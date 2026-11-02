@@ -72,4 +72,29 @@ describe('editor reducer', () => {
     expect(r.past).toHaveLength(0);
     expect(r.dirty).toBe(false);
   });
+  describe('moving a caption keeps its words in sync', () => {
+    const withCaption = () => {
+      const p = plan();
+      p.layers[0].words = [{ t: 'Đây', s: 0.1, e: 0.3, hl: false }, { t: 'là', s: 0.4, e: 0.6, hl: true }];
+      return p;
+    };
+    it('move shifts every word by the same amount as the layer', () => {
+      const s = reduce(initState(withCaption()), { type: 'move', id: 'l1', start: 1.5 });
+      const l = layer(s, 'l1');
+      expect(l.start).toBe(1.5);
+      expect(l.words!.map(w => [w.s, w.e])).toEqual([[1.5 + 0.1 - 0, 1.5 + 0.3 - 0], [1.5 + 0.4, 1.5 + 0.6]].map(([a, b]) => [Math.round(a * 1000) / 1000, Math.round(b * 1000) / 1000]));
+    });
+    it('a move clamped at 0 shifts words by the real delta, never past the layer start', () => {
+      const p = withCaption();
+      p.layers[0].start = 1; p.layers[0].end = 3;
+      p.layers[0].words = [{ t: 'a', s: 1.1, e: 1.3, hl: false }];
+      const s = reduce(initState(p), { type: 'move', id: 'l1', start: -5 });
+      expect(layer(s, 'l1').start).toBe(0);
+      expect(layer(s, 'l1').words![0].s).toBeCloseTo(0.1, 5);
+    });
+    it('layers without words are unaffected', () => {
+      const s = reduce(initState(plan()), { type: 'move', id: 'l2', start: 1 });
+      expect(layer(s, 'l2').words).toBeUndefined();
+    });
+  });
 });

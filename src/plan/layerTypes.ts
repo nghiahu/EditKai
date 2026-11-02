@@ -17,9 +17,11 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
     check: p => {
       if (!str(p.title)) return 'thiếu props.title';
       if (p.mode !== undefined && p.mode !== 'full' && p.mode !== 'overlay') return 'props.mode phải là full hoặc overlay';
-      const body = p.body as { kind?: unknown; items?: unknown } | undefined;
+      const body = p.body as { kind?: unknown; items?: unknown } | null | undefined;
       if (body === undefined) return undefined;
+      if (body === null || typeof body !== 'object' || Array.isArray(body)) return 'props.body phải là một đối tượng { kind, items }';
       if (!['list', 'card', 'waveform', 'progress', 'phone'].includes(body.kind as string)) return 'props.body.kind phải là list, card, waveform, progress hoặc phone';
+      if (body.items !== undefined && !Array.isArray(body.items)) return 'props.body.items phải là một mảng';
       if (body.kind === 'progress' && !(Array.isArray(body.items) && body.items.every((i: any) => i && str(i.label) && typeof i.value === 'number')))
         return 'body progress cần items dạng [{ label, value }]';
       return undefined;

@@ -45,7 +45,10 @@ export function reduce(s: EditorState, a: Action): EditorState {
     case 'move': {
       const next = mapLayer(s.plan, a.id, l => {
         const start = Math.max(0, a.start);
-        return { ...l, start, end: start + (l.end - l.start) };
+        const delta = start - l.start;
+        // caption words are timed in absolute seconds, so they travel with the layer (else a moved caption would never show them)
+        const words = l.words?.map(w => ({ ...w, s: Math.round((w.s + delta) * 1000) / 1000, e: Math.round((w.e + delta) * 1000) / 1000 }));
+        return { ...l, start, end: start + (l.end - l.start), ...(words ? { words } : {}) };
       });
       return next ? commit(s, next) : s;
     }

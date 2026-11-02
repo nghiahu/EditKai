@@ -97,6 +97,11 @@ describe('validatePlan', () => {
     it('rejects body.kind "chart"', () => {
       expect(codes(withScene({ title: 'X', body: { kind: 'chart', items: [] } }))).toContain('error:invalid-props');
     });
+    it('does not throw and reports invalid-props for body null or items that are not an array', () => {
+      expect(codes(withScene({ title: 'X', body: null }))).toContain('error:invalid-props');
+      for (const kind of ['list', 'card', 'waveform', 'phone'])
+        expect(codes(withScene({ title: 'X', body: { kind, items: 'Một, Hai' } }))).toContain('error:invalid-props');
+    });
     it('rejects progress items that are plain strings', () => {
       expect(codes(withScene({ title: 'X', body: { kind: 'progress', items: ['a'] } }))).toContain('error:invalid-props');
     });

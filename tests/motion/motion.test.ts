@@ -89,3 +89,24 @@ describe('wordProgress', () => {
     }
   });
 });
+
+describe('enterExit on short layers', () => {
+  it('reaches full opacity at its peak for layers shorter than enter + exit', () => {
+    for (const motion of [s1, m1]) {
+      for (const dur of [6, 9, 12, 20]) {
+        const peak = Math.max(...Array.from({ length: dur }, (_, f) => enterExit(f, dur, motion, FPS).visible));
+        expect(peak).toBeGreaterThanOrEqual(0.99);
+        expect(peak).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+  it('is still hidden on the first and last frame of a short layer', () => {
+    for (const dur of [6, 12]) {
+      expect(enterExit(0, dur, m1, FPS).visible).toBe(0);
+      expect(enterExit(dur - 1, dur, m1, FPS).visible).toBe(0);
+    }
+  });
+  it('a single-frame layer stays at 0 (nothing to peak)', () => {
+    expect(enterExit(0, 1, s1, FPS).visible).toBe(0);
+  });
+});
