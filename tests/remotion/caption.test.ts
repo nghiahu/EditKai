@@ -16,8 +16,9 @@ describe('Caption', () => {
     }, 240000);
   }
   it('highlighting a word changes the picture', async () => {
-    const a = readFileSync(await stillOf(planOf('m1', [caption(false)]), 10));
-    const b = readFileSync(await stillOf(planOf('m1', [caption(true)]), 10));
+    // frame 30 (1.0 s): the highlighted word was spoken at 0.5–0.9 s, so it is on screen now (words appear when they are spoken)
+    const a = readFileSync(await stillOf(planOf('m1', [caption(false)]), 30));
+    const b = readFileSync(await stillOf(planOf('m1', [caption(true)]), 30));
     expect(a.equals(b)).toBe(false);
   }, 240000);
   it('s1 and m1 look different for the same caption', async () => {

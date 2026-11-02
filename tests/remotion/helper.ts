@@ -3,6 +3,7 @@ import { renderStill, selectComposition } from '@remotion/renderer';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { runFfmpeg } from '../../src/media/ffmpeg';
 import { loadTheme } from '../../src/style/theme';
 import type { Layer, Plan } from '../../src/plan/types';
 
@@ -29,4 +30,16 @@ export async function stillOf(plan: Plan, frame: number, extra: Record<string, u
   const output = join(outDir, `still-${n++}.png`);
   await renderStill({ composition, serveUrl: url, output, frame, inputProps });
   return output;
+}
+
+/** A frame of the composition with no layers (what a fully faded-out layer must look like). */
+export const blankStill = (style: 's1' | 'm1', frame = 0): Promise<string> => stillOf(planOf(style, []), frame);
+
+/** Render `frames` of a plan and tile them left to right (240 px wide each) into one PNG, for looking at motion. */
+export async function filmstrip(plan: Plan, frames: number[], outPng: string): Promise<string> {
+  const pngs: string[] = [];
+  for (const f of frames) pngs.push(await stillOf(plan, f));
+  const filter = pngs.map((_, i) => `[${i}:v]scale=240:-1[s${i}]`).join(';') + ';' + pngs.map((_, i) => `[s${i}]`).join('') + `hstack=inputs=${pngs.length}`;
+  await runFfmpeg(['-y', ...pngs.flatMap(p => ['-i', p]), '-filter_complex', filter, outPng]);
+  return outPng;
 }
