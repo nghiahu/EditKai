@@ -14,7 +14,8 @@
 | Liệt kê 2–4 khái niệm đồng cấp (ví dụ Typography, Graphic, Motion) | `chip-stack` (track `graphic`) | Mỗi chip một `icon` và `label`; chip hiện lần lượt, cả cụm giữ 3–5 s. |
 | Nhắc tên công cụ/mốc quan trọng | `title-card` | `icon` + `title` ngắn, ≤ 2 s đến 3 s. |
 | Minh họa bằng màn hình/footage | `footage` với `fit: contain`, 2–10 s | Luôn kèm `caption` ở trên hoặc dưới. Vào bằng `transition` kind `blur` (0.3 s). |
-| Đổi ý lớn hoặc liệt kê quy trình | `explainer-scene` | Hiếm, ≤ 1–2 lần/video, 3–5 s, `avatar: false`. |
+| Đổi ý lớn hoặc liệt kê quy trình | `explainer-scene` | Hiếm, ≤ 1–2 lần/video, 3–5 s, `avatar: false`. Dùng `mode: "overlay"` để thẻ nằm trên người nói đã tối và mờ (như cảnh chèn của bản gốc); `mode: "full"` cho cảnh nền đen. |
+| Nhấn một từ hoặc ý quan trọng | `zoom-punch` (track `camera`) | Khoảng 6–10 s một lần, dài ≤ 1.5 s, đặt đúng lúc từ khóa được nói; `scale` mặc định 1.12. Có thể `shake` rất nhẹ ở khoảnh khắc mạnh nhất. |
 
 ## Phụ đề
 - Cỡ lớn (72), nằm giữa phần dưới, chữ trắng; từ khóa trên hộp vàng. Mỗi layer là một chunk, không chồng chunk.

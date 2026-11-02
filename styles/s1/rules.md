@@ -18,6 +18,8 @@
 
 Không dùng `chip-stack` ở s1.
 
+**Camera (track `camera`):** dùng ít, tối đa một `zoom-punch` mỗi 20 s (scale mặc định 1.06), không dùng `shake`. Cảnh giải thích mặc định là `full`; với các bước/quy trình ưu tiên `body.kind` `progress` (thanh tiến độ cho con số như quota) hoặc `waveform` (khi nói về giọng/lời nói) thay vì chỉ `list`.
+
 ## Phụ đề
 - Một dòng nhỏ ở dưới (theme đã đặt cỡ 40 và vị trí), ≤ 8 từ mỗi layer `caption`, ngắt ở chỗ nghỉ tự nhiên của câu.
 - Mỗi layer tô `hl: true` cho 1–2 từ khóa (danh từ chính, con số). Không tô cả câu.

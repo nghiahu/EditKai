@@ -49,11 +49,15 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 | `caption` | (không có) | dùng `words`: `{t, s, e, hl}` lấy từ `transcript.json`; `start` = `s` của từ đầu, `end` = `e` của từ cuối. Số từ ≤ `limits.maxCaptionWords`. |
 | `title` | `title-card` | `{ icon, title, sub? }` |
 | `graphic` | `chip-stack` | `{ chips: [{ icon, label, sub? }] }` |
-| `graphic` | `explainer-scene` | `{ label?, title, body?: { kind: "list"\|"card", items: string[] }, avatar?: boolean }` |
-| `graphic` | `transition` | `{ kind: "zoom"\|"blur"\|"slide" }`, dài ≤ 0.6 s; hiệu ứng áp lên video nền, đặt ngay trước cảnh, không chồng layer `graphic` khác |
+| `graphic` | `explainer-scene` | `{ label?, title, mode?: "full"\|"overlay", body?: { kind, items }, avatar?: boolean }`. `mode` `full` (mặc định) là nền kín; `overlay` là thẻ nằm trên người nói đã tối và mờ. `body.kind`: `list` và `card` (`items`: chuỗi), `waveform` (`items`: nhãn tùy chọn), `progress` (`items`: `{ label, value 0–100 }`), `phone` (`items`: các dòng tin nhắn) |
+| `graphic` | `transition` | `{ kind: "zoom"\|"blur"\|"slide"\|"push"\|"flash" }`, dài ≤ 0.6 s; hiệu ứng áp lên video nền (`flash` là nháy sáng), đặt ngay trước cảnh, không chồng layer `graphic` khác |
+| `camera` | `zoom-punch` | `{ scale?: số trong (1, 1.5], focus?: { x, y } trong 0–1 }`, 0.8–1.5 s; đẩy camera vào ở từ nhấn mạnh rồi trả lại (mặc định theo phong cách: s1 1.06, m1 1.12) |
+| `camera` | `shake` | `{ intensity?: 1–3 }`, rung nhẹ cho khoảnh khắc mạnh |
 | `footage` | `footage` | `{ src: "assets/<file>", fit?: "cover"\|"contain" }` |
 
-Icon có sẵn: `video`, `skill`, `chat`, `clock`, `check`, `typography`, `graphic`, `motion`, `audio` (tên lạ sẽ rơi về `check`).
+Icon có sẵn (vẽ dần và nảy khi hiện): `video`, `skill`, `chat`, `clock`, `check`, `typography`, `graphic`, `motion`, `audio`, `sparkles`, `zap`, `scissors`, `wand`, `layers`, `play`, `mic`, `subtitles`, `image`, `bot`, `gauge`, `lightbulb`, `rocket`, `star` (tên lạ, kể cả `lottie:...`, sẽ rơi về `check`).
+
+Camera là một track riêng (`camera`): hai layer cùng track không chồng nhau. Video người nói tự tối và mờ khi có cảnh giải thích `overlay` hoặc footage `fit: "contain"`; không cần khai báo.
 
 Quy tắc cứng (validator kiểm tra): schema đúng; id layer không trùng; `type` đúng bảng trên và đúng track, `props` có các trường bắt buộc (title-card/explainer-scene cần `title`, chip-stack cần `chips[].label`, transition cần `kind`); hai layer **cùng track không chồng thời gian**; footage tồn tại; không layer nào vượt độ dài video. Cảnh báo (không chặn): chữ tràn vùng an toàn, caption quá nhiều từ, cảnh quá ngắn, phụ đề lệch lời đã chép (phụ đề phải khớp từ trong `transcript.json` trong vòng 0.3 s).
 

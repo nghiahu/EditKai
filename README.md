@@ -33,4 +33,5 @@ npx tsx src/cli.ts render projects/demo
 - `npm test` chạy toàn bộ test (các file test chạy lần lượt vì Remotion dùng chung cache webpack; toàn bộ mất khoảng 1 phút).
 - Thêm phong cách: tạo `styles/<tên>/theme.json` và `styles/<tên>/rules.md`; thêm component vào `remotion/components/` và đăng ký trong `remotion/registry.ts` nếu cần.
 - `scripts/analyze-demo.ts <video> <outDir>` lấy mốc cắt và khung hình dày từ một video demo để viết `rules.md`.
-- Chưa có: nhiều lớp video chồng nhau, chỉnh sóng âm/màu, sửa bằng ô chat, chỉnh vị trí chữ bằng kéo thả.
+- Chuyển động: các hàm nảy/hiện/thoát nằm trong `remotion/motion/`, thông số theo phong cách trong khối `motion` của `theme.json`. `tests/remotion/helper.ts` có `filmstrip(plan, frames, out)` để ghép dãy khung hình thành một ảnh và xem chuyển động bằng mắt.
+- Chưa có: nhiều lớp video chồng nhau, chỉnh sóng âm/màu, sửa bằng ô chat, chỉnh vị trí chữ bằng kéo thả, âm thanh hiệu ứng, cảnh mở/kết, icon 3D.
