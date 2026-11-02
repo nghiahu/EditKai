@@ -35,7 +35,7 @@ export async function startEditorServer(projectDir: string, port = 5186): Promis
 
   const server = createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
     const url = req.url ?? '/';
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
@@ -72,6 +72,14 @@ export async function startEditorServer(projectDir: string, port = 5186): Promis
         writeFileSync(planFile, text);
         res.writeHead(204).end();
       });
+      return;
+    }
+    if (url === '/api/render' && req.method === 'POST') {
+      // dynamic import keeps Remotion's bundler out of the server's startup path
+      import('../../src/stages/render')
+        .then(m => m.renderStage(projectDir))
+        .then(out => json(res, 200, { out }))
+        .catch(e => json(res, 500, { error: (e as Error).message }));
       return;
     }
     res.writeHead(404).end();
