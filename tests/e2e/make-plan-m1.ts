@@ -47,16 +47,20 @@ const plan: Plan = {
   ],
   layers: [
     ...captions,
-    title('t1', 1.5, 3.8, 'chat', 'CLAUDE EDIT'),
-    title('t2', 4.6, 9.6, 'video', 'EDITOR TRỰC TIẾP', 'Hiển thị toàn bộ timeline'),
+    title('t1', 1.5, 3.8, 'sparkles', 'CLAUDE EDIT'),
+    title('t2', 4.6, 9.6, 'layers', 'EDITOR TRỰC TIẾP', 'Hiển thị toàn bộ timeline'),
     { id: 'k1', track: 'graphic', type: 'chip-stack', start: 16.1, end: 21.3, props: { chips: [
       { icon: 'typography', label: 'Typography', sub: 'đủ kiểu' }, { icon: 'graphic', label: 'Graphic', sub: 'đa dạng' },
       { icon: 'motion', label: 'Motion', sub: 'mượt mà' }, { icon: 'audio', label: 'Âm thanh', sub: 'khớp từng khung' }] } },
-    { id: 'x1', track: 'graphic', type: 'transition', start: 24.6, end: 25.2, props: { kind: 'blur' } },
+    { id: 'x1', track: 'graphic', type: 'transition', start: 24.6, end: 25.2, props: { kind: 'push' } },
     { id: 'e1', track: 'graphic', type: 'explainer-scene', start: 25.2, end: 29.4, props: {
-      label: 'THAY VÌ PROMPT TỪNG LỖI', title: 'GIAO DIỆN EDITOR', body: { kind: 'list', items: ['Prompt sửa từng chi tiết', 'Tốn thời gian', 'Tốn token'] }, avatar: false } },
-    title('t3', 30.8, 34, 'check', 'KHÔNG TỐN THÊM TOKEN', 'Chỉnh rồi render'),
+      label: 'THAY VÌ PROMPT TỪNG LỖI', title: 'GIAO DIỆN EDITOR', mode: 'overlay', body: { kind: 'list', items: ['Prompt sửa từng chi tiết', 'Tốn thời gian', 'Tốn token'] }, avatar: false } },
+    title('t3', 30.8, 34, 'zap', 'KHÔNG TỐN THÊM TOKEN', 'Chỉnh rồi render'),
+    { id: 'x2', track: 'graphic', type: 'transition', start: 38.9, end: 39.3, props: { kind: 'flash' } },
     title('t4', 39.4, 43.4, 'clock', 'HƠN NỬA TIẾNG', 'Claude làm + 50 phút tự chỉnh'),
+    // camera: punch-ins on emphasised words about every 6-10 s, one light shake on the cost line
+    ...[[0.3, 1.4], [10.2, 11.4], [17, 18.3], [23.2, 24.4], [34.5, 35.7], [39.7, 40.9]].map(([s, e], i): Layer => ({ id: `z${i + 1}`, track: 'camera', type: 'zoom-punch', start: s, end: e, props: {} })),
+    { id: 'k2', track: 'camera', type: 'shake', start: 26, end: 26.6, props: { intensity: 1 } },
   ],
 };
 writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan, null, 2));
