@@ -1,0 +1,9 @@
+{
+  "name": "s1",
+  "colors": { "navy": "#0B1530", "teal": "#2DE2D0", "orange": "#FF9A3C", "white": "#FFFFFF" },
+  "fonts": { "heading": "Be Vietnam Pro, Inter, sans-serif", "body": "Be Vietnam Pro, Inter, sans-serif" },
+  "captionSize": 40,
+  "radius": 24,
+  "animMs": 350,
+  "limits": { "maxCaptionWords": 8, "minSceneSec": 1.5, "safeZone": { "top": 0.08, "bottom": 0.18, "left": 0.06, "right": 0.06 } }
+}

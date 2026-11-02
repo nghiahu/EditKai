@@ -1,0 +1,9 @@
+{
+  "name": "m1",
+  "colors": { "black": "#0A0A0A", "yellow": "#FFD93D", "white": "#FFFFFF" },
+  "fonts": { "heading": "Be Vietnam Pro, Inter, sans-serif", "body": "Be Vietnam Pro, Inter, sans-serif" },
+  "captionSize": 72,
+  "radius": 16,
+  "animMs": 250,
+  "limits": { "maxCaptionWords": 4, "minSceneSec": 1.0, "safeZone": { "top": 0.08, "bottom": 0.18, "left": 0.06, "right": 0.06 } }
+}
