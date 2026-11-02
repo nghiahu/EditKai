@@ -4,6 +4,8 @@ import type { Plan } from '../src/plan/types';
 import type { Theme } from '../src/style/theme';
 import { registry } from './registry';
 import { applyOverride } from './theme-utils';
+import { baseDim, mergeStyles } from './baseDim';
+import { cameraStyle } from './camera';
 import { transitionStyle } from './transition';
 
 export type PlanVideoProps = { plan: Plan; theme: Theme; videoSrc: string; durationSec?: number; assetBase?: string };
@@ -16,7 +18,7 @@ export const PlanVideo: React.FC<PlanVideoProps> = ({ plan, theme, videoSrc, ass
   const frame = useCurrentFrame();
   return (
     <AbsoluteFill style={{ background: theme.colors.navy ?? theme.colors.black ?? '#000' }}>
-      <AbsoluteFill style={transitionStyle(plan.layers, frame / fps)}>
+      <AbsoluteFill style={mergeStyles(transitionStyle(plan.layers, frame / fps), cameraStyle(plan.layers, frame / fps, theme.motion), baseDim(plan.layers, frame / fps, theme.motion))}>
         {videoSrc ? <OffthreadVideo src={videoSrc} /> : null}
       </AbsoluteFill>
       {plan.layers.map(l => {

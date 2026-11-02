@@ -124,4 +124,11 @@ describe('validatePlan', () => {
       expect(codes(cam('zoom-punch', {}, 'graphic'))).toContain('error:unknown-layer-type');
     });
   });
+  it('accepts every transition kind, including push and flash', () => {
+    for (const kind of ['zoom', 'blur', 'slide', 'push', 'flash']) {
+      const p = plan();
+      p.layers.push({ id: 'tr', track: 'graphic', type: 'transition', start: 6, end: 6.5, props: { kind } });
+      expect(codes(p)).toEqual([]);
+    }
+  });
 });

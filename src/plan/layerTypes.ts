@@ -39,5 +39,5 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
     check: p => (p.intensity === undefined || (typeof p.intensity === 'number' && p.intensity >= 1 && p.intensity <= 3) ? undefined : 'props.intensity phải trong khoảng 1–3'),
   },
   footage: { track: 'footage', check: () => undefined }, // props.src is reported by the missing-file rule
-  transition: { track: 'graphic', check: p => (['zoom', 'blur', 'slide'].includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur hoặc slide') },
+  transition: { track: 'graphic', check: p => (['zoom', 'blur', 'slide', 'push', 'flash'].includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur, slide, push hoặc flash') },
 };
