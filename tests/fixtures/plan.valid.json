@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "meta": { "source": "cleaned.mp4", "fps": 30, "width": 1080, "height": 1920, "style": "s1" },
+  "scenes": [{ "id": "sc1", "start": 0, "end": 4.2, "role": "talking-head" }],
+  "layers": [
+    { "id": "l1", "track": "caption", "start": 0, "end": 4.2,
+      "words": [{ "t": "Đây", "s": 0.1, "e": 0.3, "hl": false }] },
+    { "id": "l2", "track": "title", "type": "title-card", "start": 0.5, "end": 3.5,
+      "props": { "icon": "video", "title": "EDIT VIDEO" }, "locked": false }
+  ]
+}

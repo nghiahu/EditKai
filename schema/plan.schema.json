@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["version", "meta", "scenes", "layers"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "meta": {
+      "type": "object",
+      "required": ["source", "fps", "width", "height", "style"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "fps": { "type": "number", "exclusiveMinimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "style": { "type": "string" }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "start", "end", "role"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "start": { "type": "number", "minimum": 0 },
+          "end": { "type": "number", "minimum": 0 },
+          "role": { "enum": ["talking-head", "explainer", "insert"] }
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "track", "start", "end"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "track": { "enum": ["scene", "caption", "title", "graphic", "footage"] },
+          "type": { "type": "string" },
+          "start": { "type": "number", "minimum": 0 },
+          "end": { "type": "number", "minimum": 0 },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["t", "s", "e", "hl"],
+              "additionalProperties": false,
+              "properties": {
+                "t": { "type": "string" }, "s": { "type": "number" },
+                "e": { "type": "number" }, "hl": { "type": "boolean" }
+              }
+            }
+          },
+          "props": { "type": "object" },
+          "override": { "type": "object" },
+          "locked": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
