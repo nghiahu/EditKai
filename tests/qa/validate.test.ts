@@ -78,4 +78,27 @@ describe('validatePlan', () => {
     t.layers.push({ id: 'x', track: 'graphic', type: 'transition', start: 6, end: 6.5, props: { kind: 'wobble' } });
     expect(codes(t)).toContain('error:invalid-props');
   });
+  describe('explainer-scene props', () => {
+    const withScene = (props: Record<string, unknown>) => {
+      const p = plan();
+      p.layers.push({ id: 'e1', track: 'graphic', type: 'explainer-scene', start: 5, end: 8, props });
+      return p;
+    };
+    it('accepts an old-style scene without mode and with body.kind "list"', () => {
+      expect(codes(withScene({ title: 'X', body: { kind: 'list', items: ['a'] } }))).toEqual([]);
+    });
+    it('accepts every new mode and body kind', () => {
+      for (const kind of ['list', 'card', 'waveform', 'phone']) expect(codes(withScene({ title: 'X', mode: 'overlay', body: { kind, items: ['a'] } }))).toEqual([]);
+      expect(codes(withScene({ title: 'X', body: { kind: 'progress', items: [{ label: 'a', value: 50 }] } }))).toEqual([]);
+    });
+    it('rejects mode "side"', () => {
+      expect(codes(withScene({ title: 'X', mode: 'side' }))).toContain('error:invalid-props');
+    });
+    it('rejects body.kind "chart"', () => {
+      expect(codes(withScene({ title: 'X', body: { kind: 'chart', items: [] } }))).toContain('error:invalid-props');
+    });
+    it('rejects progress items that are plain strings', () => {
+      expect(codes(withScene({ title: 'X', body: { kind: 'progress', items: ['a'] } }))).toContain('error:invalid-props');
+    });
+  });
 });

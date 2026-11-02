@@ -11,7 +11,19 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
     track: 'graphic',
     check: p => (Array.isArray(p.chips) && p.chips.length > 0 && p.chips.every((c: any) => c && str(c.label)) ? undefined : 'cần props.chips (mảng, mỗi chip có label)'),
   },
-  'explainer-scene': { track: 'graphic', check: p => (str(p.title) ? undefined : 'thiếu props.title') },
+  'explainer-scene': {
+    track: 'graphic',
+    check: p => {
+      if (!str(p.title)) return 'thiếu props.title';
+      if (p.mode !== undefined && p.mode !== 'full' && p.mode !== 'overlay') return 'props.mode phải là full hoặc overlay';
+      const body = p.body as { kind?: unknown; items?: unknown } | undefined;
+      if (body === undefined) return undefined;
+      if (!['list', 'card', 'waveform', 'progress', 'phone'].includes(body.kind as string)) return 'props.body.kind phải là list, card, waveform, progress hoặc phone';
+      if (body.kind === 'progress' && !(Array.isArray(body.items) && body.items.every((i: any) => i && str(i.label) && typeof i.value === 'number')))
+        return 'body progress cần items dạng [{ label, value }]';
+      return undefined;
+    },
+  },
   footage: { track: 'footage', check: () => undefined }, // props.src is reported by the missing-file rule
   transition: { track: 'graphic', check: p => (['zoom', 'blur', 'slide'].includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur hoặc slide') },
 };
