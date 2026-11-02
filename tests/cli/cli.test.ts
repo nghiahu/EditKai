@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runCli } from '../../src/cli';
+import { runCli, editorCommand } from '../../src/cli';
 import { runFfmpeg } from '../../src/media/ffmpeg';
 import type { Plan } from '../../src/plan/types';
 
@@ -83,5 +83,30 @@ describe('cli', () => {
     await runFfmpeg(['-y', '-f', 'lavfi', '-i', 'color=c=gray:s=320x240:r=30:d=2', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', join(projectDir(), 'source.mp4')]);
     expect(await cli('clean', projectDir())).toBe(1);
     expect(err.join('')).toContain('Không tìm thấy lời nói trong video');
+  });
+  it('editorCommand keeps a project path with spaces as one argument and does not use a shell', () => {
+    const c = editorCommand('C:\Users\John Smith\dự án');
+    expect(c.cmd).toBe(process.execPath);
+    expect(c.args.at(-1)).toBe('C:\Users\John Smith\dự án');
+    expect(existsSync(c.args[0])).toBe(true); // tsx cli
+  });
+  it('merge keeps locked layers of plan.json and takes the rest from plan.next.json', async () => {
+    await initProject();
+    writePlan([{ ...title('keep', 0, 1), locked: true }, title('old', 2, 3)]);
+    const next: Plan = JSON.parse(readFileSync(join(projectDir(), 'plan.json'), 'utf8'));
+    next.layers = [title('new', 2, 3), title('clash', 0.5, 0.8)];
+    writeFileSync(join(projectDir(), 'plan.next.json'), JSON.stringify(next));
+    expect(await cli('merge', projectDir())).toBe(0);
+    const merged: Plan = JSON.parse(readFileSync(join(projectDir(), 'plan.json'), 'utf8'));
+    expect(merged.layers.map(l => l.id).sort()).toEqual(['keep', 'new']);
+    expect(existsSync(join(projectDir(), 'plan.next.json'))).toBe(false);
+  });
+  it('merge refuses an invalid plan.next.json and leaves plan.json alone', async () => {
+    await initProject();
+    writePlan([title('a', 0, 1)]);
+    const before = readFileSync(join(projectDir(), 'plan.json'), 'utf8');
+    writeFileSync(join(projectDir(), 'plan.next.json'), '{"version":1}');
+    expect(await cli('merge', projectDir())).toBe(1);
+    expect(readFileSync(join(projectDir(), 'plan.json'), 'utf8')).toBe(before);
   });
 });

@@ -5,16 +5,18 @@ import type { AddressInfo } from 'node:net';
 
 const TYPES: Record<string, string> = {
   '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.webm': 'video/webm', '.png': 'image/png', '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.json': 'application/json',
+  '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.json': 'application/json', '.txt': 'text/plain',
 };
 
 /** Answer a request with a file from `dir` (relative URL path), honouring Range; 404 if missing or outside `dir`. */
 export function serveFile(dir: string, urlPath: string, req: IncomingMessage, res: ServerResponse): void {
-  const rel = normalize(decodeURIComponent(urlPath.split('?')[0])).replace(/^([\/])+/, '');
+  let decoded: string;
+  try { decoded = decodeURIComponent(urlPath.split('?')[0]); } catch { res.writeHead(400).end(); return; }
+  const rel = normalize(decoded).replace(/^([\/])+/, '');
   const file = join(dir, rel);
   if (rel.startsWith('..') || !existsSync(file) || !statSync(file).isFile()) { res.writeHead(404).end(); return; }
   const size = statSync(file).size;
-  const type = TYPES[extname(file).toLowerCase()] ?? (extname(file) === '.txt' ? 'text/plain' : 'application/octet-stream');
+  const type = TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream';
   const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
   if (range) {
     const start = range[1] ? Number(range[1]) : 0;

@@ -3,7 +3,7 @@ import type { PlayerRef } from '@remotion/player';
 import { durationOf } from '../../remotion/PlanVideo';
 import type { Issue, Plan } from '../../src/plan/types';
 import type { Theme } from '../../src/style/theme';
-import { API, getPlan, getTheme, onPlanChanged, renderVideo, savePlan } from './api';
+import { API, getIssues, getPlan, getTheme, onPlanChanged, renderVideo, savePlan } from './api';
 import { LayerList } from './LayerList';
 import { Preview } from './Preview';
 import { PropertiesPanel } from './PropertiesPanel';
@@ -61,13 +61,21 @@ function Editor({ initial, initialTheme }: { initial: Plan; initialTheme: Theme 
   useEffect(() => onPlanChanged(() => { if (dirtyRef.current) setDisk(true); else void reload(); }), [reload]);
 
   const seek = useCallback((t: number) => playerRef.current?.seekTo(Math.round(t * fps)), [fps]);
-  const save = useCallback(async () => {
+  /** Saves plan.json; resolves true only when the server accepted it. Validator problems are shown but do not block saving. */
+  const save = useCallback(async (): Promise<boolean> => {
     const r = await savePlan(state.plan);
-    if (r.ok) { dispatch({ type: 'saved' }); setIssues([]); setNotice({ kind: 'info', text: 'Đã lưu plan.json' }); }
-    else { setIssues(r.issues); setNotice({ kind: 'err', text: 'Không lưu được, plan chưa hợp lệ' }); }
+    if (!r.ok) { setIssues(r.issues); setNotice({ kind: 'err', text: 'Không lưu được, plan chưa hợp lệ' }); return false; }
+    dispatch({ type: 'saved' });
+    const found = await getIssues().catch(() => []);
+    setIssues(found);
+    const errors = found.filter(i => i.severity === 'error').length;
+    setNotice(errors
+      ? { kind: 'err', text: `Đã lưu plan.json, nhưng còn ${errors} lỗi sẽ chặn render` }
+      : { kind: 'info', text: found.length ? `Đã lưu plan.json (${found.length} cảnh báo)` : 'Đã lưu plan.json' });
+    return true;
   }, [state.plan]);
   const render = async () => {
-    if (state.dirty) await save();
+    if (state.dirty && !(await save())) return; // never render a stale plan.json
     setBusy(true); setNotice({ kind: 'info', text: 'Đang render…' });
     const r = await renderVideo();
     setBusy(false);

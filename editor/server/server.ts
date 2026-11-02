@@ -5,13 +5,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AddressInfo } from 'node:net';
 import { serveFile } from '../../src/media/serve';
+import { checkProject } from '../../src/stages/qa';
 import { validatePlanSchema } from '../../src/plan/schema';
 import { loadTheme } from '../../src/style/theme';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const hash = (s: string) => createHash('sha1').update(s).digest('hex');
 
-export async function startEditorServer(projectDir: string, port = 5186): Promise<{ url: string; close(): Promise<void> }> {
+/** Only `allowedOrigin` (the Vite editor page) may call this API from a browser; other origins cannot read it or change anything. */
+export async function startEditorServer(projectDir: string, port = 5186, allowedOrigin = 'http://127.0.0.1:5187'): Promise<{ url: string; close(): Promise<void> }> {
   const planFile = join(projectDir, 'plan.json');
   const clients = new Set<ServerResponse>();
   let lastWritten = existsSync(planFile) ? hash(readFileSync(planFile, 'utf8')) : '';
@@ -34,10 +36,15 @@ export async function startEditorServer(projectDir: string, port = 5186): Promis
     res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
 
   const server = createServer((req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    const origin = req.headers.origin;
+    if (origin === allowedOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    }
     const url = req.url ?? '/';
+    if (origin && origin !== allowedOrigin && (req.method === 'PUT' || req.method === 'POST')) { json(res, 403, { error: 'Origin không được phép' }); return; }
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
 
     if (url.startsWith('/media/')) { serveFile(projectDir, url.slice('/media/'.length), req, res); return; }
@@ -72,6 +79,10 @@ export async function startEditorServer(projectDir: string, port = 5186): Promis
         writeFileSync(planFile, text);
         res.writeHead(204).end();
       });
+      return;
+    }
+    if (url === '/api/validate' && req.method === 'GET') {
+      checkProject(projectDir).then(issues => json(res, 200, { issues }), e => json(res, 404, { error: (e as Error).message }));
       return;
     }
     if (url === '/api/render' && req.method === 'POST') {

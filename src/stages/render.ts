@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundle } from '@remotion/bundler';
@@ -7,16 +7,9 @@ import { probe } from '../media/probe';
 import { serveDir } from '../media/serve';
 import { validatePlan } from '../qa/validate';
 import { loadTheme } from '../style/theme';
-import type { Plan } from '../plan/types';
+import { readPlan } from '../plan/io';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-
-export function readPlan(projectDir: string): Plan {
-  const file = join(projectDir, 'plan.json');
-  if (!existsSync(file)) throw new Error(`Chưa có plan.json trong ${projectDir}`);
-  try { return JSON.parse(readFileSync(file, 'utf8')) as Plan; }
-  catch (e) { throw new Error(`plan.json không phải JSON hợp lệ: ${(e as Error).message}`); }
-}
 
 /** Validate plan.json (errors block, warnings print) and render out.mp4; returns its path. */
 export async function renderStage(projectDir: string): Promise<string> {

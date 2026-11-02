@@ -23,6 +23,7 @@ npx tsx src/cli.ts init projects/demo --source "video.mp4" --style m1 --aspect 9
 npx tsx src/cli.ts clean projects/demo
 # viết projects/demo/plan.json (AI làm bước này)
 npx tsx src/cli.ts validate projects/demo
+npx tsx src/cli.ts merge projects/demo      # sau khi dựng lại: gộp plan.next.json, giữ layer đã khóa
 npx tsx src/cli.ts editor projects/demo     # http://127.0.0.1:5187
 npx tsx src/cli.ts render projects/demo
 ```

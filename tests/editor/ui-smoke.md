@@ -12,6 +12,6 @@ Run on 2026-11-02 in the in-app browser against `projects/demo` (12 s cut of the
 | External write to `plan.json` while dirty: banner with "Giữ bản của tôi" / "Tải bản trên đĩa" | pass |
 | "Tải bản trên đĩa" loads the disk version (new title shown), dirty cleared | pass |
 | Pick a layer in the list: playhead seeks, preview shows caption and title card with the new title | pass |
-| Saving an invalid plan shows the server's issues and leaves the file unchanged | not driven from the UI (the reducer clamps edits so the UI cannot produce an invalid plan); covered by `tests/editor/server.test.ts` ("PUT rejects an invalid plan with 422") |
+| Saving an invalid plan shows the server's issues and leaves the file unchanged | not driven from the UI; covered by `tests/editor/server.test.ts` ("PUT rejects an invalid plan with 422"). Note: the reducer keeps edits schema-valid but can still create same-track overlaps or layers past the end; after Save the editor now calls `/api/validate` and shows those issues (fix added after the final review, checked by `tsc` and the server test only, not re-driven in the browser) |
 
 Not checked: visual fidelity of screenshots (the pane clipped screenshots, so the DOM was inspected instead), Render button end to end (covered by `tests/editor/render-endpoint.test.ts` and `tests/stages/render.test.ts`), keyboard shortcuts.

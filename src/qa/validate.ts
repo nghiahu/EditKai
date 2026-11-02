@@ -1,6 +1,7 @@
 import type { Issue, Plan } from '../plan/types';
 import type { Theme } from '../style/theme';
 import { validatePlanSchema } from '../plan/schema';
+import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
 
 export interface Ctx {
@@ -19,7 +20,21 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
   const err = (code: string, message: string, layerId?: string) => issues.push({ severity: 'error', code, message, layerId });
   const warn = (code: string, message: string, layerId?: string) => issues.push({ severity: 'warning', code, message, layerId });
 
+  const seen = new Set<string>();
   for (const l of plan.layers) {
+    if (seen.has(l.id)) err('duplicate-id', `id ${l.id} bị trùng`, l.id);
+    seen.add(l.id);
+    if (l.track === 'caption') {
+      if (l.type) err('unknown-layer-type', `${l.id}: layer caption không có type (đang là "${l.type}")`, l.id);
+    } else {
+      const spec = l.type ? LAYER_TYPES[l.type] : undefined;
+      if (!spec || spec.track !== l.track) {
+        err('unknown-layer-type', `${l.id}: type "${l.type ?? '(trống)'}" không hợp lệ cho track ${l.track}`, l.id);
+      } else {
+        const problem = spec.check(l.props ?? {});
+        if (problem) err('invalid-props', `${l.id}: ${problem}`, l.id);
+      }
+    }
     if (l.end > ctx.durationSec) err('out-of-bounds', `${l.id} kết thúc ${l.end}s, video chỉ dài ${ctx.durationSec}s`, l.id);
     if (l.track === 'footage') {
       const src = l.props?.src;

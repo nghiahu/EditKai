@@ -18,6 +18,13 @@ export async function savePlan(plan: Plan): Promise<{ ok: true } | { ok: false; 
   return { ok: false, issues: body.issues ?? [{ severity: 'error', code: 'http', message: body.error ?? `Lỗi ${r.status}` }] };
 }
 
+export async function getIssues(): Promise<Issue[]> {
+  const r = await fetch(`${API}/api/validate`);
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error ?? `Lỗi ${r.status}`);
+  return body.issues;
+}
+
 export async function renderVideo(): Promise<{ out?: string; error?: string }> {
   return (await fetch(`${API}/api/render`, { method: 'POST' })).json();
 }

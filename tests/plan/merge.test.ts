@@ -23,4 +23,9 @@ describe('mergeRegenerated', () => {
     const regen = base([], [{ id: 's2', start: 0, end: 2, role: 'explainer' }]);
     expect(mergeRegenerated(existing, regen).scenes.map(s => s.id)).toEqual(['s2']);
   });
+  it('drops a regenerated layer whose id equals a locked layer id', () => {
+    const existing = base([L('c1', 'caption', 0, 2, true)]);
+    const regen = base([L('c1', 'title', 5, 6)]);
+    expect(mergeRegenerated(existing, regen).layers.map(l => l.id)).toEqual(['c1']);
+  });
 });

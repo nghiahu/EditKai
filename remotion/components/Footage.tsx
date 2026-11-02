@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AbsoluteFill, Img, OffthreadVideo } from 'remotion';
+import { assetUrl } from '../assetUrl';
 import type { LayerComponent } from '../registry';
 
 const IMAGE = /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i;
@@ -8,7 +9,7 @@ export const Footage: LayerComponent = ({ layer, theme, assetBase }) => {
   const [failed, setFailed] = useState(false);
   const p = (layer.props ?? {}) as { src?: string; fit?: 'cover' | 'contain' };
   const src = p.src ?? '';
-  const url = /^(https?:|data:|file:)/.test(src) ? src : `${assetBase ?? ''}/${src}`;
+  const url = assetUrl(assetBase ?? '', src);
   const style: React.CSSProperties = { width: '100%', height: '100%', objectFit: p.fit ?? 'cover' };
   if (failed || !src) {
     return (

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { probe } from '../media/probe';
 import { detectSilences, type Range } from '../media/silence';
 import { cutVideo } from '../media/cut';
-import { findRepeats } from '../media/repeats';
+import { findRepeats, findSuspectRepeats } from '../media/repeats';
 import { transcribe as realTranscribe, type Transcript } from '../media/transcribe';
 
 const NO_SPEECH = 'Không tìm thấy lời nói trong video';
@@ -46,6 +46,7 @@ export async function cleanStage(projectDir: string, deps: CleanDeps = {}) {
   const cleaned = join(projectDir, 'cleaned.mp4');
   await cutVideo(source, keep, cleaned);
   writeFileSync(join(projectDir, 'cuts.json'), JSON.stringify(cuts, null, 2));
+  writeFileSync(join(projectDir, 'repeats-suspect.json'), JSON.stringify(findSuspectRepeats(raw), null, 2));
 
   const transcript = await transcribe(cleaned, join(projectDir, 'transcript.json'));
   writeFileSync(join(projectDir, 'transcript.json'), JSON.stringify(transcript, null, 2));

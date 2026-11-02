@@ -1,16 +1,24 @@
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanStage } from './stages/clean';
-import { runQa } from './stages/qa';
+import { mergeRegenerated } from './plan/merge';
+import { readPlan } from './plan/io';
+import { validatePlanSchema } from './plan/schema';
+import { resetQaRounds, runQa } from './stages/qa';
 import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'init | clean | validate | editor | render';
+const COMMANDS = 'init | clean | validate | merge | editor | render';
 
 type Out = (s: string) => void;
+
+/** Node + the tsx CLI, with the project path as a single argument (no shell, so spaces in paths are safe). */
+export function editorCommand(projectDir: string): { cmd: string; args: string[] } {
+  return { cmd: process.execPath, args: [join(root, 'node_modules', 'tsx', 'dist', 'cli.mjs'), join(root, 'scripts', 'editor.ts'), projectDir] };
+}
 
 function parse(argv: string[]) {
   const [cmd, dir, ...rest] = argv;
@@ -21,7 +29,7 @@ function parse(argv: string[]) {
 
 export async function runCli(argv: string[], out: Out = console.log, err: Out = console.error): Promise<number> {
   const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'validate', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  if (!['init', 'clean', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -44,6 +52,7 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
 
     if (cmd === 'clean') {
       const r = await cleanStage(projectDir);
+      resetQaRounds(projectDir); // new timeline, new QA count
       out(`Đã làm sạch: ${r.cuts.length} đoạn cắt, ${r.transcript.words.length} từ → ${r.cleaned}`);
       return 0;
     }
@@ -52,14 +61,29 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       out(JSON.stringify(report, null, 2));
       return report.issues.some(i => i.severity === 'error') ? 1 : 0;
     }
+    if (cmd === 'merge') {
+      // The director writes a regenerated plan to plan.next.json; locked layers of plan.json survive the merge.
+      const nextFile = join(projectDir, 'plan.next.json');
+      if (!existsSync(nextFile)) { err(`Chưa có plan.next.json trong ${projectDir}`); return 2; }
+      const next = JSON.parse(readFileSync(nextFile, 'utf8'));
+      const check = validatePlanSchema(next);
+      if (!check.ok) { err(`plan.next.json không hợp lệ:\n${check.issues.map(i => `- ${i.message}`).join('\n')}`); return 1; }
+      const merged = mergeRegenerated(readPlan(projectDir), next);
+      writeFileSync(join(projectDir, 'plan.json'), JSON.stringify(merged, null, 2));
+      rmSync(nextFile);
+      out(`Đã gộp: ${merged.layers.filter(l => l.locked).length} layer đã khóa được giữ, ${merged.layers.length} layer tổng cộng`);
+      return 0;
+    }
     if (cmd === 'render') {
       out(`Đã render: ${await renderStage(projectDir)}`);
       return 0;
     }
     // editor
     if (!existsSync(join(projectDir, 'plan.json'))) { err(`Chưa có plan.json trong ${projectDir}`); return 2; }
+    resetQaRounds(projectDir); // editing in the editor starts a new QA count
+    const { cmd: bin, args } = editorCommand(projectDir);
     return await new Promise<number>(res => {
-      const p = spawn('npx', ['tsx', join(root, 'scripts', 'editor.ts'), projectDir], { stdio: 'inherit', shell: true, cwd: root });
+      const p = spawn(bin, args, { stdio: 'inherit', cwd: root });
       p.on('close', code => res(code ?? 0));
     });
   } catch (e) {

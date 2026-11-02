@@ -13,7 +13,7 @@ Bạn là **đạo diễn**: bạn phân tích video, viết `plan.json`, chạy
 
 1. **Intake.** Hỏi người dùng (nếu chưa nói): đường dẫn video gốc, khung hình (`9:16`, `16:9`, `1:1`), phong cách (`s1` hoặc `m1`). Rồi chạy:
    `npx tsx src/cli.ts init projects/<tên> --source "<video>" --style <s1|m1> --aspect <9:16|16:9|1:1>`
-2. **Làm sạch.** `npx tsx src/cli.ts clean projects/<tên>`. Lệnh chép lời theo từng từ, cắt khoảng lặng và nói lặp, ghi `cleaned.mp4`, `transcript.json` (đã khớp thời gian với `cleaned.mp4`), `cuts.json`. Đọc `cuts.json` và `transcript.raw.json` để kiểm tra không cắt nhầm lời có nghĩa; nếu nghi ngờ thì báo người dùng. Nếu báo "Không tìm thấy lời nói trong video" thì dừng và nói rõ cho người dùng.
+2. **Làm sạch.** `npx tsx src/cli.ts clean projects/<tên>`. Lệnh chép lời theo từng từ, cắt khoảng lặng và nói lặp, ghi `cleaned.mp4`, `transcript.json` (đã khớp thời gian với `cleaned.mp4`), `cuts.json`. Đọc `cuts.json` và `transcript.raw.json` để kiểm tra không cắt nhầm lời có nghĩa; nếu nghi ngờ thì báo người dùng. Lệnh chỉ tự cắt khoảng lặng và cụm ≥ 2 từ lặp lại; từ đơn lặp lại (ví dụ "từ từ", "dần dần" là từ láy tiếng Việt) **không** bị cắt và được liệt kê trong `repeats-suspect.json` để bạn xem là nói vấp thật hay từ láy. Nếu báo "Không tìm thấy lời nói trong video" thì dừng và nói rõ cho người dùng.
 3. **Phân tích.** Đọc `transcript.json`; chia thành các cảnh theo ý (`scenes`): `talking-head` (người nói), `explainer` (đoạn giải thích có đồ họa), `insert` (chèn footage). Cảnh không ngắn hơn `minSceneSec` của phong cách.
 4. **Dựng.** Đọc `styles/<style>/rules.md` và `styles/<style>/theme.json`, rồi ghi `projects/<tên>/plan.json` (định dạng bên dưới). Footage người dùng đưa copy vào `projects/<tên>/assets/` và tham chiếu dạng `assets/<file>`.
 5. **QA.** `npx tsx src/cli.ts validate projects/<tên>` in JSON `{round, maxRounds, stop?, issues[]}`. Sửa `plan.json` theo từng issue rồi chạy lại. Dừng khi `issues` rỗng hoặc có `"stop": true` (hết 3 vòng): khi đó liệt kê rõ các cảnh báo còn lại cho người dùng. Exit code 1 nghĩa là còn **lỗi** (chặn render).
@@ -24,7 +24,7 @@ Mỗi bước ghi kết quả ra file trong thư mục project, nên có thể c
 
 ## Dựng lại sau khi người dùng đã sửa
 
-Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao giờ ghi đè hoặc xóa chúng**; sửa `plan.json` bằng cách chỉ thay các layer chưa khóa, và bỏ layer mới của bạn nếu nó chồng thời gian lên layer đã khóa cùng track.
+Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao giờ ghi đè hoặc xóa chúng.** Khi dựng lại, ghi bản mới vào `projects/<tên>/plan.next.json` (không sửa thẳng `plan.json`) rồi chạy `npx tsx src/cli.ts merge projects/<tên>`: lệnh giữ mọi layer đã khóa, bỏ layer mới trùng id hoặc chồng thời gian lên layer đã khóa cùng track.
 
 ## Định dạng `plan.json`
 
@@ -55,7 +55,7 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 
 Icon có sẵn: `video`, `skill`, `chat`, `clock`, `check`, `typography`, `graphic`, `motion`, `audio` (tên lạ sẽ rơi về `check`).
 
-Quy tắc cứng (validator kiểm tra): schema đúng; hai layer **cùng track không chồng thời gian**; footage tồn tại; không layer nào vượt độ dài video. Cảnh báo (không chặn): chữ tràn vùng an toàn, caption quá nhiều từ, cảnh quá ngắn, phụ đề lệch lời đã chép (phụ đề phải khớp từ trong `transcript.json` trong vòng 0.3 s).
+Quy tắc cứng (validator kiểm tra): schema đúng; id layer không trùng; `type` đúng bảng trên và đúng track, `props` có các trường bắt buộc (title-card/explainer-scene cần `title`, chip-stack cần `chips[].label`, transition cần `kind`); hai layer **cùng track không chồng thời gian**; footage tồn tại; không layer nào vượt độ dài video. Cảnh báo (không chặn): chữ tràn vùng an toàn, caption quá nhiều từ, cảnh quá ngắn, phụ đề lệch lời đã chép (phụ đề phải khớp từ trong `transcript.json` trong vòng 0.3 s).
 
 ## Khi nào dừng và hỏi người dùng
 

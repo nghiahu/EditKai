@@ -59,4 +59,23 @@ describe('validatePlan', () => {
     const transcript = { words: [{ t: 'Đây'.normalize('NFC'), s: 0.12, e: 0.3 }] };
     expect(codes(p, ctx({ transcript }))).not.toContain('warning:caption-sync-drift');
   });
+  it('reports duplicate-id', () => {
+    const p = plan(); p.layers.push({ id: 'l1', track: 'graphic', type: 'transition', start: 6, end: 6.5, props: { kind: 'blur' } });
+    expect(codes(p)).toContain('error:duplicate-id');
+  });
+  it('reports unknown-layer-type for a typo or a type on the wrong track', () => {
+    const typo = plan(); typo.layers[1].type = 'title_card';
+    expect(codes(typo)).toContain('error:unknown-layer-type');
+    const wrongTrack = plan(); wrongTrack.layers[1].track = 'graphic';
+    expect(codes(wrongTrack)).toContain('error:unknown-layer-type');
+    const missing = plan(); delete (missing.layers[1] as any).type;
+    expect(codes(missing)).toContain('error:unknown-layer-type');
+  });
+  it('reports invalid-props when a required prop is missing', () => {
+    const p = plan(); p.layers[1].props = { icon: 'video' };
+    expect(codes(p)).toContain('error:invalid-props');
+    const t = plan();
+    t.layers.push({ id: 'x', track: 'graphic', type: 'transition', start: 6, end: 6.5, props: { kind: 'wobble' } });
+    expect(codes(t)).toContain('error:invalid-props');
+  });
 });

@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startEditorServer } from '../../editor/server/server';
+import { runFfmpeg } from '../../src/media/ffmpeg';
 
 let base: string, dir: string, srv: Awaited<ReturnType<typeof startEditorServer>>;
 const fixture = () => readFileSync('tests/fixtures/plan.valid.json', 'utf8');
@@ -60,4 +61,24 @@ describe('editor server', () => {
     expect(seen).toContain('plan-changed');
     await reader.cancel();
   }, 20000);
+  it('rejects PUT and POST from a foreign origin with 403 and leaves the file unchanged', async () => {
+    const evil = { 'content-type': 'application/json', origin: 'http://evil.example' };
+    expect((await fetch(`${srv.url}/api/plan`, { method: 'PUT', body: fixture(), headers: evil })).status).toBe(403);
+    expect((await fetch(`${srv.url}/api/render`, { method: 'POST', headers: evil })).status).toBe(403);
+    expect(readFileSync(join(dir, 'plan.json'), 'utf8')).toBe(fixture());
+  });
+  it('allows the editor origin and answers CORS only for it', async () => {
+    const ok = await fetch(`${srv.url}/api/plan`, { headers: { origin: 'http://127.0.0.1:5187' } });
+    expect(ok.headers.get('access-control-allow-origin')).toBe('http://127.0.0.1:5187');
+    const other = await fetch(`${srv.url}/api/plan`, { headers: { origin: 'http://evil.example' } });
+    expect(other.headers.get('access-control-allow-origin')).toBeNull();
+  });
+  it('GET /api/validate reports validator issues for the saved plan', async () => {
+    await runFfmpeg(['-y', '-f', 'lavfi', '-i', 'color=c=gray:s=320x240:r=30:d=3', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', join(dir, 'cleaned.mp4')]);
+    const p = JSON.parse(fixture());
+    p.layers.push({ id: 'l3', track: 'title', type: 'title-card', start: 1, end: 2, props: { icon: 'x', title: 'y' } });
+    await put(p);
+    const body = await (await fetch(`${srv.url}/api/validate`)).json();
+    expect(body.issues.map((i: { code: string }) => i.code)).toContain('track-overlap');
+  });
 });
