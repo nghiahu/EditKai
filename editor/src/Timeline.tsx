@@ -4,7 +4,7 @@ import type { Layer, Plan, Track } from '../../src/plan/types';
 const GUTTER = 70;
 const ROWS: { track: Track; label: string }[] = [
   { track: 'scene', label: 'Cảnh' }, { track: 'caption', label: 'Phụ đề' }, { track: 'title', label: 'Chữ' },
-  { track: 'graphic', label: 'Graphic' }, { track: 'footage', label: 'Footage' },
+  { track: 'graphic', label: 'Graphic' }, { track: 'footage', label: 'Footage' }, { track: 'camera', label: 'Camera' },
 ];
 
 interface Props {

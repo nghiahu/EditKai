@@ -101,4 +101,27 @@ describe('validatePlan', () => {
       expect(codes(withScene({ title: 'X', body: { kind: 'progress', items: ['a'] } }))).toContain('error:invalid-props');
     });
   });
+  describe('camera layers', () => {
+    const cam = (type: string, props: Record<string, unknown>, track: string = 'camera') => {
+      const p = plan();
+      p.layers.push({ id: 'cam1', track: track as any, type, start: 5, end: 6, props });
+      return p;
+    };
+    it('accepts zoom-punch and shake on the camera track', () => {
+      expect(codes(cam('zoom-punch', {}))).toEqual([]);
+      expect(codes(cam('zoom-punch', { scale: 1.2, focus: { x: 0.2, y: 0.8 } }))).toEqual([]);
+      expect(codes(cam('shake', { intensity: 2 }))).toEqual([]);
+    });
+    it('rejects zoom-punch scale 0.9 and 2, and focus.x 1.5 (Review Focus 3)', () => {
+      expect(codes(cam('zoom-punch', { scale: 0.9 }))).toContain('error:invalid-props');
+      expect(codes(cam('zoom-punch', { scale: 2 }))).toContain('error:invalid-props');
+      expect(codes(cam('zoom-punch', { focus: { x: 1.5, y: 0.5 } }))).toContain('error:invalid-props');
+    });
+    it('rejects shake intensity 5', () => {
+      expect(codes(cam('shake', { intensity: 5 }))).toContain('error:invalid-props');
+    });
+    it('rejects a camera type on the graphic track', () => {
+      expect(codes(cam('zoom-punch', {}, 'graphic'))).toContain('error:unknown-layer-type');
+    });
+  });
 });

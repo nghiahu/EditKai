@@ -16,7 +16,7 @@ export function LayerList({ plan, selectedId, onPick }: Props) {
       <div className="field">
         <select value={track} onChange={e => setTrack(e.target.value)}>
           <option value="all">Tất cả track</option>
-          {['caption', 'title', 'graphic', 'footage'].map(t => <option key={t} value={t}>{t}</option>)}
+          {['caption', 'title', 'graphic', 'footage', 'camera'].map(t => <option key={t} value={t}>{t}</option>)}
         </select>
       </div>
       {items.map(l => (

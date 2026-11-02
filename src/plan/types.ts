@@ -1,4 +1,4 @@
-export type Track = 'scene' | 'caption' | 'title' | 'graphic' | 'footage';
+export type Track = 'scene' | 'caption' | 'title' | 'graphic' | 'footage' | 'camera';
 export interface Word { t: string; s: number; e: number; hl: boolean }
 export interface Scene { id: string; start: number; end: number; role: 'talking-head' | 'explainer' | 'insert' }
 export interface Layer {

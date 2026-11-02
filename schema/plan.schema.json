@@ -39,7 +39,7 @@
         "additionalProperties": false,
         "properties": {
           "id": { "type": "string" },
-          "track": { "enum": ["scene", "caption", "title", "graphic", "footage"] },
+          "track": { "enum": ["scene", "caption", "title", "graphic", "footage", "camera"] },
           "type": { "type": "string" },
           "start": { "type": "number", "minimum": 0 },
           "end": { "type": "number", "minimum": 0 },

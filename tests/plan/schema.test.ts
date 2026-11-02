@@ -24,4 +24,8 @@ describe('validatePlanSchema', () => {
     const p = load(); delete p.meta.fps;
     expect(validatePlanSchema(p).ok).toBe(false);
   });
+  it('accepts the camera track', () => {
+    const p = load(); p.layers.push({ id: 'z', track: 'camera', type: 'zoom-punch', start: 1, end: 2 });
+    expect(validatePlanSchema(p).ok).toBe(true);
+  });
 });
