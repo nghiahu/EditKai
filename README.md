@@ -1,0 +1,35 @@
+# Edit Video Pro
+
+Skill dựng video talking-head tự động (phong cách `s1`, `m1`) kèm editor local để xem lại và sửa trước khi render. Thiết kế: `../../Tài liệu/2026-11-02-edit-video-pro-design.md`.
+
+## Cài đặt (một lần)
+
+Cần Node 22+, ffmpeg/ffprobe trong PATH, Python 3.11.
+
+```bash
+npm install
+python -m venv .venv
+.venv/Scripts/python -m pip install faster-whisper
+```
+
+Remotion tải trình duyệt headless ở lần render đầu tiên. Model chép lời mặc định là `small` (đặt `EDITKAI_WHISPER_MODEL=base` để chạy nhanh hơn, kém chính xác hơn).
+
+## Dùng
+
+Nhờ Claude Code (skill `edit-video-pro`, xem `SKILL.md`) hoặc Codex (xem `AGENTS.md`) chạy quy trình, hoặc tự chạy từng bước:
+
+```bash
+npx tsx src/cli.ts init projects/demo --source "video.mp4" --style m1 --aspect 9:16
+npx tsx src/cli.ts clean projects/demo
+# viết projects/demo/plan.json (AI làm bước này)
+npx tsx src/cli.ts validate projects/demo
+npx tsx src/cli.ts editor projects/demo     # http://127.0.0.1:5187
+npx tsx src/cli.ts render projects/demo
+```
+
+## Phát triển
+
+- `npm test` chạy toàn bộ test (các file test chạy lần lượt vì Remotion dùng chung cache webpack; toàn bộ mất khoảng 1 phút).
+- Thêm phong cách: tạo `styles/<tên>/theme.json` và `styles/<tên>/rules.md`; thêm component vào `remotion/components/` và đăng ký trong `remotion/registry.ts` nếu cần.
+- `scripts/analyze-demo.ts <video> <outDir>` lấy mốc cắt và khung hình dày từ một video demo để viết `rules.md`.
+- Chưa có: nhiều lớp video chồng nhau, chỉnh sóng âm/màu, sửa bằng ô chat, chỉnh vị trí chữ bằng kéo thả.
