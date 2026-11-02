@@ -3,6 +3,9 @@ import { AbsoluteFill, OffthreadVideo, interpolate, useCurrentFrame, useVideoCon
 import { Icon } from '../icons';
 import type { LayerComponent } from '../registry';
 
+/** Horizontal room kept free beside the label/title so the avatar circle (150 px + border) never covers them. */
+export const titleInset = (avatar?: boolean): number => (avatar ? 150 + 8 + 24 : 0);
+
 type Props = { label?: string; title?: string; body?: { kind: 'list' | 'card'; items: string[] }; avatar?: boolean };
 
 export const ExplainerScene: LayerComponent = ({ layer, theme, videoSrc }) => {
@@ -27,8 +30,8 @@ export const ExplainerScene: LayerComponent = ({ layer, theme, videoSrc }) => {
           {videoSrc ? <OffthreadVideo src={videoSrc} muted style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }} /> : null}
         </div>
       ) : null}
-      {p.label ? <div style={{ fontSize: 26, letterSpacing: 3, color: accent, fontWeight: 700 }}>{p.label}</div> : null}
-      <div style={{ fontSize: 76, fontWeight: 800, lineHeight: 1.05, marginTop: 14, color: m1 ? accent : theme.colors.white }}>{p.title}</div>
+      {p.label ? <div style={{ paddingRight: titleInset(p.avatar), fontSize: 26, letterSpacing: 3, color: accent, fontWeight: 700 }}>{p.label}</div> : null}
+      <div style={{ fontSize: 76, fontWeight: 800, lineHeight: 1.05, marginTop: 14, paddingRight: titleInset(p.avatar), color: m1 ? accent : theme.colors.white }}>{p.title}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 56 }}>
         {p.body?.kind === 'card' ? (
           <div style={{ ...row, lineHeight: 1.4 }}>{items.map((t, i) => <div key={i}>{t}</div>)}</div>
