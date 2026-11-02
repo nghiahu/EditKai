@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "editor": "tsx scripts/editor.ts"
+    "editor": "tsx scripts/editor.ts",
+    "cli": "tsx src/cli.ts"
   },
   "keywords": [],
   "author": "",
