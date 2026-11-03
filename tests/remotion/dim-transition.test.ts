@@ -100,3 +100,26 @@ describe('transition and dim in the composition', () => {
     expect(dimmed).toBeGreaterThan(40);
   }, 400000);
 });
+
+describe('baseDim for the insert types', () => {
+  const layer = (type: string, props: Record<string, unknown>, track = 'graphic'): Layer => ({ id: type, track: track as Layer['track'], type, start: 5, end: 9, props });
+  const dimmed = (l: Layer) => amount(baseDim([l], 7, motion));
+  it('footage with frame window dims even with fit cover', () => {
+    expect(dimmed(layer('footage', { src: 'a.mp4', frame: 'window' }, 'footage'))).toEqual({ b: 0.55, blur: 6 });
+  });
+  it('footage with frame phone and dim false does not dim', () => {
+    expect(dimmed(layer('footage', { src: 'a.mp4', frame: 'phone', dim: false }, 'footage'))).toBeUndefined();
+  });
+  it('a full-bleed cover footage with dim true dims', () => {
+    expect(dimmed(layer('footage', { src: 'a.mp4', fit: 'cover', dim: true }, 'footage'))).toEqual({ b: 0.55, blur: 6 });
+  });
+  it('a stat-card dims, a logo-badge and a prompt-box do not, and dim true makes a logo-badge dim', () => {
+    expect(dimmed(layer('stat-card', { rows: [{ value: '1' }] }))).toEqual({ b: 0.55, blur: 6 });
+    expect(dimmed(layer('logo-badge', {}))).toBeUndefined();
+    expect(dimmed(layer('prompt-box', { text: 'x' }))).toBeUndefined();
+    expect(dimmed(layer('logo-badge', { dim: true }))).toEqual({ b: 0.55, blur: 6 });
+  });
+  it('an overlay explainer with dim false does not dim', () => {
+    expect(dimmed(layer('explainer-scene', { title: 'X', mode: 'overlay', dim: false }))).toBeUndefined();
+  });
+});

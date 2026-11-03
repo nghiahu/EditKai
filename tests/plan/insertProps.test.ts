@@ -68,3 +68,34 @@ describe('footageProblem', () => {
     ]) expect(footageProblem(props), JSON.stringify(props)).toEqual(expect.any(String));
   });
 });
+
+import { insertDims } from '../../src/plan/insertProps';
+
+describe('insertDims', () => {
+  const dims = (type: string, props: Record<string, unknown> = {}) => insertDims({ type, props });
+  it('footage follows resolveFootageProps', () => {
+    expect(dims('footage')).toBe(false);
+    expect(dims('footage', { fit: 'contain' })).toBe(true);
+    expect(dims('footage', { frame: 'window' })).toBe(true);
+    expect(dims('footage', { frame: 'phone', dim: false })).toBe(false);
+    expect(dims('footage', { dim: true })).toBe(true);
+  });
+  it('explainer-scene dims in overlay mode unless dim says otherwise', () => {
+    expect(dims('explainer-scene')).toBe(false);
+    expect(dims('explainer-scene', { mode: 'overlay' })).toBe(true);
+    expect(dims('explainer-scene', { mode: 'overlay', dim: false })).toBe(false);
+    expect(dims('explainer-scene', { dim: true })).toBe(true);
+  });
+  it('stat-card dims by default, logo-badge and prompt-box do not, dim overrides', () => {
+    expect(dims('stat-card')).toBe(true);
+    expect(dims('stat-card', { dim: false })).toBe(false);
+    for (const t of ['logo-badge', 'prompt-box']) {
+      expect(dims(t)).toBe(false);
+      expect(dims(t, { dim: true })).toBe(true);
+    }
+  });
+  it('any other type does not dim', () => {
+    expect(insertDims({ type: 'chip-stack' })).toBe(false);
+    expect(insertDims({})).toBe(false);
+  });
+});

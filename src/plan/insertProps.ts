@@ -61,3 +61,20 @@ export function footageProblem(props: Record<string, unknown> | undefined): stri
   if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
   return undefined;
 }
+
+/**
+ * Whether a layer darkens and blurs the speaker while it is on screen. Defaults: footage cards (frame window/phone or fit contain),
+ * stat-card and overlay explainers dim; full-bleed footage, logo-badge and prompt-box do not. A boolean `props.dim` always wins.
+ */
+export function insertDims(layer: { type?: string; props?: Record<string, unknown> }): boolean {
+  const p = layer.props ?? {};
+  const explicit = typeof p.dim === 'boolean' ? p.dim : undefined;
+  switch (layer.type) {
+    case 'footage': return resolveFootageProps(p).dim;
+    case 'explainer-scene': return explicit ?? p.mode === 'overlay';
+    case 'stat-card': return explicit ?? true;
+    case 'logo-badge':
+    case 'prompt-box': return explicit ?? false;
+    default: return false;
+  }
+}
