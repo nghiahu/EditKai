@@ -195,4 +195,21 @@ describe('validatePlan', () => {
       expect(codes(plan())).toEqual([]);
     });
   });
+  describe('footage props', () => {
+    const withFootage = (props: Record<string, unknown>) => {
+      const p = plan();
+      p.layers.push({ id: 'f1', track: 'footage', type: 'footage', start: 5, end: 7, props });
+      return p;
+    };
+    it('accepts window, motion, from and a title', () => {
+      expect(codes(withFootage({ src: 'assets/a.mp4', frame: 'window', motion: 'zoom-in', from: 2, title: 'Editor' }))).toEqual([]);
+    });
+    it('rejects from -1 and a title on a phone frame', () => {
+      expect(codes(withFootage({ src: 'assets/a.mp4', from: -1 }))).toContain('error:invalid-props');
+      expect(codes(withFootage({ src: 'assets/a.mp4', frame: 'phone', title: 'T' }))).toContain('error:invalid-props');
+    });
+    it('an old footage layer (src and fit only) still has no issues', () => {
+      expect(codes(withFootage({ src: 'assets/a.mp4', fit: 'contain' }))).toEqual([]);
+    });
+  });
 });
