@@ -136,4 +136,58 @@ describe('validatePlan', () => {
       expect(codes(p)).toEqual([]);
     }
   });
+  describe('caption props', () => {
+    const withCaption = (props: Record<string, unknown> | undefined, words?: number | string[], start?: number, end?: number) => {
+      const p = plan();
+      const l = p.layers[0];
+      l.props = props;
+      if (words !== undefined) l.words = (Array.isArray(words) ? words : Array.from({ length: words }, (_, i) => `w${i}`)).map((t, i) => ({ t, s: 0.1 + i * 0.2, e: 0.2 + i * 0.2, hl: false }));
+      if (start !== undefined) l.start = start;
+      if (end !== undefined) l.end = end;
+      return p;
+    };
+    it('accepts every variant, position and emphasis', () => {
+      for (const variant of ['phrase', 'word', 'big']) expect(codes(withCaption({ variant }))).toEqual([]);
+      expect(codes(withCaption({ variant: 'label', label: 'nó mở thêm' }))).toEqual([]);
+      for (const position of ['top', 'center', 'bottom']) expect(codes(withCaption({ position }, undefined, 3.5, 4.2))).toEqual([]);
+      for (const emphasis of ['box', 'ink', 'underline']) expect(codes(withCaption({ emphasis }))).toEqual([]);
+      expect(codes(withCaption({ variant: 'big', handles: true }))).toEqual([]);
+    });
+    it('rejects variant "Phrase", position "middle" and emphasis 5', () => {
+      for (const props of [{ variant: 'Phrase' }, { position: 'middle' }, { emphasis: 5 }]) expect(codes(withCaption(props))).toContain('error:invalid-props');
+    });
+    it('the label variant needs a non-empty string label, and a label must be a string', () => {
+      for (const props of [{ variant: 'label' }, { variant: 'label', label: '' }, { variant: 'label', label: 3 }, { variant: 'phrase', label: 3 }])
+        expect(codes(withCaption(props))).toContain('error:invalid-props');
+      expect(codes(withCaption({ variant: 'label', label: 'x' }))).toEqual([]);
+    });
+    it('handles must be a boolean and true only with big', () => {
+      expect(codes(withCaption({ variant: 'big', handles: 'yes' }))).toContain('error:invalid-props');
+      expect(codes(withCaption({ variant: 'phrase', handles: true }))).toContain('error:invalid-props');
+      expect(codes(withCaption({ variant: 'phrase', handles: false }))).toEqual([]);
+    });
+    it('big with 4 words warns caption-too-long, phrase with 4 words does not', () => {
+      expect(codes(withCaption({ variant: 'big' }, 4))).toContain('warning:caption-too-long');
+      expect(codes(withCaption({ variant: 'big' }, 3))).not.toContain('warning:caption-too-long');
+      expect(codes(withCaption({ variant: 'phrase' }, 4))).not.toContain('warning:caption-too-long');
+    });
+    it('a 30-character word overflows in big but not in phrase (Review Focus 2)', () => {
+      const word = ['x'.repeat(30)];
+      expect(codes(withCaption({ variant: 'big' }, word))).toContain('warning:text-overflow');
+      expect(codes(withCaption({ variant: 'phrase' }, word))).not.toContain('warning:text-overflow');
+    });
+    it('a top caption overlapping the title card warns caption-overlaps-card; bottom and later ones do not', () => {
+      expect(codes(withCaption({ position: 'top' }))).toContain('warning:caption-overlaps-card');
+      expect(codes(withCaption({ position: 'bottom' }))).not.toContain('warning:caption-overlaps-card');
+      expect(codes(withCaption({ position: 'top' }, undefined, 3.5, 4.2))).not.toContain('warning:caption-overlaps-card');
+    });
+    it('a chip-stack also counts as a card', () => {
+      const p = withCaption({ position: 'top' }, undefined, 5, 6);
+      p.layers.push({ id: 'k', track: 'graphic', type: 'chip-stack', start: 5.5, end: 7, props: { chips: [{ label: 'a' }] } });
+      expect(codes(p)).toContain('warning:caption-overlaps-card');
+    });
+    it('an old caption without props still has no issues', () => {
+      expect(codes(plan())).toEqual([]);
+    });
+  });
 });

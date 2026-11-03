@@ -38,3 +38,18 @@ export function groupRuns(words: { hl: boolean }[]): { start: number; end: numbe
   });
   return runs;
 }
+
+const inSet = (v: unknown, allowed: readonly string[]) => typeof v === 'string' && allowed.includes(v);
+
+/** Why a caption layer's props are invalid (Vietnamese message for the validator), or undefined when they are fine. */
+export function captionPropsProblem(props: Record<string, unknown> | undefined): string | undefined {
+  if (!props) return undefined;
+  if (props.variant !== undefined && !inSet(props.variant, CAPTION_VARIANTS)) return `props.variant phải là một trong: ${CAPTION_VARIANTS.join(', ')}`;
+  if (props.position !== undefined && !inSet(props.position, CAPTION_POSITIONS)) return `props.position phải là một trong: ${CAPTION_POSITIONS.join(', ')}`;
+  if (props.emphasis !== undefined && !inSet(props.emphasis, CAPTION_EMPHASES)) return `props.emphasis phải là một trong: ${CAPTION_EMPHASES.join(', ')}`;
+  if (props.label !== undefined && typeof props.label !== 'string') return 'props.label phải là chuỗi';
+  if (props.variant === 'label' && !(typeof props.label === 'string' && props.label.length > 0)) return 'variant label cần props.label (chuỗi không rỗng)';
+  if (props.handles !== undefined && typeof props.handles !== 'boolean') return 'props.handles phải là true hoặc false';
+  if (props.handles === true && props.variant !== 'big') return 'props.handles chỉ dùng với variant big';
+  return undefined;
+}

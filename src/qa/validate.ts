@@ -1,6 +1,7 @@
 import type { Issue, Plan } from '../plan/types';
 import type { Theme } from '../style/theme';
 import { validatePlanSchema } from '../plan/schema';
+import { captionPropsProblem, resolveCaptionProps } from '../plan/captionProps';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
 
@@ -11,6 +12,7 @@ export interface Ctx {
 }
 
 const DRIFT_SEC = 0.3;
+const MAX_BIG_WORDS = 3;
 
 export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
   const schema = validatePlanSchema(plan);
@@ -26,6 +28,8 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     seen.add(l.id);
     if (l.track === 'caption') {
       if (l.type) err('unknown-layer-type', `${l.id}: layer caption không có type (đang là "${l.type}")`, l.id);
+      const bad = captionPropsProblem(l.props);
+      if (bad) err('invalid-props', `${l.id}: ${bad}`, l.id);
     } else {
       const spec = l.type ? LAYER_TYPES[l.type] : undefined;
       if (!spec || spec.track !== l.track) {
@@ -60,9 +64,15 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
   const usable = width * (1 - safeZone.left - safeZone.right);
   for (const l of plan.layers.filter(x => x.track === 'caption' && x.words)) {
     const words = l.words!;
-    if (words.length > maxCaptionWords) warn('caption-too-long', `${l.id}: ${words.length} từ, tối đa ${maxCaptionWords}`, l.id);
+    const resolved = resolveCaptionProps(l.props, theme); // bad values were reported above; here they just fall back
+    const big = resolved.variant === 'big';
+    const maxWords = big ? MAX_BIG_WORDS : maxCaptionWords;
+    if (words.length > maxWords) warn('caption-too-long', `${l.id}: ${words.length} từ, tối đa ${maxWords}`, l.id);
+    if (resolved.position === 'top' && plan.layers.some(c => (c.type === 'title-card' || c.type === 'chip-stack') && c.start < l.end && l.start < c.end))
+      warn('caption-overlaps-card', `${l.id}: caption ở trên trùng thời gian với một thẻ ở phía trên`, l.id);
     const chars = words.map(w => w.t).join(' ').length;
-    if (chars * theme.captionSize * 0.55 > usable) warn('text-overflow', `${l.id}: chữ có thể tràn khỏi vùng an toàn`, l.id);
+    const size = big ? theme.captionSize * theme.captionBigScale : theme.captionSize;
+    if (chars * size * 0.55 > usable) warn('text-overflow', `${l.id}: chữ có thể tràn khỏi vùng an toàn`, l.id);
     if (ctx.transcript) {
       const drift = words.find(w => !ctx.transcript!.words.some(
         tw => normalizeWord(tw.t) === normalizeWord(w.t) && Math.abs(tw.s - w.s) <= DRIFT_SEC));
