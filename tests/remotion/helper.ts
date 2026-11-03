@@ -66,3 +66,11 @@ export async function inkBox(png: string, width = 1080, height = 1920): Promise<
   if (x1 < 0) throw new Error('no content brighter than the background');
   return { w: x1 - x0 + 1, h: y1 - y0 + 1, x: x0, y: y0 };
 }
+
+/** Luma (0-255) of one pixel of a PNG, via a 1x1 crop written as PGM. */
+export async function lumaAt(png: string, x: number, y: number): Promise<number> {
+  const out = join(mkdtempSync(join(tmpdir(), 'editkai-luma-')), 'p.pgm');
+  await runFfmpeg(['-y', '-i', png, '-vf', `crop=1:1:${x}:${y},format=gray`, '-frames:v', '1', out]);
+  const b = readFileSync(out);
+  return b[b.length - 1];
+}
