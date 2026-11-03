@@ -23,3 +23,18 @@ describe('QA rounds', () => {
     expect(await runQa(dir)).toMatchObject({ round: 1 });
   });
 });
+
+import { checkProject } from '../../src/stages/qa';
+
+describe('checkProject with assets.json', () => {
+  it('a corrupt manifest becomes one asset-manifest-invalid warning instead of an exception (Review Focus 5)', async () => {
+    writeFileSync(join(dir, 'assets.json'), '{ not json');
+    const issues = await checkProject(dir);
+    expect(issues.filter(i => i.code === 'asset-manifest-invalid')).toHaveLength(1);
+    expect(issues.find(i => i.code === 'asset-manifest-invalid')?.severity).toBe('warning');
+  });
+  it('a manifest entry whose file is missing warns asset-missing', async () => {
+    writeFileSync(join(dir, 'assets.json'), JSON.stringify({ assets: [{ file: 'assets/gone.mp4', description: 'x', kind: 'screen' }] }));
+    expect((await checkProject(dir)).some(i => i.code === 'asset-missing')).toBe(true);
+  });
+});

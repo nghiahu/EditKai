@@ -212,4 +212,19 @@ describe('validatePlan', () => {
       expect(codes(withFootage({ src: 'assets/a.mp4', fit: 'contain' }))).toEqual([]);
     });
   });
+  describe('assets manifest', () => {
+    it('warns asset-missing for every manifest entry whose file does not exist', () => {
+      const present = new Set(['assets/here.mp4']);
+      const issues = validatePlan(plan(), theme, ctx({
+        fileExists: p => present.has(p),
+        assets: [{ file: 'assets/here.mp4' }, { file: 'assets/gone.mp4' }, { file: 'assets/gone2.mp4' }],
+      }));
+      expect(issues.filter(i => i.code === 'asset-missing').map(i => i.severity)).toEqual(['warning', 'warning']);
+      expect(issues.filter(i => i.code === 'asset-missing').map(i => i.message).join(' ')).toMatch(/gone\.mp4[\s\S]*gone2\.mp4/);
+    });
+    it('no warning when every listed file exists, or when there is no manifest', () => {
+      expect(codes(plan(), ctx({ assets: [{ file: 'assets/a.mp4' }] }))).toEqual([]);
+      expect(codes(plan(), ctx())).toEqual([]);
+    });
+  });
 });

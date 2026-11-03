@@ -9,6 +9,7 @@ export interface Ctx {
   durationSec: number;
   fileExists: (path: string) => boolean;
   transcript?: { words: { t: string; s: number; e: number }[] };
+  assets?: { file: string }[];
 }
 
 const DRIFT_SEC = 0.3;
@@ -21,6 +22,10 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
   const issues: Issue[] = [];
   const err = (code: string, message: string, layerId?: string) => issues.push({ severity: 'error', code, message, layerId });
   const warn = (code: string, message: string, layerId?: string) => issues.push({ severity: 'warning', code, message, layerId });
+
+  for (const a of ctx.assets ?? []) {
+    if (!ctx.fileExists(a.file)) warn('asset-missing', `assets.json liệt kê ${a.file} nhưng file không tồn tại`);
+  }
 
   const seen = new Set<string>();
   for (const l of plan.layers) {

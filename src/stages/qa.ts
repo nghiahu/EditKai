@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readManifest } from '../assets/manifest';
 import { probe } from '../media/probe';
 import type { Transcript } from '../media/transcribe';
 import type { Issue } from '../plan/types';
@@ -25,11 +26,18 @@ export async function checkProject(projectDir: string): Promise<Issue[]> {
   if (!existsSync(video)) throw new Error(`Không tìm thấy video nguồn ${plan.meta.source}`);
   const transcriptFile = join(projectDir, 'transcript.json');
   const transcript = existsSync(transcriptFile) ? (JSON.parse(readFileSync(transcriptFile, 'utf8')) as Transcript) : undefined;
-  return validatePlan(plan, theme, {
+  // a corrupt assets.json must not stop validation: it becomes one warning
+  let assets: { file: string }[] | undefined;
+  const extra: Issue[] = [];
+  try { assets = readManifest(projectDir).assets; }
+  catch (e) { extra.push({ severity: 'warning', code: 'asset-manifest-invalid', message: (e as Error).message }); }
+  const issues = validatePlan(plan, theme, {
     durationSec: (await probe(video)).durationSec,
     fileExists: p => existsSync(join(projectDir, p)),
     transcript,
+    assets,
   });
+  return [...issues, ...extra];
 }
 
 /** One QA round: validate plan.json, count the round, and tell the AI to stop after MAX_ROUNDS rounds with issues left. */
