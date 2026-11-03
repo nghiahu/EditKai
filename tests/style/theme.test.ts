@@ -39,4 +39,19 @@ describe('loadTheme', () => {
     expect(loadTheme(join(dir, 's')).motion).toEqual(DEFAULT_MOTION);
     rmSync(dir, { recursive: true, force: true });
   });
+  it('exposes the caption emphasis and big scale of each style', () => {
+    const [s1, m1] = [loadTheme('styles/s1'), loadTheme('styles/m1')];
+    expect([s1.captionEmphasis, s1.captionBigScale]).toEqual(['underline', 1.8]);
+    expect([m1.captionEmphasis, m1.captionBigScale]).toEqual(['box', 2.2]);
+  });
+  it('gives a theme.json without the caption fields box and 2', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'editkai-style-'));
+    const raw = JSON.parse(readFileSync('styles/s1/theme.json', 'utf8'));
+    delete raw.captionEmphasis; delete raw.captionBigScale;
+    mkdirSync(join(dir, 's'));
+    writeFileSync(join(dir, 's', 'theme.json'), JSON.stringify(raw));
+    const t = loadTheme(join(dir, 's'));
+    expect([t.captionEmphasis, t.captionBigScale]).toEqual(['box', 2]);
+    rmSync(dir, { recursive: true, force: true });
+  });
 });

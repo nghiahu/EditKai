@@ -32,5 +32,7 @@
     "exitFrames": 6,
     "wordLeadSec": 0.08,
     "punchScale": 1.12
-  }
+  },
+  "captionEmphasis": "box",
+  "captionBigScale": 2.2
 }

@@ -5,7 +5,7 @@ import { PlanVideo, durationOf, type PlanVideoProps } from './PlanVideo';
 
 const placeholder: PlanVideoProps = {
   plan: { version: 1, meta: { source: '', fps: 30, width: 1080, height: 1920, style: 's1' }, scenes: [], layers: [] },
-  theme: { name: 's1', colors: {}, fonts: { heading: 'sans-serif', body: 'sans-serif' }, captionSize: 40, radius: 24, animMs: 300, motion: DEFAULT_MOTION,
+  theme: { name: 's1', colors: {}, fonts: { heading: 'sans-serif', body: 'sans-serif' }, captionSize: 40, radius: 24, animMs: 300, motion: DEFAULT_MOTION, captionEmphasis: 'box', captionBigScale: 2,
     limits: { maxCaptionWords: 8, minSceneSec: 1.5, safeZone: { top: 0.08, bottom: 0.18, left: 0.06, right: 0.06 } } },
   videoSrc: '',
 };
