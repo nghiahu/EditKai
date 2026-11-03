@@ -70,9 +70,10 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     if (words.length > maxWords) warn('caption-too-long', `${l.id}: ${words.length} từ, tối đa ${maxWords}`, l.id);
     if (resolved.position === 'top' && plan.layers.some(c => (c.type === 'title-card' || c.type === 'chip-stack') && c.start < l.end && l.start < c.end))
       warn('caption-overlaps-card', `${l.id}: caption ở trên trùng thời gian với một thẻ ở phía trên`, l.id);
-    const chars = words.map(w => w.t).join(' ').length;
     const size = big ? theme.captionSize * theme.captionBigScale : theme.captionSize;
-    if (chars * size * 0.55 > usable) warn('text-overflow', `${l.id}: chữ có thể tràn khỏi vùng an toàn`, l.id);
+    // captions wrap at spaces, so only the longest unbreakable word can spill out of the safe zone
+    const longest = Math.max(0, ...words.map(w => w.t.length));
+    if (longest * size * 0.55 > usable) warn('text-overflow', `${l.id}: chữ có thể tràn khỏi vùng an toàn`, l.id);
     if (ctx.transcript) {
       const drift = words.find(w => !ctx.transcript!.words.some(
         tw => normalizeWord(tw.t) === normalizeWord(w.t) && Math.abs(tw.s - w.s) <= DRIFT_SEC));

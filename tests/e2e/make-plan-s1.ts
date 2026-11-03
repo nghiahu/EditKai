@@ -19,13 +19,23 @@ words.forEach((w, i) => {
 });
 if (cur.length) chunks.push(cur);
 
+// Caption variants per styles/s1/rules.md: mostly phrase at the bottom (underline emphasis is the theme default), label rarely for tool names, never big.
+const TERM_LABEL: Record<string, string> = { skill: 'bộ hướng dẫn', codex: 'công cụ', quota: 'giới hạn' };
+let labels = 0;
+const startOf = (c: typeof words) => Math.max(0, c[0].s - 0.05); // the phrase appears at the layer start, so start just before the first word
+
 const captions: Layer[] = chunks.map((c, i) => {
   let marked = 0;
-  const nextStart = chunks[i + 1]?.[0].s ?? Infinity;
+  const start = startOf(c);
+  const nextStart = chunks[i + 1] ? startOf(chunks[i + 1]) : Infinity;
+  const hlFlags = c.map(w => { const hl = marked < 2 && KEY.has(normalizeWord(w.t)); if (hl) marked++; return hl; });
+  const term = c.map(w => normalizeWord(w.t)).find(t => t in TERM_LABEL);
+  const label = term && c.length >= 4 && labels < 3 ? (labels++, TERM_LABEL[term]) : undefined;
   return {
-    id: `c${i + 1}`, track: 'caption', start: c[0].s,
-    end: Math.min(c[c.length - 1].e + 0.15, nextStart, duration),
-    words: c.map(w => { const hl = marked < 2 && KEY.has(normalizeWord(w.t)); if (hl) marked++; return { t: w.t, s: w.s, e: w.e, hl }; }),
+    id: `c${i + 1}`, track: 'caption', start,
+    end: Math.min(c[c.length - 1].e + 0.4, nextStart, duration),
+    ...(label ? { props: { variant: 'label', label } } : {}),
+    words: c.map((w, k) => ({ t: w.t, s: w.s, e: w.e, hl: hlFlags[k] })),
   };
 });
 

@@ -176,6 +176,11 @@ describe('validatePlan', () => {
       expect(codes(withCaption({ variant: 'big' }, word))).toContain('warning:text-overflow');
       expect(codes(withCaption({ variant: 'phrase' }, word))).not.toContain('warning:text-overflow');
     });
+    it('a long caption made of several short words wraps, so it does not warn text-overflow; only an unbreakable long word does', () => {
+      const words = ['x'.repeat(10), 'y'.repeat(10), 'z'.repeat(10)];
+      expect(codes(withCaption({ variant: 'big' }, words))).not.toContain('warning:text-overflow');
+      expect(codes(withCaption({ variant: 'phrase' }, ['w'.repeat(10), 'w'.repeat(10), 'w'.repeat(10), 'w'.repeat(10), 'w'.repeat(10), 'w'.repeat(10)]))).not.toContain('warning:text-overflow');
+    });
     it('a top caption overlapping the title card warns caption-overlaps-card; bottom and later ones do not', () => {
       expect(codes(withCaption({ position: 'top' }))).toContain('warning:caption-overlaps-card');
       expect(codes(withCaption({ position: 'bottom' }))).not.toContain('warning:caption-overlaps-card');

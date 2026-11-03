@@ -18,21 +18,42 @@ words.forEach((w, i) => {
   if (cur.length === 4 || /[.,?!]$/.test(w.t) || (next && next.s - w.e > 0.5)) { chunks.push(cur); cur = []; }
 });
 if (cur.length) chunks.push(cur);
+// make room for big captions: a 4-word chunk with a key word after its first word becomes 1 + 3 words, so the short claim can be big
+for (let i = 0, lastBigAt = -Infinity; i < chunks.length; i++) {
+  const c = chunks[i];
+  if (c.length === 4 && c[1].s - lastBigAt >= 8 && c.slice(1).some(w => KEY.has(normalizeWord(w.t)))) {
+    chunks.splice(i, 1, [c[0]], c.slice(1));
+    lastBigAt = c[1].s;
+    i++;
+  }
+}
+
+// Caption variants per styles/m1/rules.md: ~60% phrase at the bottom, ~20% label (tool names and terms), 10-15% big (key claims of <= 3 words, at most once per 8 s).
+const TERM_LABEL: Record<string, string> = {
+  claude: 'công cụ', editor: 'giao diện', token: 'chi phí', typography: 'chữ', graphic: 'đồ họa', motion: 'chuyển động',
+  tiktok: 'kênh', skill: 'bộ skill', render: 'xuất video', opus: 'mô hình',
+};
+let lastBig = -Infinity;
+let labels = 0;
+const startOf = (c: typeof words) => Math.max(0, c[0].s - 0.05); // the phrase appears at the layer start, so start just before the first word
 
 const captions: Layer[] = chunks.map((c, i) => {
   let marked = 0;
-  const start = c[0].s;
-  const nextStart = chunks[i + 1]?.[0].s ?? Infinity;
+  const start = startOf(c);
+  const nextStart = chunks[i + 1] ? startOf(chunks[i + 1]) : Infinity;
+  const hlFlags = c.map(w => { const hl = marked < 2 && KEY.has(normalizeWord(w.t)); if (hl) marked++; return hl; });
+  const term = c.map(w => normalizeWord(w.t)).find(t => t in TERM_LABEL);
+  let props: Record<string, unknown> | undefined;
+  if (c.length <= 3 && hlFlags.some(Boolean) && start - lastBig >= 8) { props = { variant: 'big' }; lastBig = start; }
+  else if (term && c.length >= 3 && labels < chunks.length * 0.2) { props = { variant: 'label', label: TERM_LABEL[term] }; labels++; }
   return {
     id: `c${i + 1}`, track: 'caption', start,
-    end: Math.min(c[c.length - 1].e + 0.15, nextStart, duration),
-    words: c.map(w => {
-      const hl = marked < 2 && KEY.has(normalizeWord(w.t));
-      if (hl) marked++;
-      return { t: w.t, s: w.s, e: w.e, hl };
-    }),
+    end: Math.min(c[c.length - 1].e + 0.4, nextStart, duration),
+    ...(props ? { props } : {}),
+    words: c.map((w, k) => ({ t: w.t, s: w.s, e: w.e, hl: hlFlags[k] })),
   };
 });
+console.log('caption variants:', captions.reduce((n: Record<string, number>, l) => { const v = String(l.props?.variant ?? 'phrase'); n[v] = (n[v] ?? 0) + 1; return n; }, {}));
 
 const title = (id: string, start: number, end: number, icon: string, t: string, sub?: string): Layer =>
   ({ id, track: 'title', type: 'title-card', start, end, props: { icon, title: t, ...(sub ? { sub } : {}) } });
