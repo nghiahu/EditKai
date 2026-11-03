@@ -243,4 +243,19 @@ describe('validatePlan', () => {
         expect(codes(withBadge(props))).toContain('error:invalid-props');
     });
   });
+  describe('prompt-box props', () => {
+    const withPrompt = (props: Record<string, unknown>) => {
+      const p = plan();
+      p.layers.push({ id: 'pb', track: 'graphic', type: 'prompt-box', start: 5, end: 7, props });
+      return p;
+    };
+    it('accepts a valid prompt box', () => {
+      expect(codes(withPrompt({ text: 'Sửa giúp mình' }))).toEqual([]);
+      expect(codes(withPrompt({ text: 'x', placeholder: 'y', strike: true, position: 'bottom', dim: true }))).toEqual([]);
+    });
+    it('rejects missing or empty text, strike "yes", position "left", placeholder 3, dim "yes"', () => {
+      for (const props of [{}, { text: '' }, { text: 3 }, { text: 'x', strike: 'yes' }, { text: 'x', position: 'left' }, { text: 'x', placeholder: 3 }, { text: 'x', dim: 'yes' }])
+        expect(codes(withPrompt(props))).toContain('error:invalid-props');
+    });
+  });
 });

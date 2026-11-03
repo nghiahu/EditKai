@@ -34,3 +34,31 @@ export function logoBadgeProblem(props: Record<string, unknown>): string | undef
   if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
   return undefined;
 }
+
+export interface ResolvedPromptBox {
+  text: string;
+  placeholder?: string;
+  strike: boolean;
+  position: InsertPosition;
+}
+
+/** Reads prompt-box props with safe defaults (position `top`); never throws. */
+export function resolvePromptBox(props: Record<string, unknown> | undefined): ResolvedPromptBox {
+  const p = props ?? {};
+  return {
+    text: isString(p.text) ? p.text : '',
+    ...(isString(p.placeholder) && p.placeholder.length > 0 ? { placeholder: p.placeholder } : {}),
+    strike: p.strike === true,
+    position: positionOr(p.position, 'top'),
+  };
+}
+
+/** Why prompt-box props are invalid (Vietnamese message for the validator), or undefined. `text` is required. */
+export function promptBoxProblem(props: Record<string, unknown>): string | undefined {
+  if (!isString(props.text) || props.text.length === 0) return 'thiếu props.text (chuỗi không rỗng)';
+  if (props.placeholder !== undefined && !isString(props.placeholder)) return 'props.placeholder phải là chuỗi';
+  if (props.strike !== undefined && typeof props.strike !== 'boolean') return 'props.strike phải là true hoặc false';
+  if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
+  if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
+  return undefined;
+}

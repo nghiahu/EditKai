@@ -9,6 +9,7 @@ import { Footage } from './components/Footage';
 import { Transition } from './components/Transition';
 import { Camera } from './components/Camera';
 import { LogoBadge } from './components/LogoBadge';
+import { PromptBox } from './components/PromptBox';
 
 export type LayerComponent = React.FC<{ layer: Layer; theme: Theme; videoSrc?: string; assetBase?: string }>;
 
@@ -21,6 +22,7 @@ export const registry: Record<string, LayerComponent> = {
   footage: Footage,
   transition: Transition,
   'logo-badge': LogoBadge,
+  'prompt-box': PromptBox,
   'zoom-punch': Camera,
   shake: Camera,
 };
