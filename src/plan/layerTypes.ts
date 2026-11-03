@@ -1,4 +1,5 @@
 import { footageProblem } from './insertProps';
+import { logoBadgeProblem } from './insertTypes';
 import type { Track } from './types';
 
 export interface LayerTypeSpec { track: Track; check: (props: Record<string, unknown>) => string | undefined }
@@ -41,6 +42,7 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
     track: 'camera',
     check: p => (p.intensity === undefined || (typeof p.intensity === 'number' && p.intensity >= 1 && p.intensity <= 3) ? undefined : 'props.intensity phải trong khoảng 1–3'),
   },
+  'logo-badge': { track: 'graphic', check: p => logoBadgeProblem(p) },
   footage: { track: 'footage', check: p => footageProblem(p) }, // props.src is reported by the missing-file rule
   transition: { track: 'graphic', check: p => (['zoom', 'blur', 'slide', 'push', 'flash'].includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur, slide, push hoặc flash') },
 };

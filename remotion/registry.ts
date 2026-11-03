@@ -8,6 +8,7 @@ import { ExplainerScene } from './components/ExplainerScene';
 import { Footage } from './components/Footage';
 import { Transition } from './components/Transition';
 import { Camera } from './components/Camera';
+import { LogoBadge } from './components/LogoBadge';
 
 export type LayerComponent = React.FC<{ layer: Layer; theme: Theme; videoSrc?: string; assetBase?: string }>;
 
@@ -19,6 +20,7 @@ export const registry: Record<string, LayerComponent> = {
   'explainer-scene': ExplainerScene,
   footage: Footage,
   transition: Transition,
+  'logo-badge': LogoBadge,
   'zoom-punch': Camera,
   shake: Camera,
 };

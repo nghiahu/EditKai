@@ -227,4 +227,20 @@ describe('validatePlan', () => {
       expect(codes(plan(), ctx())).toEqual([]);
     });
   });
+  describe('logo-badge props', () => {
+    const withBadge = (props: Record<string, unknown>) => {
+      const p = plan();
+      p.layers.push({ id: 'lb', track: 'graphic', type: 'logo-badge', start: 5, end: 7, props });
+      return p;
+    };
+    it('accepts a bare badge and a full one', () => {
+      expect(codes(withBadge({}))).toEqual([]);
+      expect(codes(withBadge({ icon: 'rocket', label: 'Claude Opus 5.5', sub: 'mô hình', position: 'top', dim: true }))).toEqual([]);
+      expect(codes(withBadge({ src: 'assets/logo.png' }))).toEqual([]);
+    });
+    it('rejects position "left", icon 3, src 3, label 5, sub 5 and dim "yes"', () => {
+      for (const props of [{ position: 'left' }, { icon: 3 }, { src: 3 }, { label: 5 }, { sub: 5 }, { dim: 'yes' }])
+        expect(codes(withBadge(props))).toContain('error:invalid-props');
+    });
+  });
 });
