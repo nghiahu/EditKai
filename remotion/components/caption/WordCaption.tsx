@@ -29,6 +29,7 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
           color: theme.colors.white,
         }}
       >
+        <div>{/* one flex child, so the words stay on one flowing line when the box is a centred flex column */}
         {(layer.words ?? []).map((w, i) => {
           const p = wordProgress(w, tSec, theme.motion);
           const active = tSec >= w.s && tSec <= Math.max(w.e, w.s + 0.12);
@@ -70,6 +71,7 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
             </span>
           );
         })}
+        </div>
       </div>
     </AbsoluteFill>
   );

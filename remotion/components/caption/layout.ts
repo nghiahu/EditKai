@@ -7,6 +7,6 @@ export function captionBox(position: CaptionPosition, theme: Theme, width: numbe
   const sz = theme.limits.safeZone;
   const base: React.CSSProperties = { position: 'absolute', left: width * sz.left, right: width * sz.right, textAlign: 'center' };
   if (position === 'top') return { ...base, top: height * sz.top };
-  if (position === 'center') return { ...base, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' };
+  if (position === 'center') return { ...base, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' };
   return { ...base, bottom: theme.name === 'm1' ? height * 0.28 : height * sz.bottom };
 }

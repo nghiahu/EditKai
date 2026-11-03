@@ -46,7 +46,7 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 
 | Track | `type` | `props` |
 |---|---|---|
-| `caption` | (không có) | dùng `words`: `{t, s, e, hl}` lấy từ `transcript.json`; `start` = `s` của từ đầu, `end` = `e` của từ cuối. Số từ ≤ `limits.maxCaptionWords`. |
+| `caption` | (không có) | dùng `words`: `{t, s, e, hl}` lấy từ `transcript.json`; `start` = `s` của từ đầu trừ 0.05 s (cụm `phrase` hiện ngay ở đầu layer), `end` = `e` của từ cuối cộng 0.4 s hoặc sát đầu caption kế tiếp (hiệu ứng thoát chạy sau lời nói, không đè lên từ cuối). Số từ ≤ `limits.maxCaptionWords`. |
 | `title` | `title-card` | `{ icon, title, sub? }` |
 | `graphic` | `chip-stack` | `{ chips: [{ icon, label, sub? }] }` |
 | `graphic` | `explainer-scene` | `{ label?, title, mode?: "full"\|"overlay", body?: { kind, items }, avatar?: boolean }`. `mode` `full` (mặc định) là nền kín; `overlay` là thẻ nằm trên người nói đã tối và mờ. `body.kind`: `list` và `card` (`items`: chuỗi), `waveform` (`items`: nhãn tùy chọn), `progress` (`items`: `{ label, value 0–100 }`), `phone` (`items`: các dòng tin nhắn) |

@@ -1,6 +1,6 @@
 import { bundle } from '@remotion/bundler';
 import { renderStill, selectComposition } from '@remotion/renderer';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -42,4 +42,27 @@ export async function filmstrip(plan: Plan, frames: number[], outPng: string): P
   const filter = pngs.map((_, i) => `[${i}:v]scale=240:-1[s${i}]`).join(';') + ';' + pngs.map((_, i) => `[s${i}]`).join('') + `hstack=inputs=${pngs.length}`;
   await runFfmpeg(['-y', ...pngs.flatMap(p => ['-i', p]), '-filter_complex', filter, outPng]);
   return outPng;
+}
+
+/**
+ * Bounding box of everything clearly brighter than the (dark) background in a still: {w, h, x, y}.
+ * Decodes the PNG to raw gray bytes with ffmpeg and scans them (ffmpeg's cropdetect gives inverted column ranges for these stills).
+ */
+export async function inkBox(png: string, width = 1080, height = 1920): Promise<{ w: number; h: number; x: number; y: number }> {
+  const raw = join(mkdtempSync(join(tmpdir(), 'editkai-ink-')), 'gray.raw');
+  await runFfmpeg(['-y', '-i', png, '-vf', `scale=${width}:${height}`, '-pix_fmt', 'gray', '-f', 'rawvideo', raw]);
+  const px = readFileSync(raw);
+  let x0 = width, x1 = -1, y0 = height, y1 = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (px[y * width + x] > 60) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) throw new Error('no content brighter than the background');
+  return { w: x1 - x0 + 1, h: y1 - y0 + 1, x: x0, y: y0 };
 }

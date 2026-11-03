@@ -54,3 +54,13 @@ describe('caption rules per style', () => {
     expect(r).toMatch(/không dùng `big`/);
   });
 });
+
+describe('SKILL.md timing advice for phrase captions', () => {
+  it('no longer tells the AI to start and end a caption exactly on its first and last word', () => {
+    expect(skill).not.toMatch(/`start` = `s` của từ đầu, `end` = `e` của từ cuối/);
+  });
+  it('says to start just before the first word and keep the caption up after the last', () => {
+    expect(skill).toMatch(/0\.05/);
+    expect(skill).toMatch(/0\.4/);
+  });
+});
