@@ -55,6 +55,18 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 | `camera` | `shake` | `{ intensity?: 1–3 }`, rung nhẹ cho khoảnh khắc mạnh |
 | `footage` | `footage` | `{ src: "assets/<file>", fit?: "cover"\|"contain" }` |
 
+**Caption (`props` của layer `caption`, đều tùy chọn).** Mặc định là `phrase`: cả cụm hiện cùng lúc từ đầu layer (mờ rõ dần và nảy nhẹ), các từ `hl: true` đứng liền nhau gộp thành một cụm nhấn, cả cụm mờ ra ở cuối layer. Thời điểm hiện do `start`/`end` của layer quyết định, nên `start` đặt ngay trước từ đầu tiên.
+
+| Trường | Giá trị | Mặc định | Ý nghĩa |
+|---|---|---|---|
+| `variant` | `phrase`, `word`, `big`, `label` | `phrase` | `phrase`: nguyên cụm một lần. `word`: từng từ nảy theo lúc nói. `big`: một từ hoặc cụm ≤ 3 từ cỡ lớn. `label`: dòng nhỏ phía trên cộng dòng chính |
+| `position` | `top`, `center`, `bottom` | `center` cho `big`, còn lại `bottom` | Vị trí dọc. `top` trùng thẻ tiêu đề hoặc chip sẽ bị cảnh báo `caption-overlaps-card` |
+| `emphasis` | `box`, `ink`, `underline` | theo phong cách (m1 `box`, s1 `underline`) | `box`: hộp vàng chữ đen quét qua cả cụm nhấn. `ink`: chữ màu nhấn. `underline`: màu nhấn và gạch chân |
+| `label` | chuỗi | không | Dòng nhỏ phía trên; **bắt buộc** (không rỗng) khi `variant` là `label` |
+| `handles` | `true`, `false` | `false` | Chỉ với `big`: bốn ô vuông ở góc khung chữ |
+
+Giá trị lạ làm validator báo `invalid-props`; số từ quá giới hạn (`big` ≤ 3, kiểu khác ≤ `limits.maxCaptionWords`) báo `caption-too-long`.
+
 Icon có sẵn (vẽ dần và nảy khi hiện): `video`, `skill`, `chat`, `clock`, `check`, `typography`, `graphic`, `motion`, `audio`, `sparkles`, `zap`, `scissors`, `wand`, `layers`, `play`, `mic`, `subtitles`, `image`, `bot`, `gauge`, `lightbulb`, `rocket`, `star` (tên lạ, kể cả `lottie:...`, sẽ rơi về `check`).
 
 Camera là một track riêng (`camera`): hai layer cùng track không chồng nhau. Video người nói tự tối và mờ khi có cảnh giải thích `overlay` hoặc footage `fit: "contain"`; không cần khai báo.

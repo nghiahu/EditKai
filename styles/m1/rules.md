@@ -18,7 +18,9 @@
 | Nhấn một từ hoặc ý quan trọng | `zoom-punch` (track `camera`) | Khoảng 6–10 s một lần, dài ≤ 1.5 s, đặt đúng lúc từ khóa được nói; `scale` mặc định 1.12. Có thể `shake` rất nhẹ ở khoảnh khắc mạnh nhất. |
 
 ## Phụ đề
-- Cỡ lớn (72), nằm giữa phần dưới, chữ trắng; từ khóa trên hộp vàng. Mỗi layer là một chunk, không chồng chunk.
+- Cỡ lớn (72), chữ trắng; từ khóa trên hộp vàng chữ đen (`emphasis` là `box`; các từ nhấn liền nhau gộp thành một hộp). Mỗi layer là một chunk, không chồng chunk.
+- Chia các dòng theo nội dung (giống demo): khoảng 60% là `phrase` ở dưới (câu thường, nguyên cụm một lần); khoảng 20% là `label` (tên công cụ hoặc thuật ngữ: dòng nhỏ phía trên cộng dòng chính, ví dụ `label` "nó mở thêm" và dòng chính "tool Editor trực tiếp"); khoảng 10–15% là `big` (ý chính ≤ 3 từ ở giữa khung, tối đa một lần mỗi 8 s, có thể thêm `handles: true`); mỗi dòng một cụm nhấn.
+- `position: "top"` chỉ dùng khi không có thẻ tiêu đề hoặc chip ở phía trên cùng lúc.
 - Khi có `footage` hoặc thẻ chiếm màn hình, caption vẫn giữ nhưng ngắn hơn (≤ 3 từ).
 
 ## Nhịp và giới hạn
