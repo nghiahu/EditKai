@@ -4,7 +4,7 @@ import { blankStill, planOf, stillOf } from './helper';
 import type { Layer } from '../../src/plan/types';
 
 const caption = (start = 0, end = 4, words?: Layer['words']): Layer => ({
-  id: 'c1', track: 'caption', start, end,
+  id: 'c1', track: 'caption', props: { variant: 'word' }, start, end,
   words: words ?? [{ t: 'Edit', s: 0.2, e: 0.5, hl: false }, { t: 'video', s: 0.6, e: 0.9, hl: true }, { t: 'nhanh', s: 1.0, e: 1.3, hl: false }],
 });
 const bytes = async (style: 's1' | 'm1', layer: Layer, frame: number) => readFileSync(await stillOf(planOf(style, [layer]), frame));

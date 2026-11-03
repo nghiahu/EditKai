@@ -4,7 +4,7 @@ import { planOf, stillOf } from './helper';
 import type { Layer } from '../../src/plan/types';
 
 const caption = (hl: boolean): Layer => ({
-  id: 'c1', track: 'caption', start: 0, end: 4,
+  id: 'c1', track: 'caption', props: { variant: 'word' }, start: 0, end: 4,
   words: [{ t: 'Edit', s: 0.1, e: 0.4, hl: false }, { t: 'video', s: 0.5, e: 0.9, hl }, { t: 'nhanh', s: 1, e: 1.4, hl: false }],
 });
 
