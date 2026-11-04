@@ -62,3 +62,46 @@ export function promptBoxProblem(props: Record<string, unknown>): string | undef
   if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
   return undefined;
 }
+
+export interface StatRow {
+  icon?: string;
+  value: string;
+  caption?: string;
+}
+
+export interface ResolvedStatCard {
+  title?: string;
+  rows: StatRow[];
+  position: InsertPosition;
+}
+
+const MAX_STAT_ROWS = 4;
+
+/** Reads stat-card props with safe defaults (position `center`, at most 4 rows, bad rows dropped); never throws. */
+export function resolveStatCard(props: Record<string, unknown> | undefined): ResolvedStatCard {
+  const p = props ?? {};
+  const rows: StatRow[] = [];
+  for (const raw of Array.isArray(p.rows) ? p.rows : []) {
+    if (rows.length === MAX_STAT_ROWS) break;
+    if (typeof raw !== 'object' || raw === null || !isString((raw as { value?: unknown }).value)) continue;
+    const r = raw as { icon?: unknown; value: string; caption?: unknown };
+    rows.push({ value: r.value, ...(isString(r.icon) && r.icon.length > 0 ? { icon: r.icon } : {}), ...(isString(r.caption) && r.caption.length > 0 ? { caption: r.caption } : {}) });
+  }
+  return { ...(isString(p.title) && p.title.length > 0 ? { title: p.title } : {}), rows, position: positionOr(p.position, 'center') };
+}
+
+/** Why stat-card props are invalid (Vietnamese message for the validator), or undefined. `rows` (1-4, each with a non-empty value) is required. */
+export function statCardProblem(props: Record<string, unknown>): string | undefined {
+  if (!Array.isArray(props.rows) || props.rows.length < 1 || props.rows.length > MAX_STAT_ROWS) return `props.rows phải là mảng từ 1 đến ${MAX_STAT_ROWS} hàng`;
+  for (const [i, row] of props.rows.entries()) {
+    if (typeof row !== 'object' || row === null) return `props.rows[${i}] phải là một đối tượng { value, icon?, caption? }`;
+    const r = row as { value?: unknown; icon?: unknown; caption?: unknown };
+    if (!isString(r.value) || r.value.length === 0) return `props.rows[${i}].value phải là chuỗi không rỗng`;
+    if (r.icon !== undefined && !isString(r.icon)) return `props.rows[${i}].icon phải là chuỗi`;
+    if (r.caption !== undefined && !isString(r.caption)) return `props.rows[${i}].caption phải là chuỗi`;
+  }
+  if (props.title !== undefined && !isString(props.title)) return 'props.title phải là chuỗi';
+  if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
+  if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
+  return undefined;
+}

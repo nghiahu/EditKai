@@ -258,4 +258,21 @@ describe('validatePlan', () => {
         expect(codes(withPrompt(props))).toContain('error:invalid-props');
     });
   });
+  describe('stat-card props', () => {
+    const withCard = (props: Record<string, unknown>) => {
+      const p = plan();
+      p.layers.push({ id: 'sc', track: 'graphic', type: 'stat-card', start: 5, end: 7, props });
+      return p;
+    };
+    const row = (value: unknown = '30 phút') => ({ icon: 'clock', value, caption: 'chờ Claude làm' });
+    it('accepts one to four rows with optional icon, caption and title', () => {
+      expect(codes(withCard({ rows: [row()] }))).toEqual([]);
+      expect(codes(withCard({ rows: [row(), row(), row(), row()], title: 'Thời gian', position: 'top', dim: false }))).toEqual([]);
+      expect(codes(withCard({ rows: [{ value: '5–10 phút' }] }))).toEqual([]);
+    });
+    it('rejects no rows, five rows, a row without value, an empty value, rows as a string, a title of 3', () => {
+      for (const props of [{}, { rows: [] }, { rows: [row(), row(), row(), row(), row()] }, { rows: [{ icon: 'clock' }] }, { rows: [row('')] }, { rows: [row(5)] }, { rows: 'abc' }, { rows: [row()], title: 3 }, { rows: [row()], position: 'left' }, { rows: [{ value: 'x', icon: 3 }] }, { rows: [{ value: 'x', caption: 3 }] }, { rows: [null] }])
+        expect(codes(withCard(props))).toContain('error:invalid-props');
+    });
+  });
 });
