@@ -64,3 +64,34 @@ describe('SKILL.md timing advice for phrase captions', () => {
     expect(skill).toMatch(/0\.4/);
   });
 });
+
+import { FOOTAGE_FRAMES, FOOTAGE_MOTIONS, INSERT_POSITIONS } from '../../src/plan/insertProps';
+import { ASSET_KINDS } from '../../src/assets/manifest';
+
+describe('SKILL.md documents the inserts', () => {
+  const quoted = (names: readonly string[]) => names.filter(n => !skill.includes('`' + n + '`'));
+  it('lists every footage frame, motion and asset kind in code quotes', () => {
+    expect(quoted(FOOTAGE_FRAMES)).toEqual([]);
+    expect(quoted(FOOTAGE_MOTIONS)).toEqual([]);
+    expect(quoted(ASSET_KINDS)).toEqual([]);
+    expect(quoted(INSERT_POSITIONS)).toEqual([]);
+  });
+  it('names the footage props from, focus, sound, title and dim', () => {
+    expect(quoted(['from', 'focus', 'sound', 'title', 'dim', 'frame', 'motion'])).toEqual([]);
+  });
+  it('explains assets.json and both assets commands', () => {
+    for (const s of ['assets.json', 'assets add', 'assets list', '--desc']) expect(skill).toContain(s);
+  });
+  it('says footage is muted unless sound is true', () => {
+    expect(skill).toMatch(/tắt tiếng/);
+  });
+});
+
+describe('rules of both styles cover the inserts', () => {
+  for (const style of ['s1', 'm1']) {
+    it(`${style} rules mention logo-badge, prompt-box, stat-card and the window frame`, () => {
+      const r = readFileSync(`styles/${style}/rules.md`, 'utf8');
+      for (const n of ['`logo-badge`', '`prompt-box`', '`stat-card`', '`window`']) expect(r).toContain(n);
+    });
+  }
+});

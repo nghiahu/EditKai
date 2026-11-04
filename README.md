@@ -20,6 +20,7 @@ Nhờ Claude Code (skill `edit-video-pro`, xem `SKILL.md`) hoặc Codex (xem `AG
 
 ```bash
 npx tsx src/cli.ts init projects/demo --source "video.mp4" --style m1 --aspect 9:16
+npx tsx src/cli.ts assets add projects/demo "man-hinh.mp4" --desc "quay man hinh editor"   # footage de chen (tuy chon)
 npx tsx src/cli.ts clean projects/demo
 # viết projects/demo/plan.json (AI làm bước này)
 npx tsx src/cli.ts validate projects/demo

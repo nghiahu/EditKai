@@ -17,6 +17,21 @@
 | Đổi ý lớn hoặc liệt kê quy trình | `explainer-scene` | Hiếm, ≤ 1–2 lần/video, 3–5 s, `avatar: false`. Dùng `mode: "overlay"` để thẻ nằm trên người nói đã tối và mờ (như cảnh chèn của bản gốc); `mode: "full"` cho cảnh nền đen. |
 | Nhấn một từ hoặc ý quan trọng | `zoom-punch` (track `camera`) | Khoảng 6–10 s một lần, dài ≤ 1.5 s, đặt đúng lúc từ khóa được nói; `scale` mặc định 1.12. Có thể `shake` rất nhẹ ở khoảnh khắc mạnh nhất. |
 
+## Chèn theo tình huống (đồ họa và footage)
+Chèn dày: khoảng một cảnh chèn mỗi 5–8 s. Chọn kiểu theo lời đang nói, đọc `assets.json` để biết có footage nào:
+
+| Lời đang nói | Chèn | Ghi chú |
+|---|---|---|
+| Tên công cụ, sản phẩm, mô hình ("Claude Opus 5.5") | `logo-badge` | `label` là tên, `icon` hoặc `src` là logo; 2–3 s; không làm tối người nói |
+| Trích một câu prompt hoặc yêu cầu ("sửa giúp mình chữ này to hơn") | `prompt-box` | `text` là câu trích; `strike: true` khi nói đừng làm như vậy nữa; 2–4 s |
+| Số liệu thời gian, chi phí ("mất hơn nửa tiếng") | `stat-card` | 1–3 hàng, giá trị ngắn; 3–5 s |
+| Nói về giao diện hoặc thao tác trên màn hình | `footage` với `frame` là `window`, `motion` là `zoom-in` | Dùng clip `screen` trong `assets.json`; `title` là tên ứng dụng; 3–6 s; `from` để cắt đúng đoạn |
+| Nói về một video ngắn hoặc nội dung dọc (TikTok) | `footage` với `frame` là `phone` | Dùng clip `phone`; 2–4 s; có thể `motion` là `pan-left` |
+| Ảnh chụp hoặc minh họa | `footage` với `frame` là `window` hoặc `fit` là `contain` | Dùng ảnh `photo` |
+| Không có footage nào khớp | `logo-badge`, `prompt-box`, `stat-card` hoặc `chip-stack` | Không tự bịa đường dẫn footage |
+
+Footage trong `window` hoặc `phone` làm tối và mờ người nói; vẫn giữ caption (≤ 3 từ, `position` là `bottom`).
+
 ## Phụ đề
 - Cỡ lớn (72), chữ trắng; từ khóa trên hộp vàng chữ đen (`emphasis` là `box`; các từ nhấn liền nhau gộp thành một hộp). Mỗi layer là một chunk, không chồng chunk.
 - Chia các dòng theo nội dung (giống demo): khoảng 60% là `phrase` ở dưới (câu thường, nguyên cụm một lần); khoảng 20% là `label` (tên công cụ hoặc thuật ngữ: dòng nhỏ phía trên cộng dòng chính, ví dụ `label` "nó mở thêm" và dòng chính "tool Editor trực tiếp"); khoảng 10–15% là `big` (ý chính ≤ 3 từ ở giữa khung, tối đa một lần mỗi 8 s, có thể thêm `handles: true`); mỗi dòng một cụm nhấn.

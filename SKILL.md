@@ -13,6 +13,8 @@ Bạn là **đạo diễn**: bạn phân tích video, viết `plan.json`, chạy
 
 1. **Intake.** Hỏi người dùng (nếu chưa nói): đường dẫn video gốc, khung hình (`9:16`, `16:9`, `1:1`), phong cách (`s1` hoặc `m1`). Rồi chạy:
    `npx tsx src/cli.ts init projects/<tên> --source "<video>" --style <s1|m1> --aspect <9:16|16:9|1:1>`
+   Hỏi thêm người dùng có **footage để chèn** không (quay màn hình, video dọc ngắn, ảnh chụp, logo). Mỗi file đăng ký một lần, kèm mô tả nội dung bằng lời của người dùng:
+   `npx tsx src/cli.ts assets add projects/<tên> "<file>" --desc "<mô tả>"` (xem mục `assets.json` bên dưới). Không có footage thì dùng `logo-badge`, `prompt-box`, `stat-card`.
 2. **Làm sạch.** `npx tsx src/cli.ts clean projects/<tên>`. Lệnh chép lời theo từng từ, cắt khoảng lặng và nói lặp, ghi `cleaned.mp4`, `transcript.json` (đã khớp thời gian với `cleaned.mp4`), `cuts.json`. Đọc `cuts.json` và `transcript.raw.json` để kiểm tra không cắt nhầm lời có nghĩa; nếu nghi ngờ thì báo người dùng. Lệnh chỉ tự cắt khoảng lặng và cụm ≥ 2 từ lặp lại; từ đơn lặp lại (ví dụ "từ từ", "dần dần" là từ láy tiếng Việt) **không** bị cắt và được liệt kê trong `repeats-suspect.json` để bạn xem là nói vấp thật hay từ láy. Nếu báo "Không tìm thấy lời nói trong video" thì dừng và nói rõ cho người dùng.
 3. **Phân tích.** Đọc `transcript.json`; chia thành các cảnh theo ý (`scenes`): `talking-head` (người nói), `explainer` (đoạn giải thích có đồ họa), `insert` (chèn footage). Cảnh không ngắn hơn `minSceneSec` của phong cách.
 4. **Dựng.** Đọc `styles/<style>/rules.md` và `styles/<style>/theme.json`, rồi ghi `projects/<tên>/plan.json` (định dạng bên dưới). Footage người dùng đưa copy vào `projects/<tên>/assets/` và tham chiếu dạng `assets/<file>`.
@@ -56,7 +58,28 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 | `graphic` | `transition` | `{ kind: "zoom"\|"blur"\|"slide"\|"push"\|"flash" }`, dài ≤ 0.6 s; hiệu ứng áp lên video nền (`flash` là nháy sáng), đặt ngay trước cảnh, không chồng layer `graphic` khác |
 | `camera` | `zoom-punch` | `{ scale?: số trong (1, 1.5], focus?: { x, y } trong 0–1 }`, 0.8–1.5 s; đẩy camera vào ở từ nhấn mạnh rồi trả lại (mặc định theo phong cách: s1 1.06, m1 1.12) |
 | `camera` | `shake` | `{ intensity?: 1–3 }`, rung nhẹ cho khoảnh khắc mạnh |
-| `footage` | `footage` | `{ src: "assets/<file>", fit?: "cover"\|"contain" }` |
+| `footage` | `footage` | `{ src: "assets/<file>", fit?, frame?, motion?, focus?, from?, title?, sound?, dim? }` (bảng props bên dưới) |
+
+**Footage (`props` của layer `footage`; chỉ `src` là bắt buộc).** Nội dung `assets/<file>` do `assets add` đưa vào. Footage mặc định **tắt tiếng** (tiếng của nó sẽ chồng lên giọng người nói); chỉ bật khi `sound` là `true`.
+
+| Trường | Giá trị | Mặc định | Ý nghĩa |
+|---|---|---|---|
+| `fit` | `cover`, `contain` | `cover` | `cover` phủ toàn khung; `contain` thành thẻ nổi bo góc |
+| `frame` | `none`, `window`, `phone` | `none` | `window`: thẻ cửa sổ ứng dụng nằm ngang có thanh tiêu đề (cho quay màn hình, ảnh chụp giao diện); `phone`: khung điện thoại (cho video dọc ngắn). Hai khung đều là thẻ nổi |
+| `motion` | `none`, `zoom-in`, `zoom-out`, `pan-left`, `pan-right` | `none` | Trôi chậm suốt layer (Ken Burns), áp lên nội dung chứ không lên khung |
+| `focus` | `{ x, y }` trong 0–1 | `{ x: 0.5, y: 0.5 }` | Điểm gốc của zoom |
+| `from` | số giây ≥ 0 | 0 | Bắt đầu phát clip từ giây thứ mấy (chỉ video) |
+| `title` | chuỗi | không | Chữ trên thanh cửa sổ; chỉ dùng với `frame` là `window` |
+| `sound` | `true`, `false` | `false` | `true` mới bật tiếng của footage |
+| `dim` | `true`, `false` | theo bảng dưới | Ghi đè việc làm tối và mờ người nói |
+
+**Làm tối nền người nói (`dim`).** Mặc định có làm tối và mờ (độ sáng 0.55, mờ 6 px) với: footage có `frame` là `window` hoặc `phone` hoặc `fit` là `contain`, `stat-card`, `explainer-scene` chế độ `overlay`. Mặc định **không** làm tối: footage `cover` toàn khung, `logo-badge`, `prompt-box`. Prop `dim` boolean trên layer thắng mặc định.
+
+**`assets.json` và lệnh `assets`.** Mỗi project có thư mục `assets/` và file `assets.json`: `{ "assets": [ { "file": "assets/editor.mp4", "description": "...", "kind": "screen|phone|photo|logo|other", "durationSec", "width", "height" } ] }`. `kind` là một trong `screen`, `phone`, `photo`, `logo`, `other` và tự suy ra: video ngang là `screen`, video dọc là `phone`, ảnh là `photo` (đổi bằng `--kind`, ví dụ `logo` cho logo hoặc `other` cho loại khác). Lệnh:
+- `npx tsx src/cli.ts assets add projects/<tên> "<file>" --desc "<mô tả>" [--kind screen|phone|photo|logo|other]`: sao chép vào `assets/`, đo kích thước và thời lượng, ghi `assets.json`. Cùng tên file nhưng khác nội dung thì báo lỗi, không ghi đè.
+- `npx tsx src/cli.ts assets list projects/<tên>`: in `assets.json`.
+
+Khi dựng, đọc `assets.json` và ghép **mô tả** với lời đang nói (ví dụ mô tả "quay màn hình editor" ghép với đoạn nói về giao diện editor); dùng `from` để cắt đúng đoạn cần trong clip dài. `validate` cảnh báo `asset-missing` khi một mục trong `assets.json` trỏ tới file không tồn tại.
 
 **Caption (`props` của layer `caption`, đều tùy chọn).** Mặc định là `phrase`: cả cụm hiện cùng lúc từ đầu layer (mờ rõ dần và nảy nhẹ), các từ `hl: true` đứng liền nhau gộp thành một cụm nhấn, cả cụm mờ ra ở cuối layer. Thời điểm hiện do `start`/`end` của layer quyết định, nên `start` đặt ngay trước từ đầu tiên.
 

@@ -20,6 +20,18 @@ Không dùng `chip-stack` ở s1.
 
 **Camera (track `camera`):** dùng ít, tối đa một `zoom-punch` mỗi 20 s (scale mặc định 1.06), không dùng `shake`. Cảnh giải thích mặc định là `full`; với các bước/quy trình ưu tiên `body.kind` `progress` (thanh tiến độ cho con số như quota) hoặc `waveform` (khi nói về giọng/lời nói) thay vì chỉ `list`.
 
+## Chèn theo tình huống (đồ họa và footage)
+Chèn thưa: khoảng một cảnh chèn mỗi 20–30 s, ngoài các thẻ tiêu đề và cảnh giải thích. Đọc `assets.json` để biết có footage nào:
+
+| Lời đang nói | Chèn | Ghi chú |
+|---|---|---|
+| Ảnh chụp hoặc quay màn hình giao diện | `footage` với `frame` là `window` | `title` là tên ứng dụng; `motion` là `zoom-in` chậm; 4–6 s |
+| Con số quan trọng (quota, chi phí, tỷ lệ) | `stat-card` | 1–2 hàng; hoặc `title-card` nếu chỉ một con số |
+| Giới thiệu một sản phẩm hoặc công cụ lần đầu | `logo-badge` | Hiếm, tối đa một lần mỗi 30 s; không làm tối người nói |
+| Trích một câu prompt | `prompt-box` | Rất hiếm; `strike` không dùng ở s1 |
+| Video dọc ngắn do người dùng đưa | `footage` với `frame` là `phone` | 3–5 s |
+| Không có footage nào khớp | `title-card` hoặc cảnh giải thích | Không tự bịa đường dẫn footage |
+
 ## Phụ đề
 - Một dòng nhỏ ở dưới (theme đã đặt cỡ 40 và vị trí), ≤ 8 từ mỗi layer `caption`, ngắt ở chỗ nghỉ tự nhiên của câu. Chủ yếu dùng `phrase` (nguyên dòng hiện một lần) với `emphasis` là `underline`; `label` hiếm (tên công cụ hoặc thuật ngữ); không dùng `big`.
 - Mỗi layer tô `hl: true` cho 1–2 từ khóa (danh từ chính, con số). Không tô cả câu.
