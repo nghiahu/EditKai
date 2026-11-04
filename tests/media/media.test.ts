@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -41,6 +41,23 @@ describe('media', () => {
     await cutVideo(clip, [{ start: 0, end: 1 }, { start: 2, end: 3 }], out);
     expect(existsSync(out)).toBe(true);
     expect(Math.abs((await probe(out)).durationSec - 2)).toBeLessThan(0.15);
+  });
+  it('cutVideo with fadeSec fades each kept part in and out, so a cut inside a tone has no click', async () => {
+    const peakOfStart = async (file: string) => {
+      const raw = join(dir, 'start.pcm');
+      await runFfmpeg(['-y', '-i', file, '-t', '0.02', '-f', 's16le', '-ac', '1', '-ar', '16000', raw]);
+      const b = readFileSync(raw);
+      let peak = 0;
+      for (let i = 0; i + 1 < b.length; i += 2) peak = Math.max(peak, Math.abs(b.readInt16LE(i)));
+      return peak;
+    };
+    const hard = join(dir, 'hard.mp4');
+    const soft = join(dir, 'soft.mp4');
+    const keep = [{ start: 0.2, end: 0.8 }, { start: 2.2, end: 2.8 }];
+    await cutVideo(clip, keep, hard);
+    await cutVideo(clip, keep, soft, { fadeSec: 0.1 });
+    expect(await peakOfStart(soft)).toBeLessThan((await peakOfStart(hard)) * 0.4);
+    expect(Math.abs((await probe(soft)).durationSec - 1.2)).toBeLessThan(0.15);
   });
   it('runFfmpeg rejects with ffmpeg stderr on failure', async () => {
     await expect(runFfmpeg(['-i', join(dir, 'missing.mp4'), '-f', 'null', '-'])).rejects.toThrow(/missing\.mp4/);
