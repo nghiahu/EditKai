@@ -147,3 +147,12 @@ describe('SKILL.md describes the automatic transitions on joins', () => {
     expect(skill).toContain('do `analyze` đặt');
   });
 });
+
+describe('SKILL.md describes the quick preview', () => {
+  it('names the command, its pictures and the sheet, and the low-resolution video', () => {
+    expect(missing(['src/cli.ts preview', 'sheet.png', 'preview.mp4', '--video', '--frames'])).toEqual([]);
+  });
+  it('no longer says there is no quick preview command', () => {
+    expect(skill).not.toContain('Chưa có lệnh dựng bản nháp nhanh');
+  });
+});

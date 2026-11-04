@@ -14,11 +14,12 @@ import { mergeRegenerated } from './plan/merge';
 import { readPlan } from './plan/io';
 import { validatePlanSchema } from './plan/schema';
 import { resetQaRounds, runQa } from './stages/qa';
+import { previewStage, previewVideo } from './stages/preview';
 import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | analyze | compose | validate | merge | assets | editor | render';
+const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | analyze | compose | validate | merge | assets | editor | preview | render';
 
 type Out = (s: string) => void;
 
@@ -77,7 +78,7 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   if (argv[0] === 'doctor') return runDoctorCommand(out);
   const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'analyze', 'compose', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'analyze', 'compose', 'validate', 'merge', 'editor', 'preview', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -155,6 +156,18 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       writeFileSync(join(projectDir, 'plan.json'), JSON.stringify(merged, null, 2));
       rmSync(nextFile);
       out(`Đã gộp: ${merged.layers.filter(l => l.locked).length} layer đã khóa được giữ, ${merged.layers.length} layer tổng cộng`);
+      return 0;
+    }
+    if (cmd === 'preview') {
+      if ('video' in flags) { // --video is a bare flag
+        const t0 = Date.now();
+        const file = await previewVideo(projectDir);
+        out(`Đã dựng bản xem nhanh (nhỏ, chất lượng thấp): ${file} trong ${Math.round((Date.now() - t0) / 1000)} giây`);
+        return 0;
+      }
+      const r = await previewStage(projectDir, flags.frames ? { max: Number(flags.frames) } : {}); // --frames N goes before --video
+      out(`Đã chụp ${r.frames.length} khung vào ${r.dir}; bảng tổng hợp: ${r.sheet}`);
+      r.frames.forEach(f => out(`  ${f.t.toFixed(1)} s  ${f.label}  ${f.file}`));
       return 0;
     }
     if (cmd === 'render') {
