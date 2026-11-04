@@ -6,11 +6,14 @@ const BAR = 44;
 /** App-window card: rounded, with a 44 px title bar (three dots and an optional centred title) above a 16:10 media area. */
 export const WindowFrame: React.FC<{ title?: string; children: React.ReactNode }> = ({ title, children }) => {
   const { width, height } = useVideoConfig();
+  // a landscape window (16:10 body) like the demo's app windows: 84% of the width, but never taller than 62% of the frame
+  // (so it fits a 16:9 frame too), centred horizontally, starting at 20% of the height unless that would push it past 90%
+  const w = Math.min(width * 0.84, (height * 0.62 - BAR) / 0.625);
+  const h = w * 0.625 + BAR;
   return (
     <div
       style={{
-        // a landscape window (16:10 body) in the upper part of the frame, like the demo's app windows
-        position: 'absolute', left: width * 0.08, width: width * 0.84, top: height * 0.2, height: width * 0.84 * 0.625 + BAR,
+        position: 'absolute', left: (width - w) / 2, width: w, top: Math.min(height * 0.2, height * 0.9 - h), height: h,
         borderRadius: 20, overflow: 'hidden', background: '#111', boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
         display: 'flex', flexDirection: 'column',
       }}

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { footageMotion } from '../../remotion/footageMotion';
 import { runFfmpeg } from '../../src/media/ffmpeg';
 import { serveDir } from '../../src/media/serve';
-import { blankStill, lumaAt, planOf, stillOf } from './helper';
+import { blankStill, inkBox, lumaAt, planOf, stillOf } from './helper';
 import type { Layer } from '../../src/plan/types';
 
 const scaleOf = (s: { transform?: string | number }) => Number(/scale\(([\d.]+)\)/.exec(String(s.transform))?.[1]);
@@ -83,6 +83,17 @@ describe('Footage frames in the composition', () => {
   }, T);
   it('the last frame equals a blank frame for window and phone', async () => {
     for (const frame of ['window', 'phone']) expect((await bytes({ frame }, 119)).equals(await blank(119))).toBe(true);
+  }, T);
+  it('a window card fits inside a 16:9 frame instead of running off the bottom', async () => {
+    const plan16x9 = { ...planOf('m1', [layer({ frame: 'window' })]), meta: { source: 'cleaned.mp4', fps: 30, width: 1920, height: 1080, style: 'm1' } };
+    const box = await inkBox(await stillOf(plan16x9, 40), 1920, 1080);
+    expect(box.y + box.h).toBeLessThan(1000);
+    expect(Math.abs(box.x + box.w / 2 - 960)).toBeLessThan(30);
+  }, T);
+  it('a 9:16 window keeps its place (84% wide, centred)', async () => {
+    const box = await inkBox(await stillOf(planOf('m1', [layer({ frame: 'window' })]), 40));
+    expect(box.w).toBeGreaterThan(1080 * 0.8);
+    expect(Math.abs(box.x + box.w / 2 - 540)).toBeLessThan(20);
   }, T);
   it('a one-frame layer with motion renders', async () => {
     const png = await stillOf(planOf('m1', [layer({ frame: 'window', motion: 'pan-left' }, 0, 0.03)]), 0);

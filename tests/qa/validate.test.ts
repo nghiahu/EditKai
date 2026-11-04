@@ -275,4 +275,34 @@ describe('validatePlan', () => {
         expect(codes(withCard(props))).toContain('error:invalid-props');
     });
   });
+  describe('footage overrun and prompt timing', () => {
+    const footageLayer = (from: number, start: number, end: number, src = 'assets/a.mp4'): Layer => ({ id: 'fo', track: 'footage', type: 'footage', start, end, props: { src, from } });
+    const withLayer = (l: Layer) => { const p = plan(); p.layers.push(l); return p; };
+    const known = [{ file: 'assets/a.mp4', durationSec: 10 }, { file: 'assets/img.png' }];
+    it('warns footage-overrun when from + layer length passes the clip duration in assets.json', () => {
+      expect(codes(withLayer(footageLayer(8, 5, 9)), ctx({ assets: known }))).toContain('warning:footage-overrun'); // 8 s + 4 s passes the 10 s clip
+      expect(codes(withLayer(footageLayer(9.5, 5, 6)), ctx({ assets: known }))).toContain('warning:footage-overrun');
+    });
+    it('no footage-overrun when it fits, when the asset has no duration, or when the clip is not listed', () => {
+      expect(codes(withLayer(footageLayer(2, 5, 7)), ctx({ assets: known }))).not.toContain('warning:footage-overrun');
+      expect(codes(withLayer(footageLayer(8, 5, 7)), ctx({ assets: known }))).not.toContain('warning:footage-overrun'); // 8 s + 2 s ends exactly at the clip end
+      expect(codes(withLayer(footageLayer(8, 5, 7, 'assets/img.png')), ctx({ assets: known }))).not.toContain('warning:footage-overrun');
+      expect(codes(withLayer(footageLayer(8, 5, 7, 'assets/other.mp4')), ctx({ assets: known }))).not.toContain('warning:footage-overrun');
+      expect(codes(withLayer(footageLayer(8, 5, 7)), ctx())).not.toContain('warning:footage-overrun');
+    });
+    const prompt = (text: string, strike: boolean, start: number, end: number): Layer => ({ id: 'pb', track: 'graphic', type: 'prompt-box', start, end, props: { text, strike } });
+    it('warns prompt-too-long when the text cannot be typed (and struck) within the layer', () => {
+      expect(codes(withLayer(prompt('x'.repeat(60), false, 5, 6.5)))).toContain('warning:prompt-too-long');
+      expect(codes(withLayer(prompt('x'.repeat(40), true, 5, 7)))).toContain('warning:prompt-too-long');
+    });
+    it('no prompt-too-long when typing and strike fit', () => {
+      expect(codes(withLayer(prompt('Sửa chữ này to hơn', true, 5, 6.7)))).not.toContain('warning:prompt-too-long');
+      expect(codes(withLayer(prompt('x'.repeat(28), false, 5, 6.5)))).not.toContain('warning:prompt-too-long');
+    });
+  });
+  describe('a hand-edited manifest never crashes validation', () => {
+    it('entries without a string file are skipped by validatePlan', () => {
+      expect(() => validatePlan(plan(), theme, ctx({ assets: [{} as any, { file: 3 } as any, null as any] }))).not.toThrow();
+    });
+  });
 });

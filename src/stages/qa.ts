@@ -27,10 +27,22 @@ export async function checkProject(projectDir: string): Promise<Issue[]> {
   const transcriptFile = join(projectDir, 'transcript.json');
   const transcript = existsSync(transcriptFile) ? (JSON.parse(readFileSync(transcriptFile, 'utf8')) as Transcript) : undefined;
   // a corrupt assets.json must not stop validation: it becomes one warning
-  let assets: { file: string }[] | undefined;
+  let assets: { file: string; durationSec?: number }[] | undefined;
   const extra: Issue[] = [];
-  try { assets = readManifest(projectDir).assets; }
-  catch (e) { extra.push({ severity: 'warning', code: 'asset-manifest-invalid', message: (e as Error).message }); }
+  try {
+    assets = [];
+    (readManifest(projectDir).assets as unknown[]).forEach((a, i) => {
+      const entry = a as { file?: unknown; durationSec?: unknown } | null;
+      if (entry && typeof entry === 'object' && typeof entry.file === 'string') {
+        assets!.push({ file: entry.file, ...(typeof entry.durationSec === 'number' ? { durationSec: entry.durationSec } : {}) });
+      } else {
+        extra.push({ severity: 'warning', code: 'asset-manifest-invalid', message: `assets.json: mục thứ ${i + 1} phải là đối tượng có "file" (chuỗi)` });
+      }
+    });
+  } catch (e) {
+    assets = undefined;
+    extra.push({ severity: 'warning', code: 'asset-manifest-invalid', message: (e as Error).message });
+  }
   const issues = validatePlan(plan, theme, {
     durationSec: (await probe(video)).durationSec,
     fileExists: p => existsSync(join(projectDir, p)),

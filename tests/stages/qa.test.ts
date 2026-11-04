@@ -38,3 +38,19 @@ describe('checkProject with assets.json', () => {
     expect((await checkProject(dir)).some(i => i.code === 'asset-missing')).toBe(true);
   });
 });
+
+describe('checkProject with a malformed but parseable assets.json', () => {
+  it('an entry that is not an object with a string file becomes a warning instead of a crash', async () => {
+    for (const manifest of [{ assets: ['assets/a.mp4'] }, { assets: [{}] }, { assets: [{ file: 3 }] }, { assets: [null] }]) {
+      writeFileSync(join(dir, 'assets.json'), JSON.stringify(manifest));
+      const issues = await checkProject(dir);
+      expect(issues.some(i => i.code === 'asset-manifest-invalid' && i.severity === 'warning')).toBe(true);
+    }
+  });
+  it('valid entries next to a broken one are still checked', async () => {
+    writeFileSync(join(dir, 'assets.json'), JSON.stringify({ assets: [{ file: 'assets/gone.mp4' }, 'oops'] }));
+    const codes = (await checkProject(dir)).map(i => i.code);
+    expect(codes).toContain('asset-missing');
+    expect(codes).toContain('asset-manifest-invalid');
+  });
+});

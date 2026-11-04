@@ -2,13 +2,11 @@ import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { resolvePromptBox } from '../../src/plan/insertTypes';
 import { clamp01, drawProgress, enterExit } from '../motion';
-import { typedText, typingDoneFrame } from '../promptTyping';
+import { STRIKE_DELAY_SEC, STRIKE_FRAMES, typedText, typingDoneFrame } from '../promptTyping';
 import type { LayerComponent } from '../registry';
 import { insertBox } from './insertLayout';
 
 const BLINK_FRAMES = 15;
-const STRIKE_DELAY_SEC = 0.4;
-const STRIKE_FRAMES = 12;
 
 /** Chat-style input pill: the text is typed with a blinking cursor; with `strike` a line is drawn through it afterwards. */
 export const PromptBox: LayerComponent = ({ layer, theme }) => {

@@ -1,7 +1,10 @@
 import type { Issue, Plan } from '../plan/types';
 import type { Theme } from '../style/theme';
 import { validatePlanSchema } from '../plan/schema';
+import { typingDoneFrame, strikeDoneFrame } from '../../remotion/promptTyping';
 import { captionPropsProblem, resolveCaptionProps } from '../plan/captionProps';
+import { resolveFootageProps } from '../plan/insertProps';
+import { resolvePromptBox } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
 
@@ -9,7 +12,7 @@ export interface Ctx {
   durationSec: number;
   fileExists: (path: string) => boolean;
   transcript?: { words: { t: string; s: number; e: number }[] };
-  assets?: { file: string }[];
+  assets?: { file: string; durationSec?: number }[];
 }
 
 const DRIFT_SEC = 0.3;
@@ -23,7 +26,8 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
   const err = (code: string, message: string, layerId?: string) => issues.push({ severity: 'error', code, message, layerId });
   const warn = (code: string, message: string, layerId?: string) => issues.push({ severity: 'warning', code, message, layerId });
 
-  for (const a of ctx.assets ?? []) {
+  const assets = (ctx.assets ?? []).filter(a => a && typeof a.file === 'string'); // a hand-edited manifest may hold junk
+  for (const a of assets) {
     if (!ctx.fileExists(a.file)) warn('asset-missing', `assets.json liệt kê ${a.file} nhưng file không tồn tại`);
   }
 
@@ -44,10 +48,20 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
         if (problem) err('invalid-props', `${l.id}: ${problem}`, l.id);
       }
     }
+    if (l.type === 'prompt-box') {
+      const pb = resolvePromptBox(l.props);
+      const need = pb.strike ? strikeDoneFrame(pb.text, plan.meta.fps) : typingDoneFrame(pb.text, plan.meta.fps);
+      if (pb.text.length > 0 && need > Math.round((l.end - l.start) * plan.meta.fps))
+        warn('prompt-too-long', `${l.id}: cần ${(need / plan.meta.fps).toFixed(1)}s để gõ${pb.strike ? ' và gạch' : ''} chữ nhưng layer chỉ dài ${(l.end - l.start).toFixed(1)}s`, l.id);
+    }
     if (l.end > ctx.durationSec) err('out-of-bounds', `${l.id} kết thúc ${l.end}s, video chỉ dài ${ctx.durationSec}s`, l.id);
     if (l.track === 'footage') {
       const src = l.props?.src;
       if (typeof src !== 'string' || !ctx.fileExists(src)) err('missing-file', `${l.id}: không tìm thấy footage ${String(src)}`, l.id);
+      // OffthreadVideo freezes on the last frame when the layer plays past the end of the clip
+      const clip = typeof src === 'string' ? assets.find(a => a.file === src)?.durationSec : undefined;
+      if (typeof clip === 'number' && resolveFootageProps(l.props).from + (l.end - l.start) > clip + 0.1)
+        warn('footage-overrun', `${l.id}: from + độ dài layer vượt quá clip ${src} (${clip}s), hình sẽ đứng ở khung cuối`, l.id);
     }
   }
   for (const s of plan.scenes) {
