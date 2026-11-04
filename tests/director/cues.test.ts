@@ -103,6 +103,10 @@ describe('emphasis, ui, shortvideo and question cues', () => {
     const c = of('Đừng làm vậy, rất tệ và cực kỳ chậm', 'emphasis');
     expect(c.map(x => [x.text, x.word])).toEqual([['Đừng', 0], ['rất', 3], ['cực kỳ', 6]]); // Đừng0 làm1 vậy,2 rất3 tệ4 và5 cực6 kỳ7
   });
+  it('emphasis keeps tone marks: dùng, đúng, qua and chứa are not đừng, quá or chưa (and NFD input still matches)', () => {
+    expect(of('Mình dùng Claude, đúng rồi, đi qua trang chủ', 'emphasis')).toEqual([]);
+    expect(of('Đừng làm vậy'.normalize('NFD'), 'emphasis').map(x => x.word)).toEqual([0]);
+  });
   it('ui and shortvideo match the first occurrence only', () => {
     expect(of('Giao diện editor và lại giao diện nữa', 'ui').map(c => c.word)).toEqual([0, 2]); // 'giao diện' at 0, 'editor' at 2, repeats ignored
     expect(of('video ngắn cho TikTok, rồi lại video ngắn', 'shortvideo').map(c => c.text)).toEqual(['video ngắn', 'TikTok,']);

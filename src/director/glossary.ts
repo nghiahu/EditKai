@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { normalizeLoose } from './text';
+import { normalizeLoose, normalizeTone } from './text';
 
 export interface Glossary {
   terms: { term: string; label?: string }[];
@@ -40,7 +40,8 @@ export function loadGlossary(projectDir: string): Glossary {
   return merged;
 }
 
-const NEGATIONS = new Set(['dung', 'khong', 'chua', 'dung co']);
+// tone marks matter: loosely, đừng would equal dùng and đúng
+const NEGATIONS = new Set(['đừng', 'không', 'chưa', 'đừng có', 'khong']);
 
 /** True for a negating emphasis word such as "đừng" or "không" (used to decide a prompt box gets a strike). */
-export const isNegation = (text: string): boolean => NEGATIONS.has(normalizeLoose(text));
+export const isNegation = (text: string): boolean => NEGATIONS.has(normalizeTone(text));

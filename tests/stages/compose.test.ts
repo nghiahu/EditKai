@@ -6,6 +6,8 @@ import { composeStage } from '../../src/stages/compose';
 import { checkProject } from '../../src/stages/qa';
 import { readStoryboard, writeStoryboard } from '../../src/director/storyboard';
 import type { Plan } from '../../src/plan/types';
+import { mergeRegenerated } from '../../src/plan/merge';
+import { readPlan } from '../../src/plan/io';
 import type { Asset } from '../../src/assets/manifest';
 import { writeCleanedVideo, writeProject } from '../helpers/project';
 
@@ -110,5 +112,53 @@ describe('composeStage', () => {
   it('report counts captions by variant', async () => {
     const r = await composeStage(await project());
     expect(r.report.captions.phrase + r.report.captions.label + r.report.captions.big).toBeGreaterThan(0);
+  }, 60000);
+  it('a storyboard with missing or wrongly typed fields composes and names the beats it repaired or skipped (Review finding 1)', async () => {
+    const dir = await project();
+    const raw = readStoryboard(dir) as any;
+    delete raw.beats[0].treatment;
+    raw.beats[1].treatment.caption = null;
+    raw.beats[1].treatment.inserts = null;
+    raw.beats[2] && (raw.beats[2].treatment.caption.hl = 3, raw.beats[2].treatment.caption.bigRange = 3, delete raw.beats[2].cues);
+    raw.beats.push({ id: 'bx', start: 0, end: 1, firstWord: null, lastWord: 2, treatment: {} });
+    writeStoryboard(dir, raw);
+    const r = await composeStage(dir);
+    const text = r.report.issues.join('\n');
+    for (const id of ['b1', 'b2', 'bx']) expect(text).toContain(id);
+    expect((await checkProject(dir)).filter(i => i.severity === 'error')).toEqual([]);
+  }, 60000);
+  it('a camera type in inserts, and footage without a real src, never reach plan.json (Review finding 2)', async () => {
+    const dir = await project();
+    const sb = readStoryboard(dir);
+    sb.beats[0].treatment.inserts = [
+      { type: 'zoom-punch', props: {}, at: 1, duration: 1 },
+      { type: 'footage', props: { src: 'assets/gõ-nhầm.mp4', frame: 'window' }, at: 3, duration: 2 },
+      { type: 'footage', props: { frame: 'window' }, at: 6, duration: 2 },
+    ];
+    sb.beats[0].treatment.camera = [{ type: 'zoom-punch', at: 1.2, duration: 1 }];
+    writeStoryboard(dir, sb);
+    const r = await composeStage(dir);
+    const plan = json(dir, 'plan.json') as Plan;
+    expect(plan.layers.filter(l => l.track === 'footage')).toEqual([]);
+    expect(plan.layers.filter(l => l.track === 'camera')).toHaveLength(1);
+    expect(r.report.inserts.dropped).toHaveLength(3);
+    expect((await checkProject(dir)).filter(i => i.severity === 'error')).toEqual([]);
+  }, 60000);
+  it('new layers get ids that do not clash with the existing plan, so merge keeps them (Review finding 4)', async () => {
+    const dir = await project();
+    const sb = readStoryboard(dir);
+    const logo = (at: number) => ({ type: 'logo-badge', props: { label: 'Claude' }, at, duration: 2 });
+    sb.beats[0].treatment.inserts = [logo(2), logo(8)];
+    writeStoryboard(dir, sb);
+    await composeStage(dir);
+    const plan = json(dir, 'plan.json') as Plan;
+    plan.layers.find(l => l.id === 'i2')!.locked = true; // the user locked the second badge
+    writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan, null, 2));
+    sb.beats[0].treatment.inserts = [logo(2), { type: 'stat-card', props: { rows: [{ value: '30 phút' }] }, at: 11, duration: 2 }];
+    writeStoryboard(dir, sb);
+    await composeStage(dir);
+    const merged = mergeRegenerated(readPlan(dir), json(dir, 'plan.next.json') as Plan);
+    expect(merged.layers.some(l => l.type === 'stat-card')).toBe(true);
+    expect(new Set(merged.layers.map(l => l.id)).size).toBe(merged.layers.length);
   }, 60000);
 });

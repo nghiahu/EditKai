@@ -53,6 +53,7 @@ describe('loadGlossary', () => {
 describe('isNegation', () => {
   it('matches đừng, không and chưa (any diacritics) but not rất', () => {
     for (const w of ['đừng', 'Đừng', 'không', 'khong', 'chưa', 'đừng có']) expect(isNegation(w)).toBe(true);
-    for (const w of ['rất', 'quá', '']) expect(isNegation(w)).toBe(false);
+    for (const w of ['rất', 'quá', '', 'dùng', 'đúng', 'dung']) expect(isNegation(w)).toBe(false);
+    expect(isNegation('Đừng,'.normalize('NFD'))).toBe(true);
   });
 });

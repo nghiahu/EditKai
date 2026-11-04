@@ -1,8 +1,8 @@
 import type { Glossary } from './glossary';
-import { normalizeLoose } from './text';
+import { normalizeLoose, normalizeTone } from './text';
 import type { BeatSpan, Cue, CueKind } from './types';
 
-interface Tok { idx: number; raw: string; norm: string }
+interface Tok { idx: number; raw: string; norm: string; tone: string }
 
 const NUMBER_UNITS = new Set(['phut', 'giay', 'gio', 'tieng', 'ngay', 'k', 'trieu', 'nghin', 'usd', 'vnd', 'dong', '$', '%']);
 const NUMBER = /^\d+([.,]\d+)?%?$/;
@@ -16,11 +16,11 @@ const stripEnds = (s: string) => s.replace(/^[^\p{L}\p{N}%$]+|[^\p{L}\p{N}%$]+$/
 const joinRaw = (toks: Tok[]) => toks.map(t => t.raw).join(' ');
 
 /** Start positions in `toks` where the normalised `pattern` tokens occur consecutively. */
-function findSeq(toks: Tok[], pattern: string[]): number[] {
+function findSeq(toks: Tok[], pattern: string[], key: 'norm' | 'tone' = 'norm'): number[] {
   const out: number[] = [];
   if (pattern.length === 0) return out;
   for (let i = 0; i + pattern.length <= toks.length; i++) {
-    if (pattern.every((p, k) => toks[i + k].norm === p)) out.push(i);
+    if (pattern.every((p, k) => toks[i + k][key] === p)) out.push(i);
   }
   return out;
 }
@@ -30,7 +30,7 @@ const patternOf = (entry: string) => entry.split(/\s+/).map(normalizeLoose).filt
 /** Content signals of one beat (see the spec table); `word` is always an index into the whole transcript. */
 export function detectCues(words: { t: string; s: number; e: number }[], span: BeatSpan, glossary: Glossary): Cue[] {
   const toks: Tok[] = [];
-  for (let i = span.firstWord; i <= span.lastWord && i < words.length; i++) toks.push({ idx: i, raw: words[i].t, norm: normalizeLoose(words[i].t) });
+  for (let i = span.firstWord; i <= span.lastWord && i < words.length; i++) toks.push({ idx: i, raw: words[i].t, norm: normalizeLoose(words[i].t), tone: normalizeTone(words[i].t) });
   const cues: Cue[] = [];
 
   // tool: glossary terms (one or more tokens), then Latin capitalised words that are not the first word of the beat
@@ -101,8 +101,9 @@ export function detectCues(words: { t: string; s: number; e: number }[], span: B
 
   // emphasis: every occurrence; ui and shortvideo: the first occurrence of each entry
   for (const entry of glossary.emphasis) {
-    const pat = patternOf(entry);
-    for (const at of findSeq(toks, pat)) cues.push({ kind: 'emphasis', text: joinRaw(toks.slice(at, at + pat.length)), word: toks[at].idx });
+    // emphasis keeps tone marks: dùng and đúng must not match đừng
+    const pat = entry.split(/\s+/).map(normalizeTone).filter(Boolean);
+    for (const at of findSeq(toks, pat, 'tone')) cues.push({ kind: 'emphasis', text: joinRaw(toks.slice(at, at + pat.length)), word: toks[at].idx });
   }
   for (const [kind, entries] of [['ui', glossary.ui], ['shortvideo', glossary.shortvideo]] as const) {
     for (const entry of entries) {

@@ -11,14 +11,14 @@ const KEEP_RATIO = 0.6;
 type Dropped = { type: string; at: number; reason: string };
 
 /** Insert layers (ids i1…) from every beat's inserts: invalid entries are dropped, clamped to the video, and same-track collisions moved or dropped. */
-export function insertLayers(sb: Storyboard, durationSec: number): { layers: Layer[]; moved: { id: string; from: number; to: number }[]; dropped: Dropped[] } {
+export function insertLayers(sb: Storyboard, durationSec: number, fileExists?: (path: string) => boolean): { layers: Layer[]; moved: { id: string; from: number; to: number }[]; dropped: Dropped[] } {
   const dropped: Dropped[] = [];
   const moved: { id: string; from: number; to: number }[] = [];
   const layers: Layer[] = [];
   const lastEnd: Record<string, number> = {};
 
   const specs = sb.beats.flatMap(b => b.treatment.inserts).filter(s => {
-    const p = insertProblem(s, durationSec);
+    const p = insertProblem(s, durationSec, fileExists);
     if (p) dropped.push({ type: String(s?.type), at: Number(s?.at), reason: `invalid: ${p}` });
     return !p;
   });

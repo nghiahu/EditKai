@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { Asset } from '../../src/assets/manifest';
 import { runFfmpeg } from '../../src/media/ffmpeg';
 
@@ -30,7 +30,13 @@ export function writeProject(
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'transcript.json'), JSON.stringify({ words: opts.words ?? makeWords(sentences, { pause: opts.pause }) }));
   writeFileSync(join(dir, 'project.json'), JSON.stringify({ style: opts.style ?? 'm1', aspect: '9:16', width: 1080, height: 1920, fps: 30 }));
-  if (opts.assets) writeFileSync(join(dir, 'assets.json'), JSON.stringify({ assets: opts.assets }));
+  if (opts.assets) {
+    writeFileSync(join(dir, 'assets.json'), JSON.stringify({ assets: opts.assets }));
+    for (const a of opts.assets) { // the listed files exist (empty stand-ins), like after assets add
+      mkdirSync(dirname(join(dir, a.file)), { recursive: true });
+      writeFileSync(join(dir, a.file), '');
+    }
+  }
   if (opts.glossary !== undefined) writeFileSync(join(dir, 'glossary.json'), JSON.stringify(opts.glossary));
   return dir;
 }

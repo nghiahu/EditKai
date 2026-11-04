@@ -41,6 +41,11 @@ describe('analyzeStage', () => {
     expect(sb.beats[0].cues.map(c => c.kind)).toContain('prompt');
     expect(sb.beats[0].treatment.inserts.map(i => i.type)).not.toContain('prompt-box');
   });
+  it('a prompt after "dùng" is not struck out (dùng is not đừng)', async () => {
+    const dir = writeProject(['Mình dùng Claude bảo nó tạo cho bạn một giao diện mới.']);
+    const box = (await analyzeStage(dir)).beats[0].treatment.inserts.find(i => i.type === 'prompt-box');
+    expect(box?.props).toMatchObject({ strike: false });
+  });
   it('an empty transcript gives a clear error, one word still works (Review Focus 1)', async () => {
     await expect(analyzeStage(writeProject([], { words: [] }))).rejects.toThrow('Không có lời để phân tích');
     const sb = await analyzeStage(writeProject(['Xin']));
