@@ -1,4 +1,4 @@
-import { lumaGrid } from '../media/luma';
+import { lumaGrid, type FrameView } from '../media/luma';
 import { resolveCaptionProps, type CaptionPosition } from '../plan/captionProps';
 import { captionRegion } from '../plan/captionRegion';
 import type { Layer } from '../plan/types';
@@ -24,10 +24,10 @@ function textWidthFraction(layer: Layer, theme: Theme, frameWidth: number, max: 
  * White text vanishes on such a picture. A white panel at the far side of the frame does not count against a short caption.
  * `frameWidth` is the width the font size is relative to (the plan's width). Layers that start after the video ends are left out.
  */
-export async function measureCaptionBright(video: string, captions: Layer[], theme: Theme, frameWidth = 1080): Promise<Map<string, number>> {
+export async function measureCaptionBright(video: string, captions: Layer[], theme: Theme, frameWidth = 1080, view?: FrameView): Promise<Map<string, number>> {
   const positions = new Set<CaptionPosition>(captions.map(l => resolveCaptionProps(l.props, theme).position));
   const grids = new Map<CaptionPosition, number[][]>();
-  for (const p of positions) grids.set(p, await lumaGrid(video, captionRegion(p, theme), COLS, FPS));
+  for (const p of positions) grids.set(p, await lumaGrid(video, captionRegion(p, theme), COLS, FPS, view));
   const out = new Map<string, number>();
   for (const l of captions) {
     const position = resolveCaptionProps(l.props, theme).position;

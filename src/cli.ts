@@ -4,6 +4,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ASSET_KINDS, addAsset, readManifest, type AssetKind } from './assets/manifest';
 import { runDoctor } from './doctor';
+import { probe } from './media/probe';
+import { aspectNote, framingProblem } from './plan/framing';
 import { analyzeStage } from './stages/analyze';
 import { cleanStage } from './stages/clean';
 import { condenseStage } from './stages/condense';
@@ -89,11 +91,20 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       if (!ASPECTS[aspect]) { err(`Khung hình không hợp lệ: ${aspect}. Chọn: ${Object.keys(ASPECTS).join(', ')}`); return 2; }
       if (!source || !existsSync(source)) { err('Thiếu --source <file video> hoặc không tìm thấy file'); return 2; }
       if (existsSync(join(projectDir, 'source.mp4'))) { err(`Project đã tồn tại: ${projectDir}`); return 2; }
+      // how the source sits in the frame: --fit cover|contain and --focus x,y (0-1); checked before anything is created
+      const framing: { fit?: string; focus?: { x: number; y: number } } = {};
+      if (flags.fit !== undefined) framing.fit = flags.fit;
+      if (flags.focus !== undefined) { const [x, y] = flags.focus.split(',').map(Number); framing.focus = { x, y }; }
+      const bad = framingProblem(framing);
+      if (bad) { err(`${bad.replace('meta.', '--')}${flags.focus !== undefined ? ' (dạng --focus 0.4,0.5)' : ''}`); return 2; }
       mkdirSync(projectDir, { recursive: true });
       copyFileSync(source, join(projectDir, 'source.mp4'));
       const [width, height] = ASPECTS[aspect];
-      writeFileSync(join(projectDir, 'project.json'), JSON.stringify({ style, aspect, width, height, fps: 30 }, null, 2));
+      writeFileSync(join(projectDir, 'project.json'), JSON.stringify({ style, aspect, width, height, fps: 30, ...framing }, null, 2));
       out(`Đã tạo project ${projectDir} (${style}, ${aspect}, ${width}x${height})`);
+      const src = await probe(source);
+      const note = aspectNote(src.width, src.height, width, height);
+      if (note) out(note);
       return 0;
     }
 

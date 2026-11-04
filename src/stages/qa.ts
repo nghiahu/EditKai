@@ -8,6 +8,7 @@ import type { Issue } from '../plan/types';
 import { validatePlan } from '../qa/validate';
 import { loadTheme } from '../style/theme';
 import { readPlan } from '../plan/io';
+import { resolveFraming } from '../plan/framing';
 import { measureCaptionBright } from './captionBright';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -49,7 +50,7 @@ export async function checkProject(projectDir: string): Promise<Issue[]> {
     fileExists: p => existsSync(join(projectDir, p)),
     transcript,
     assets,
-    captionBright: await measureCaptionBright(video, plan.layers.filter(l => l.track === 'caption'), theme, plan.meta.width),
+    captionBright: await measureCaptionBright(video, plan.layers.filter(l => l.track === 'caption'), theme, plan.meta.width, { width: plan.meta.width, height: plan.meta.height, ...resolveFraming(plan.meta) }),
   });
   return [...issues, ...extra];
 }

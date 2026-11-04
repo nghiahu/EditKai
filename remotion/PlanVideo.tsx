@@ -7,6 +7,12 @@ import { applyOverride } from './theme-utils';
 import { baseDim, mergeStyles } from './baseDim';
 import { cameraStyle } from './camera';
 import { transitionStyle } from './transition';
+import { framingStyle, resolveFraming } from '../src/plan/framing';
+
+const FILL = { width: '100%', height: '100%' } as const;
+const BLUR_FILL_PX = 40;
+const BLUR_FILL_LIGHT = 0.6;
+const BLUR_FILL_SCALE = 1.2;
 
 export type PlanVideoProps = { plan: Plan; theme: Theme; videoSrc: string; durationSec?: number; assetBase?: string };
 
@@ -16,10 +22,15 @@ export const durationOf = (p: PlanVideoProps): number =>
 export const PlanVideo: React.FC<PlanVideoProps> = ({ plan, theme, videoSrc, assetBase }) => {
   const { fps } = plan.meta;
   const frame = useCurrentFrame();
+  const framing = resolveFraming(plan.meta);
   return (
     <AbsoluteFill style={{ background: theme.colors.navy ?? theme.colors.black ?? '#000' }}>
       <AbsoluteFill style={mergeStyles(transitionStyle(plan.layers, frame / fps), cameraStyle(plan.layers, frame / fps, theme.motion), baseDim(plan.layers, frame / fps, theme.motion))}>
-        {videoSrc ? <OffthreadVideo src={videoSrc} /> : null}
+        {videoSrc ? (
+          <>
+            <OffthreadVideo src={videoSrc} style={{ ...FILL, ...framingStyle(framing) }} />
+          </>
+        ) : null}
       </AbsoluteFill>
       {plan.layers.map(l => {
         const Component = registry[l.type ?? l.track];

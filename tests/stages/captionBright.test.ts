@@ -43,3 +43,16 @@ describe('measureCaptionBright looks only where the text is', () => {
     expect(m.get('long')!).toBeGreaterThan(0.15);
   }, 60000);
 });
+
+describe('measureCaptionBright for a picture cropped into the frame', () => {
+  it('looks at the part of the picture that is in the frame: a white left half counts only when the focus is on it', async () => {
+    const dir = writeProject(['x']);
+    const clip = join(dir, 'cleaned.mp4');
+    const { runFfmpeg } = await import('../../src/media/ffmpeg');
+    await runFfmpeg(['-y', '-f', 'lavfi', '-i', 'color=c=black:s=640x360:r=30:d=2,drawbox=x=0:y=0:w=320:h=360:color=white:t=fill', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', clip]);
+    const layer: Layer = { id: 'c', track: 'caption', start: 0, end: 1, words: [{ t: 'abcdefgh', s: 0, e: 1, hl: false }] };
+    const view = (x: number) => ({ width: 1080, height: 1920, fit: 'cover' as const, focus: { x, y: 0.5 } });
+    expect((await measureCaptionBright(clip, [layer], theme, 1080, view(0))).get('c')!).toBeGreaterThan(0.8);
+    expect((await measureCaptionBright(clip, [layer], theme, 1080, view(1))).get('c')!).toBeLessThan(0.1);
+  }, 60000);
+});

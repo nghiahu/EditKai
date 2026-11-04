@@ -173,3 +173,25 @@ describe('composeStage', () => {
     expect((json(grey, 'plan.json') as Plan).layers.some(l => (l.props as { backdrop?: string } | undefined)?.backdrop === 'plate')).toBe(false);
   }, 120000);
 });
+
+describe('composeStage keeps the framing of project.json', () => {
+  it('fit and focus go into plan.meta; without them the meta has neither', async () => {
+    const plain = await project();
+    await composeStage(plain);
+    expect(json(plain, 'plan.json').meta).not.toHaveProperty('fit');
+    const framed = await project();
+    const pj = json(framed, 'project.json');
+    writeFileSync(join(framed, 'project.json'), JSON.stringify({ ...pj, fit: 'contain', focus: { x: 0.3, y: 0.6 } }));
+    await composeStage(framed);
+    expect(json(framed, 'plan.json').meta).toMatchObject({ fit: 'contain', focus: { x: 0.3, y: 0.6 } });
+    expect((await checkProject(framed)).filter(i => i.severity === 'error')).toEqual([]);
+  }, 120000);
+  it('a bad fit in project.json is left out of the plan instead of breaking it', async () => {
+    const dir = await project();
+    writeFileSync(join(dir, 'project.json'), JSON.stringify({ ...json(dir, 'project.json'), fit: 'stretch', focus: { x: 9, y: 9 } }));
+    const r = await composeStage(dir);
+    expect(json(dir, 'plan.json').meta).not.toHaveProperty('fit');
+    expect(json(dir, 'plan.json').meta).not.toHaveProperty('focus');
+    expect(r.report.issues.join('\n')).toMatch(/fit|focus/);
+  }, 120000);
+});

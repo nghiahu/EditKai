@@ -56,3 +56,30 @@ describe('lumaGrid', () => {
     }
   });
 });
+
+describe('lumaGrid with a view (the picture as it sits in a frame of another shape)', () => {
+  let wideFile: string;
+  beforeAll(async () => {
+    wideFile = join(dir, 'ngang trắng đen.mp4'); // wide: the left half white, the right half black
+    await runFfmpeg(['-y', '-f', 'lavfi', '-i', 'color=c=black:s=640x360:r=30:d=1,drawbox=x=0:y=0:w=320:h=360:color=white:t=fill', '-pix_fmt', 'yuv420p', wideFile]);
+  });
+  const whole = { x: 0, y: 0, w: 1, h: 1 };
+  it('cover crops around the focus: a left focus sees the white half, a right focus the black half', async () => {
+    const left = await lumaGrid(wideFile, whole, 4, 2, { width: 360, height: 640, fit: 'cover', focus: { x: 0, y: 0.5 } });
+    const right = await lumaGrid(wideFile, whole, 4, 2, { width: 360, height: 640, fit: 'cover', focus: { x: 1, y: 0.5 } });
+    expect(left[0].every(v => v > 0.85)).toBe(true);
+    expect(right[0].every(v => v < 0.15)).toBe(true);
+  });
+  it('contain keeps the whole picture: black bars above and below, the white half left and the black half right in the middle', async () => {
+    const top = await lumaGrid(wideFile, { x: 0, y: 0, w: 1, h: 0.1 }, 2, 2, { width: 360, height: 640, fit: 'contain', focus: { x: 0.5, y: 0.5 } });
+    expect(top[0].every(v => v < 0.15)).toBe(true);
+    const mid = await lumaGrid(wideFile, { x: 0, y: 0.45, w: 1, h: 0.1 }, 2, 2, { width: 360, height: 640, fit: 'contain', focus: { x: 0.5, y: 0.5 } });
+    expect(mid[0][0]).toBeGreaterThan(0.85);
+    expect(mid[0][1]).toBeLessThan(0.15);
+  });
+  it('without a view the region is taken from the picture as it is (the old behaviour)', async () => {
+    const g = await lumaGrid(wideFile, whole, 2, 2);
+    expect(g[0][0]).toBeGreaterThan(0.85);
+    expect(g[0][1]).toBeLessThan(0.15);
+  });
+});

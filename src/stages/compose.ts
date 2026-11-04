@@ -9,6 +9,7 @@ import { normalizeStoryboard, readStoryboard, validateStoryboard } from '../dire
 import { probe } from '../media/probe';
 import { readPlan } from '../plan/io';
 import type { Layer, Plan } from '../plan/types';
+import { framingProblem, resolveFraming } from '../plan/framing';
 import { BRIGHT_SHARE, validatePlan } from '../qa/validate';
 import { measureCaptionBright } from './captionBright';
 import { loadTheme } from '../style/theme';
@@ -51,7 +52,7 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   }
   const video = join(projectDir, 'cleaned.mp4');
   if (!existsSync(video)) throw new Error('Chưa có cleaned.mp4 — chạy clean trước');
-  const project = JSON.parse(readFileSync(join(projectDir, 'project.json'), 'utf8')) as { style: string; fps?: number; width: number; height: number };
+  const project = JSON.parse(readFileSync(join(projectDir, 'project.json'), 'utf8')) as { style: string; fps?: number; width: number; height: number; fit?: unknown; focus?: unknown };
   const theme = loadTheme(join(root, 'styles', project.style));
   const durationSec = (await probe(video)).durationSec;
 
@@ -64,7 +65,8 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   const ins = insertLayers(sb, durationSec, fileExists);
   const cam = cameraLayers(sb, theme.director, durationSec);
   // white text on a bright picture (a white panel in the source, say) disappears: those captions get a dark plate behind them
-  const bright = await measureCaptionBright(video, caps.layers, theme, project.width);
+  const framed = framingProblem({ fit: project.fit, focus: project.focus }) ? resolveFraming(undefined) : resolveFraming({ fit: project.fit, focus: project.focus } as Plan['meta']);
+  const bright = await measureCaptionBright(video, caps.layers, theme, project.width, { width: project.width, height: project.height, ...framed });
   for (const l of caps.layers) if ((bright.get(l.id) ?? 0) > BRIGHT_SHARE) l.props = { ...l.props, backdrop: 'plate' };
   let layers = [...caps.layers, ...ins.layers, ...cam.layers];
 
@@ -74,10 +76,19 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
     try { layers = freshIds(layers, new Set(readPlan(projectDir).layers.map(l => l.id))); } catch { /* unreadable plan.json: nothing to avoid */ }
   }
 
+  // how the source sits in the frame (project.json: fit, focus) goes into the plan; a value that does not make sense is left out and reported
+  const framingMeta: Pick<Plan['meta'], 'fit' | 'focus'> = {};
+  const framingBad = framingProblem({ fit: project.fit, focus: project.focus });
+  if (framingBad) issues.push(`project.json: ${framingBad.replace('meta.', '')}, bỏ qua (dùng cover, giữa khung)`);
+  else {
+    if (project.fit !== undefined) framingMeta.fit = project.fit as Plan['meta']['fit'];
+    if (project.focus !== undefined) framingMeta.focus = project.focus as Plan['meta']['focus'];
+  }
+
   const assets = readManifest(projectDir).assets.filter(a => typeof a.file === 'string');
   const build = (ls: typeof layers): Plan => ({
     version: 1,
-    meta: { source: 'cleaned.mp4', fps: project.fps ?? 30, width: project.width, height: project.height, style: project.style },
+    meta: { source: 'cleaned.mp4', fps: project.fps ?? 30, width: project.width, height: project.height, style: project.style, ...framingMeta },
     scenes: buildScenes(sb, ls, theme.limits, durationSec),
     layers: ls,
   });

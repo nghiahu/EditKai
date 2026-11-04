@@ -156,3 +156,9 @@ describe('SKILL.md describes the quick preview', () => {
     expect(skill).not.toContain('Chưa có lệnh dựng bản nháp nhanh');
   });
 });
+
+describe('SKILL.md describes how the source sits in the frame', () => {
+  it('names fit, focus, both fit values, the init options and the shape note', () => {
+    expect(missing(['meta.fit', 'meta.focus', '`cover`', '`contain`', '--fit', '--focus'])).toEqual([]);
+  });
+});
