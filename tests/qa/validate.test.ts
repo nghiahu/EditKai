@@ -223,7 +223,7 @@ describe('validatePlan', () => {
       expect(issues.filter(i => i.code === 'asset-missing').map(i => i.message).join(' ')).toMatch(/gone\.mp4[\s\S]*gone2\.mp4/);
     });
     it('no warning when every listed file exists, or when there is no manifest', () => {
-      expect(codes(plan(), ctx({ assets: [{ file: 'assets/a.mp4' }] }))).toEqual([]);
+      expect(codes(plan(), ctx({ assets: [{ file: 'assets/a.mp4' }] }))).toEqual(['warning:asset-unused']); // listed, exists, but nothing uses it
       expect(codes(plan(), ctx())).toEqual([]);
     });
   });
@@ -304,5 +304,59 @@ describe('validatePlan', () => {
     it('entries without a string file are skipped by validatePlan', () => {
       expect(() => validatePlan(plan(), theme, ctx({ assets: [{} as any, { file: 3 } as any, null as any] }))).not.toThrow();
     });
+  });
+});
+
+describe('density checks (director)', () => {
+  const m1 = loadTheme('styles/m1');
+  const badge = (id: string, start: number, end: number, props: Record<string, unknown> = { label: 'Claude' }, type = 'logo-badge', track: Layer['track'] = 'graphic'): Layer => ({ id, track, type, start, end, props });
+  const issues = (p: Plan, t = theme, c: Ctx = ctx()) => validatePlan(p, t, c);
+  const gaps = (p: Plan, t = theme, c: Ctx = ctx()) => issues(p, t, c).filter(i => i.code === 'insert-gap');
+  /** A plan whose only inserts are the given layers (the fixture title is removed). */
+  const only = (...layers: Layer[]): Plan => { const p = plan(); p.layers = [p.layers[0], ...layers]; return p; };
+
+  it('a gap longer than the style limit warns insert-gap and a shorter one does not (m1 10 s vs s1 35 s, same plan)', () => {
+    const p = only(badge('a', 0, 2), badge('b', 14, 16));
+    expect(gaps(p, m1, ctx({ durationSec: 16 })).map(i => i.severity)).toEqual(['warning']);
+    expect(gaps(p, theme, ctx({ durationSec: 16 }))).toEqual([]);
+  });
+  it('gaps are measured from the start and to the end of the video', () => {
+    const p = only(badge('a', 12, 13));
+    const g = gaps(p, m1, ctx({ durationSec: 25 }));
+    expect(g).toHaveLength(2);
+    expect(g[0].message).toMatch(/0/);
+    expect(g[1].message).toMatch(/25/);
+  });
+  it('transition layers do not count as inserts, and overlapping inserts merge', () => {
+    const t: Layer = { id: 't', track: 'graphic', type: 'transition', start: 5, end: 6, props: { kind: 'zoom' } };
+    const p = only(badge('a', 0, 1), t);
+    expect(gaps(p, m1, ctx({ durationSec: 13 }))).toHaveLength(1); // 1 s to 13 s; counting the transition would split it into 4 s and 7 s
+    const q = only(badge('a', 0, 6), badge('b', 5, 12, { src: 'x' }, 'footage', 'footage'));
+    expect(gaps(q, m1, ctx({ durationSec: 12 }))).toEqual([]);
+  });
+  it('only 5 gap warnings are listed, then a summary', () => {
+    const layers = Array.from({ length: 9 }, (_, i) => badge('g' + i, i * 20, i * 20 + 1));
+    const g = gaps(only(...layers), m1, ctx({ durationSec: 200 }));
+    expect(g).toHaveLength(6);
+    expect(g[5].message).toMatch(/khoảng trống khác/);
+  });
+  it('an unused asset warns and a used one does not (footage src and logo-badge src)', () => {
+    const p = only(badge('f', 0, 3, { src: 'assets/a.mp4' }, 'footage', 'footage'), badge('l', 4, 6, { label: 'x', src: 'assets/logo.png' }));
+    const assets = [{ file: 'assets/a.mp4' }, { file: 'assets/logo.png' }, { file: 'assets/b.mp4' }];
+    const w = issues(p, theme, ctx({ assets })).filter(i => i.code === 'asset-unused');
+    expect(w).toHaveLength(1);
+    expect(w[0].message).toContain('assets/b.mp4');
+  });
+  it('a top caption over a top prompt-box warns, over a bottom one does not', () => {
+    const mk = (position: string) => { const p = only(badge('p', 0, 3, { text: 'hi', position }, 'prompt-box')); p.layers[0].props = { position: 'top' }; return p; };
+    expect(issues(mk('top')).map(i => i.code)).toContain('caption-overlaps-card');
+    expect(issues(mk('bottom')).map(i => i.code)).not.toContain('caption-overlaps-card');
+  });
+  it('a centred big caption over a centred stat-card warns', () => {
+    const p = only(badge('s', 0, 3, { rows: [{ value: '1' }] }, 'stat-card'));
+    p.layers[0].props = { variant: 'big' };
+    expect(issues(p).map(i => i.code)).toContain('caption-overlaps-card');
+    p.layers[1].props = { rows: [{ value: '1' }], position: 'bottom' };
+    expect(issues(p).map(i => i.code)).not.toContain('caption-overlaps-card');
   });
 });

@@ -1,10 +1,10 @@
-import type { Issue, Plan } from '../plan/types';
+import type { Issue, Layer, Plan } from '../plan/types';
 import type { Theme } from '../style/theme';
 import { validatePlanSchema } from '../plan/schema';
 import { typingDoneFrame, strikeDoneFrame } from '../../remotion/promptTyping';
 import { captionPropsProblem, resolveCaptionProps } from '../plan/captionProps';
 import { resolveFootageProps } from '../plan/insertProps';
-import { resolvePromptBox } from '../plan/insertTypes';
+import { resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
 
@@ -17,6 +17,17 @@ export interface Ctx {
 
 const DRIFT_SEC = 0.3;
 const MAX_BIG_WORDS = 3;
+const MAX_GAP_WARNINGS = 5;
+const INSERT_TRACKS = ['title', 'graphic', 'footage'];
+
+/** Where an insert layer sits on screen, for the caption overlap check. */
+function insertPosition(l: Layer): string | undefined {
+  if (l.type === 'title-card' || l.type === 'chip-stack') return 'top';
+  if (l.type === 'prompt-box') return resolvePromptBox(l.props).position;
+  if (l.type === 'stat-card') return resolveStatCard(l.props).position;
+  if (l.type === 'logo-badge') return resolveLogoBadge(l.props).position;
+  return undefined;
+}
 
 export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
   const schema = validatePlanSchema(plan);
@@ -87,8 +98,10 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     const big = resolved.variant === 'big';
     const maxWords = big ? MAX_BIG_WORDS : maxCaptionWords;
     if (words.length > maxWords) warn('caption-too-long', `${l.id}: ${words.length} từ, tối đa ${maxWords}`, l.id);
-    if (resolved.position === 'top' && plan.layers.some(c => (c.type === 'title-card' || c.type === 'chip-stack') && c.start < l.end && l.start < c.end))
-      warn('caption-overlaps-card', `${l.id}: caption ở trên trùng thời gian với một thẻ ở phía trên`, l.id);
+    const overlapsAt = (where: string, types?: string[]) =>
+      plan.layers.some(c => c.track !== 'caption' && (!types || (c.type && types.includes(c.type))) && insertPosition(c) === where && c.start < l.end && l.start < c.end);
+    if ((resolved.position === 'top' && overlapsAt('top')) || (big && resolved.position === 'center' && overlapsAt('center', ['stat-card', 'logo-badge'])))
+      warn('caption-overlaps-card', `${l.id}: caption trùng thời gian với một thẻ ở cùng vị trí`, l.id);
     const size = big ? theme.captionSize * theme.captionBigScale : theme.captionSize;
     // captions wrap at spaces, so only the longest unbreakable word can spill out of the safe zone
     const longest = Math.max(0, ...words.map(w => w.t.length));
@@ -99,5 +112,22 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
       if (drift) warn('caption-sync-drift', `${l.id}: từ "${drift.t}" lệch lời đã chép`, l.id);
     }
   }
+
+  // density: stretches of video with nothing but the talking head
+  const spans = plan.layers.filter(l => INSERT_TRACKS.includes(l.track) && l.type !== 'transition').map(l => [l.start, l.end] as const).sort((a, b) => a[0] - b[0]);
+  const gapList: [number, number][] = [];
+  let cursor = 0;
+  for (const [s, e] of spans) {
+    if (s > cursor) gapList.push([cursor, s]);
+    cursor = Math.max(cursor, e);
+  }
+  if (ctx.durationSec > cursor) gapList.push([cursor, ctx.durationSec]);
+  const tooLong = gapList.filter(([a, b]) => b - a > theme.director.insertGapMaxSec);
+  for (const [a, b] of tooLong.slice(0, MAX_GAP_WARNINGS))
+    warn('insert-gap', `không có insert nào từ ${a.toFixed(1)}s đến ${b.toFixed(1)}s (${(b - a).toFixed(1)}s, tối đa ${theme.director.insertGapMaxSec}s)`);
+  if (tooLong.length > MAX_GAP_WARNINGS) warn('insert-gap', `và ${tooLong.length - MAX_GAP_WARNINGS} khoảng trống khác`);
+
+  const usedSrc = new Set(plan.layers.filter(l => l.type === 'footage' || l.type === 'logo-badge').map(l => l.props?.src));
+  for (const a of assets) if (!usedSrc.has(a.file)) warn('asset-unused', `${a.file} có trong assets.json nhưng chưa layer nào dùng`);
   return issues;
 }
