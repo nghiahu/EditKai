@@ -72,7 +72,9 @@ export function insertDims(layer: { type?: string; props?: Record<string, unknow
   switch (layer.type) {
     case 'footage': return resolveFootageProps(p).dim;
     case 'explainer-scene': return explicit ?? p.mode === 'overlay';
-    case 'stat-card': return explicit ?? true;
+    case 'stat-card':
+    case 'quote-card':
+    case 'counter': return explicit ?? true;
     case 'logo-badge':
     case 'prompt-box': return explicit ?? false;
     default: return false;

@@ -130,11 +130,24 @@ describe('validatePlan', () => {
     });
   });
   it('accepts every transition kind, including push and flash', () => {
-    for (const kind of ['zoom', 'blur', 'slide', 'push', 'flash']) {
+    for (const kind of ['zoom', 'blur', 'slide', 'push', 'flash', 'whip', 'dip']) {
       const p = plan();
       p.layers.push({ id: 'tr', track: 'graphic', type: 'transition', start: 6, end: 6.5, props: { kind } });
       expect(codes(p)).toEqual([]);
     }
+  });
+  describe('quote-card and counter props', () => {
+    const add = (type: string, props: Record<string, unknown>) => { const p = plan(); p.layers.push({ id: 'n1', track: 'graphic', type, start: 5, end: 7, props }); return p; };
+    it('good props give no issues', () => {
+      expect(codes(add('quote-card', { quote: 'Một câu nói', author: 'Ai đó' }))).toEqual([]);
+      expect(codes(add('counter', { to: 1250, suffix: ' triệu', label: 'lượt xem' }))).toEqual([]);
+    });
+    it('a missing quote or a missing target is an invalid-props error naming the layer', () => {
+      const q = validatePlan(add('quote-card', {}), theme, ctx()).filter(i => i.code === 'invalid-props');
+      expect(q).toHaveLength(1);
+      expect(q[0].layerId).toBe('n1');
+      expect(codes(add('counter', { suffix: '%' }))).toContain('error:invalid-props');
+    });
   });
   describe('caption props', () => {
     const withCaption = (props: Record<string, unknown> | undefined, words?: number | string[], start?: number, end?: number) => {

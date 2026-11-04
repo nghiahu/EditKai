@@ -105,3 +105,68 @@ export function statCardProblem(props: Record<string, unknown>): string | undefi
   if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
   return undefined;
 }
+
+const MAX_QUOTE_CHARS = 240;
+const MAX_DECIMALS = 3;
+
+export interface ResolvedQuoteCard {
+  quote: string;
+  author?: string;
+  position: InsertPosition;
+}
+
+/** Reads quote-card props with safe defaults (position `center`, empty quote when missing); never throws. */
+export function resolveQuoteCard(props: Record<string, unknown> | undefined): ResolvedQuoteCard {
+  const p = props ?? {};
+  return { quote: isString(p.quote) ? p.quote : '', ...(isString(p.author) && p.author.length > 0 ? { author: p.author } : {}), position: positionOr(p.position, 'center') };
+}
+
+/** Why quote-card props are invalid (Vietnamese message for the validator), or undefined. `quote` (non-empty, at most 240 characters) is required. */
+export function quoteCardProblem(props: Record<string, unknown>): string | undefined {
+  if (!isString(props.quote) || props.quote.length === 0) return 'props.quote phải là chuỗi không rỗng';
+  if (props.quote.length > MAX_QUOTE_CHARS) return `props.quote dài tối đa ${MAX_QUOTE_CHARS} ký tự`;
+  if (props.author !== undefined && !isString(props.author)) return 'props.author phải là chuỗi';
+  if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
+  if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
+  return undefined;
+}
+
+export interface ResolvedCounter {
+  from: number;
+  to: number;
+  decimals: number;
+  prefix?: string;
+  suffix?: string;
+  label?: string;
+  position: InsertPosition;
+}
+
+const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** Reads counter props with safe defaults (from 0, no decimals, position `center`; a bad number falls back); never throws. */
+export function resolveCounter(props: Record<string, unknown> | undefined): ResolvedCounter {
+  const p = props ?? {};
+  const decimals = typeof p.decimals === 'number' && Number.isInteger(p.decimals) && p.decimals >= 0 && p.decimals <= MAX_DECIMALS ? p.decimals : 0;
+  return {
+    from: isFiniteNumber(p.from) ? p.from : 0,
+    to: isFiniteNumber(p.to) ? p.to : 0,
+    decimals,
+    ...(isString(p.prefix) && p.prefix.length > 0 ? { prefix: p.prefix } : {}),
+    ...(isString(p.suffix) && p.suffix.length > 0 ? { suffix: p.suffix } : {}),
+    ...(isString(p.label) && p.label.length > 0 ? { label: p.label } : {}),
+    position: positionOr(p.position, 'center'),
+  };
+}
+
+/** Why counter props are invalid (Vietnamese message for the validator), or undefined. `to` (a finite number) is required. */
+export function counterProblem(props: Record<string, unknown>): string | undefined {
+  if (!isFiniteNumber(props.to)) return 'props.to phải là một số hữu hạn';
+  if (props.from !== undefined && !isFiniteNumber(props.from)) return 'props.from phải là một số hữu hạn';
+  if (props.decimals !== undefined && !(typeof props.decimals === 'number' && Number.isInteger(props.decimals) && props.decimals >= 0 && props.decimals <= MAX_DECIMALS)) return `props.decimals phải là số nguyên từ 0 đến ${MAX_DECIMALS}`;
+  for (const key of ['prefix', 'suffix', 'label']) {
+    if (props[key] !== undefined && !isString(props[key])) return `props.${key} phải là chuỗi`;
+  }
+  if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
+  if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
+  return undefined;
+}

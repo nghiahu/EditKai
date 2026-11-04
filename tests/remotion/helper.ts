@@ -76,3 +76,12 @@ export async function lumaAt(png: string, x: number, y: number): Promise<number>
   const b = readFileSync(out);
   return b[b.length - 1];
 }
+
+/** Mean luma (0-255) of a rectangle of a PNG (the whole picture when no box is given): how much light the pictured thing gives. */
+export async function meanLuma(png: string, box?: { x: number; y: number; w: number; h: number }, width = 1080, height = 1920): Promise<number> {
+  const out = join(mkdtempSync(join(tmpdir(), 'editkai-mean-')), 'm.pgm');
+  const crop = box ? `crop=${box.w}:${box.h}:${box.x}:${box.y},` : '';
+  await runFfmpeg(['-y', '-i', png, '-vf', `scale=${width}:${height},${crop}scale=1:1:flags=area,format=gray`, '-frames:v', '1', out]);
+  const b = readFileSync(out);
+  return b[b.length - 1];
+}

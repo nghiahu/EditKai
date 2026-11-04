@@ -26,6 +26,19 @@ const MIN_LABEL_WORDS = 3;
 
 const wordCount = (s: BeatSpan) => s.lastWord - s.firstWord + 1;
 
+/** "30 phút", "50%", "2,5%", "100" → the number and its unit; anything else (a range, words) is not a count. */
+function parseCount(text: string): { to: number; decimals: number; unit: string } | undefined {
+  const m = /^(\d+(?:[.,]\d+)?)\s*(%|\p{L}+(?:\s+\p{L}+)?)?$/u.exec(text.trim());
+  if (!m) return undefined;
+  const decimals = /[.,](\d+)$/.exec(m[1])?.[1].length ?? 0;
+  return { to: Number(m[1].replace(',', '.')), decimals, unit: m[2] ?? '' };
+}
+
+function counterProps(text: string): Record<string, unknown> {
+  const c = parseCount(text)!;
+  return { to: c.to, ...(c.decimals ? { decimals: c.decimals } : {}), ...(c.unit ? { suffix: c.unit === '%' ? '%' : ` ${c.unit}` } : {}) };
+}
+
 function iconForNumber(text: string): string | undefined {
   const n = normalizeLoose(text);
   if (/%/.test(text)) return 'gauge';
@@ -155,10 +168,13 @@ export function suggestTreatments(input: {
       const cue = first(situation);
       if (!cue || (situation === 'list' && !cue.items)) continue;
       const at = startOf(cue);
-      const rec = choose(playbook.situations[situation] ?? [], at);
+      // a counter needs a plain number (with a percent sign or a unit): a range such as 2-3% cannot count up
+      const usable = (playbook.situations[situation] ?? []).filter(x => x.builder !== 'counter' || parseCount(cue.text));
+      const rec = choose(usable, at);
       if (!rec) continue;
       let props: Record<string, unknown>;
-      if (rec.builder === 'chips') props = { chips: cue.items!.map(label => ({ icon: 'check', label })) };
+      if (rec.builder === 'counter') props = counterProps(cue.text);
+      else if (rec.builder === 'chips') props = { chips: cue.items!.map(label => ({ icon: 'check', label })) };
       else if (rec.builder === 'explainer-list') props = { title: span.text.split(/\s+/).slice(0, 3).join(' ').toUpperCase(), body: { kind: 'list', items: cue.items } };
       else props = fillProps(rec.props ?? {}, { text: cue.text, label: cue.label ?? (situation === 'tool' ? 'công cụ' : undefined), icon: situation === 'number' ? iconForNumber(cue.text) : undefined });
       candidates.push({ situation, recipe: rec.id, type: rec.type, props, at, duration: rec.duration });

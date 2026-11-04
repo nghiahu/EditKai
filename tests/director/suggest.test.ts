@@ -318,3 +318,34 @@ describe('gap filler placed before a later insert of the same type', () => {
     expect(inserts.some(i => i.maybe && i.at < 18)).toBe(true);
   });
 });
+
+describe('playbook: the counter as a way to show a number', () => {
+  const far = (n: number) => Array.from({ length: n }, (_, i) => span(i * 40, i * 40 + 5));
+  const numberBeats = (texts: string[]) => {
+    const spans = far(texts.length);
+    return run(spans, texts.map((t, i) => [cue('number', i * 40 + 1, { text: t })]));
+  };
+  it('after the stat card and the title card the same situation turns to the counter, with the number and unit taken from the cue', () => {
+    const out = numberBeats(['30 phút', '40 phút', '50 phút']);
+    expect(out.map(t => t.inserts[0].type)).toEqual(['stat-card', 'title-card', 'counter']);
+    expect(out[2].inserts[0].props).toMatchObject({ to: 50, suffix: ' phút' });
+  });
+  it('a percent, a decimal with a comma and a bare number are parsed; a range is not a counter', () => {
+    const counterOf = (text: string) => {
+      const pb = withPlaybook({ situations: { number: [{ id: 'c', type: 'counter', duration: 3.5, builder: 'counter' }] } });
+      const spans = [span(0, 5)];
+      return runPb(spans, [[cue('number', 1, { text })]], pb)[0].inserts[0];
+    };
+    expect(counterOf('50%').props).toMatchObject({ to: 50, suffix: '%' });
+    expect(counterOf('2,5%').props).toMatchObject({ to: 2.5, decimals: 1, suffix: '%' });
+    expect(counterOf('100').props).toMatchObject({ to: 100 });
+    expect(counterOf('100').props).not.toHaveProperty('suffix');
+    expect(counterOf('2-3%')).toBeUndefined();
+    expect(counterOf('hơn nửa tiếng')).toBeUndefined();
+  });
+  it('a style that does not allow counter never gets one', () => {
+    const spans = far(3);
+    const out = runPb(spans, spans.map((_, i) => [cue('number', i * 40 + 1, { text: '30 phút' })]), DEFAULT_PLAYBOOK, { ...m1, allowedInserts: m1.allowedInserts.filter(t => t !== 'counter') });
+    expect(out.flatMap(t => t.inserts).some(i => i.type === 'counter')).toBe(false);
+  });
+});

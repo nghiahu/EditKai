@@ -62,12 +62,12 @@ describe('theme director block', () => {
   it('s1 and m1 expose the director values', () => {
     expect(loadTheme('styles/m1').director).toEqual({
       insertGapMaxSec: 10, insertMinGapSec: 2.5,
-      allowedInserts: ['logo-badge', 'prompt-box', 'stat-card', 'footage', 'chip-stack', 'title-card'],
+      allowedInserts: ['logo-badge', 'prompt-box', 'stat-card', 'footage', 'chip-stack', 'title-card', 'counter'],
       captionMix: { label: 0.2, big: 0.12 }, bigSpacingSec: 8, punchSpacingSec: 6,
     });
     expect(loadTheme('styles/s1').director).toEqual({
       insertGapMaxSec: 35, insertMinGapSec: 6,
-      allowedInserts: ['title-card', 'stat-card', 'footage', 'logo-badge', 'explainer-scene'],
+      allowedInserts: ['title-card', 'stat-card', 'footage', 'logo-badge', 'explainer-scene', 'counter'],
       captionMix: { label: 0.05, big: 0 }, bigSpacingSec: 8, punchSpacingSec: 20,
     });
   });

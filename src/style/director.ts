@@ -12,7 +12,7 @@ export interface Director {
 export const DEFAULT_DIRECTOR: Director = {
   insertGapMaxSec: 35,
   insertMinGapSec: 6,
-  allowedInserts: ['title-card', 'stat-card', 'footage', 'logo-badge', 'explainer-scene'],
+  allowedInserts: ['title-card', 'stat-card', 'footage', 'logo-badge', 'explainer-scene', 'counter'],
   captionMix: { label: 0.05, big: 0 },
   bigSpacingSec: 8,
   punchSpacingSec: 20,

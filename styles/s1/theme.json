@@ -44,7 +44,8 @@
       "stat-card",
       "footage",
       "logo-badge",
-      "explainer-scene"
+      "explainer-scene",
+      "counter"
     ],
     "captionMix": {
       "label": 0.05,

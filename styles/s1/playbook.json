@@ -43,6 +43,12 @@
           "icon": "zap",
           "title": "{TEXT}"
         }
+      },
+      {
+        "id": "number-counter",
+        "type": "counter",
+        "duration": 3.5,
+        "builder": "counter"
       }
     ],
     "section": [

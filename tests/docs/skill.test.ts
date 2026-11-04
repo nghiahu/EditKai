@@ -10,7 +10,7 @@ describe('SKILL.md covers the plan vocabulary', () => {
   it('mentions every layer type', () => expect(missing(Object.keys(LAYER_TYPES))).toEqual([]));
   it('mentions every icon name', () => expect(missing(iconNames)).toEqual([]));
   it('mentions every explainer body kind and mode', () => expect(missing(['list', 'card', 'waveform', 'progress', 'phone', 'overlay', 'full'])).toEqual([]));
-  it('mentions every transition kind', () => expect(missing(['zoom', 'blur', 'slide', 'push', 'flash'])).toEqual([]));
+  it('mentions every transition kind', () => expect(missing(['zoom', 'blur', 'slide', 'push', 'flash', 'whip', 'dip'])).toEqual([]));
   it('mentions the camera track', () => expect(missing(['camera'])).toEqual([]));
 });
 

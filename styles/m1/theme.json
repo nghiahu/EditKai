@@ -14,7 +14,7 @@
   "animMs": 250,
   "limits": {
     "maxCaptionWords": 4,
-    "minSceneSec": 1.0,
+    "minSceneSec": 1,
     "safeZone": {
       "top": 0.08,
       "bottom": 0.18,
@@ -44,7 +44,8 @@
       "stat-card",
       "footage",
       "chip-stack",
-      "title-card"
+      "title-card",
+      "counter"
     ],
     "captionMix": {
       "label": 0.2,
