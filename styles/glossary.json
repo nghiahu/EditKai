@@ -1,0 +1,18 @@
+{
+  "terms": [
+    { "term": "Claude", "label": "công cụ" },
+    { "term": "ChatGPT", "label": "công cụ" },
+    { "term": "Codex", "label": "công cụ" },
+    { "term": "Opus", "label": "mô hình" },
+    { "term": "Remotion", "label": "công cụ" },
+    { "term": "TikTok", "label": "kênh" },
+    { "term": "Typography", "label": "chữ" },
+    { "term": "Graphic", "label": "đồ họa" },
+    { "term": "Motion", "label": "chuyển động" },
+    { "term": "token", "label": "chi phí" }
+  ],
+  "ui": ["giao diện", "editor", "timeline", "màn hình", "layer", "ứng dụng", "công cụ"],
+  "shortvideo": ["tiktok", "reels", "shorts", "video ngắn", "video dọc"],
+  "emphasis": ["đừng", "không", "rất", "cực kỳ", "quá", "nhất", "luôn", "hoàn toàn", "tuyệt đối"],
+  "promptVerbs": ["prompt", "bảo", "yêu cầu", "gõ", "nhập"]
+}
