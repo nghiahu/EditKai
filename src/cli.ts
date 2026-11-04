@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSyn
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ASSET_KINDS, addAsset, readManifest, type AssetKind } from './assets/manifest';
+import { analyzeStage } from './stages/analyze';
 import { cleanStage } from './stages/clean';
 import { mergeRegenerated } from './plan/merge';
 import { readPlan } from './plan/io';
@@ -12,7 +13,7 @@ import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'init | clean | validate | merge | assets | editor | render';
+const COMMANDS = 'init | clean | analyze | validate | merge | assets | editor | render';
 
 type Out = (s: string) => void;
 
@@ -60,7 +61,7 @@ function parse(argv: string[]) {
 export async function runCli(argv: string[], out: Out = console.log, err: Out = console.error): Promise<number> {
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  if (!['init', 'clean', 'analyze', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -85,6 +86,13 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       const r = await cleanStage(projectDir);
       resetQaRounds(projectDir); // new timeline, new QA count
       out(`Đã làm sạch: ${r.cuts.length} đoạn cắt, ${r.transcript.words.length} từ → ${r.cleaned}`);
+      return 0;
+    }
+    if (cmd === 'analyze') {
+      const sb = await analyzeStage(projectDir, { force: 'force' in flags }); // --force is a bare flag
+      const cues = sb.beats.reduce((n, b) => n + b.cues.length, 0);
+      const inserts = sb.beats.reduce((n, b) => n + b.treatment.inserts.length, 0);
+      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất → storyboard.json`);
       return 0;
     }
     if (cmd === 'validate') {
