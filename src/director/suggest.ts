@@ -11,6 +11,11 @@ type W = { t: string; s: number; e: number };
 // when two situations of one beat want an insert, the first of these wins (the other usually fails the minimum gap)
 const SITUATION_PRIORITY = ['footage', 'prompt', 'section', 'cta', 'number', 'tool', 'list'];
 const FOOTAGE_SEC = 4;
+const FILL_TAIL_SEC = 0.5; // the video is taken to end this long after the last word
+const MAX_FILLERS = 200;
+const FILL_EMPHASIS_BONUS = 2; // seconds of distance a beat with an emphasised word is worth
+const MAX_PHRASE_WORDS = 3;
+const MAX_PHRASE_CHARS = 30;
 const MIN_SHARE_JUDGED = 4; // maxShare only applies once this many inserts exist
 const PHONE_FOOTAGE_SEC = 3;
 const PROMPT_TAIL_SEC = 0.3;
@@ -54,7 +59,7 @@ export function suggestTreatments(input: {
       if (!director.allowedInserts.includes(r.type)) return false;
       const share = v.maxShare[r.type];
       if (share !== undefined && accepted.length >= MIN_SHARE_JUDGED && (accepted.filter(a => a.type === r.type).length + 1) / (accepted.length + 1) > share) return false;
-      return !accepted.some(a => a.type === r.type && at < a.end + v.sameTypeGapSec);
+      return !accepted.some(a => a.type === r.type && at < a.end + v.sameTypeGapSec && a.at < at + r.duration + v.sameTypeGapSec); // too close to one before it or one after it
     });
     if (!v.rotate) return ok[0];
     return [...ok].sort((a, b) => (lastUsed[a.id] ?? 0) - (lastUsed[b.id] ?? 0))[0];
@@ -63,7 +68,61 @@ export function suggestTreatments(input: {
   let lastPunchAt = -Infinity;
   let labelCount = 0;
 
-  return spans.map((span, i): Treatment => {
+  /**
+   * Fills stretches longer than `insertGapMaxSec` with no insert: the biggest gap first, a filler (the playbook's `filler` situation, marked
+   * `maybe: true`) on the beat nearest the middle of it that keeps the minimum gaps, preferring a beat with an emphasised word. A filler says
+   * the beat's own words (from the emphasised word, a few words, capitals): a guess for the director to confirm, reword or delete.
+   */
+  const fillGaps = (treatments: Treatment[]) => {
+    const recipes = playbook.situations.filler ?? [];
+    if (!recipes.length || !spans.length) return;
+    const horizon = words.length ? words[words.length - 1].e + FILL_TAIL_SEC : 0;
+    const skipped = new Set<number>();
+    for (let round = 0; round < MAX_FILLERS; round++) {
+      const sorted = [...accepted].sort((a, b) => a.at - b.at);
+      const gaps: { from: number; to: number; open: boolean; close: boolean }[] = [];
+      let cursor = 0;
+      sorted.forEach((a, k) => { gaps.push({ from: cursor, to: a.at, open: k === 0, close: false }); cursor = Math.max(cursor, a.end); });
+      gaps.push({ from: cursor, to: horizon, open: sorted.length === 0, close: true });
+      const worst = gaps.filter(g => g.to - g.from > director.insertGapMaxSec && !skipped.has(g.from)).sort((a, b) => b.to - b.from - (a.to - a.from))[0];
+      if (!worst) return;
+      const lower = worst.from + (worst.open ? 0 : director.insertMinGapSec);
+      const upper = worst.to - (worst.close ? 0 : director.insertMinGapSec);
+      const mid = (worst.from + worst.to) / 2;
+      let best: { i: number; rec: Recipe; at: number; score: number } | undefined;
+      spans.forEach((s, i) => {
+        const at = s.start;
+        if (at < lower) return;
+        const rec = choose(recipes, at);
+        if (!rec || at + rec.duration > upper) return;
+        const score = Math.abs(at - mid) - (treatments[i].caption.hl.length ? FILL_EMPHASIS_BONUS : 0);
+        if (!best || score < best.score) best = { i, rec, at, score };
+      });
+      if (!best) { skipped.add(worst.from); continue; }
+      const { i, rec, at } = best;
+      const phrase = keyPhrase(spans[i], treatments[i].caption.hl);
+      if (!phrase) { skipped.add(worst.from); continue; }
+      treatments[i].inserts.push({ type: rec.type, props: fillProps(rec.props ?? {}, { text: phrase }), at, duration: rec.duration, maybe: true });
+      treatments[i].inserts.sort((a, b) => a.at - b.at);
+      accepted.push({ at, end: at + rec.duration, type: rec.type });
+      lastUsed[rec.id] = accepted.length;
+    }
+  };
+
+  /** Up to MAX_PHRASE_WORDS words of the beat from its first emphasised word (else its start), upper case, at most MAX_PHRASE_CHARS characters. */
+  const keyPhrase = (span: BeatSpan, hl: number[]): string => {
+    const from = hl.find(i => i >= span.firstWord && i <= span.lastWord) ?? span.firstWord;
+    const picked: string[] = [];
+    for (let i = from; i <= span.lastWord && picked.length < MAX_PHRASE_WORDS; i++) {
+      const w = (words[i]?.t ?? '').replace(/^[^\p{L}\p{N}%$]+|[^\p{L}\p{N}%$]+$/gu, '').toUpperCase();
+      if (!w) continue;
+      if ([...picked, w].join(' ').length > MAX_PHRASE_CHARS) break;
+      picked.push(w);
+    }
+    return picked.join(' ');
+  };
+
+  const treatments = spans.map((span, i): Treatment => {
     const beatCues = cues[i] ?? [];
     const asset = matches[i];
     const startOf = (cue?: Cue) => Math.min(span.end, Math.max(span.start, cue?.word !== undefined ? words[cue.word].s : span.start));
@@ -139,4 +198,6 @@ export function suggestTreatments(input: {
     }
     return { caption, inserts, camera };
   });
+  fillGaps(treatments);
+  return treatments;
 }

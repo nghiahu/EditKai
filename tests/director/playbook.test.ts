@@ -15,7 +15,7 @@ describe('shipped playbooks', () => {
   it('every situation has at least one recipe with a known insert type and a positive duration', () => {
     for (const style of ['styles/s1', 'styles/m1', undefined]) {
       const pb = style ? loadPlaybook(style) : DEFAULT_PLAYBOOK;
-      for (const s of ['tool', 'number', 'section', 'cta', 'list']) {
+      for (const s of ['tool', 'number', 'section', 'cta', 'list', 'filler']) {
         expect(pb.situations[s]?.length, `${style} ${s}`).toBeGreaterThan(0);
         for (const r of pb.situations[s]) { expect(r.id).toBeTruthy(); expect(r.duration).toBeGreaterThan(0); }
       }

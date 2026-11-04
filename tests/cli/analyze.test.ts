@@ -49,3 +49,12 @@ describe('analyze command', () => {
     expect(err.join('\n')).toContain('analyze');
   });
 });
+
+describe('analyze summary and fillers', () => {
+  it('says how many inserts are guesses to confirm', async () => {
+    const dir = writeProject(Array.from({ length: 14 }, () => 'Mình nói tiếp về chủ đề này một cách bình thường.'), { style: 'm1' });
+    out.length = 0;
+    expect(await cli('analyze', dir)).toBe(0);
+    expect(out.join('\n')).toMatch(/chưa chắc/);
+  });
+});

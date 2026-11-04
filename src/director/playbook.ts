@@ -31,6 +31,8 @@ export const DEFAULT_PLAYBOOK: Playbook = {
     number: [r('number-stat', 'stat-card', 3.5, { rows: [{ value: '{text}', icon: '{icon}' }] }), r('number-title', 'title-card', 2.6, { icon: 'zap', title: '{TEXT}' })],
     section: [r('section-title', 'title-card', 2.6, { icon: 'layers', title: '{TEXT}' }), r('section-badge', 'logo-badge', 2, { label: '{text}', icon: 'layers' })],
     cta: [r('cta-title', 'title-card', 2.6, { icon: 'rocket', title: '{TEXT}' }), r('cta-badge', 'logo-badge', 2, { label: '{text}', icon: 'rocket' })],
+    // a stretch with no insert at all gets one of these (see suggest.ts): the text is built from the beat's own words
+    filler: [r('filler-title', 'title-card', 2.4, { icon: 'lightbulb', title: '{TEXT}' }), r('filler-badge', 'logo-badge', 2, { label: '{text}', icon: 'sparkles' })],
     list: [r('list-chips', 'chip-stack', 4, undefined, 'chips'), r('list-explainer', 'explainer-scene', 5, undefined, 'explainer-list')],
   },
   variety: { rotate: true, maxShare: { 'title-card': 0.7 }, sameTypeGapSec: 5 },

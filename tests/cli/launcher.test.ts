@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -33,5 +33,24 @@ describe('scripts/ev.mjs (runs the CLI from any folder)', () => {
     const r = ev(base, 'assets', 'add', project, 'clip.mp4', '--desc', 'thử');
     expect(r.status).toBe(0);
     expect(existsSync(join(project, 'assets', 'clip.mp4'))).toBe(true);
+  });
+});
+
+describe('scripts/ev.mjs and the other file options', () => {
+  it('a relative --fixes is read from the folder the command was typed in', () => {
+    const project = join(base, 'dự án sửa lời');
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(project, 'transcript.json'), JSON.stringify({ words: [{ t: 'một', s: 0, e: 0.3 }, { t: 'hai', s: 0.4, e: 0.7 }] }));
+    writeFileSync(join(base, 'sua.json'), JSON.stringify([{ sai: 'hai', dung: 'ba' }]));
+    const r = ev(base, 'fix-transcript', project, '--fixes', 'sua.json');
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/1 từ/);
+  });
+  it('a relative --spec is read from that folder too (the error names the file when it is missing)', () => {
+    const project = join(base, 'dự án rút gọn');
+    mkdirSync(project, { recursive: true });
+    const r = ev(base, 'condense', project, '--spec', 'khong-co.json');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain(join(base, 'khong-co.json')); // resolved against the typing folder
   });
 });

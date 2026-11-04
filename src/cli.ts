@@ -126,7 +126,8 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       for (const b of sb.beats) for (const i of b.treatment.inserts) byType[i.type] = (byType[i.type] ?? 0) + 1;
       const inserts = Object.values(byType).reduce((n, v) => n + v, 0);
       const kinds = Object.entries(byType).map(([t, n]) => `${t} ${n}`).join(', ');
-      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất${kinds ? ` (${kinds})` : ''} → storyboard.json`);
+      const guesses = sb.beats.reduce((n, b) => n + b.treatment.inserts.filter(i => i.maybe).length, 0);
+      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất${kinds ? ` (${kinds})` : ''}${guesses ? `, trong đó ${guesses} chưa chắc (lấp khoảng trống, cần xem lại)` : ''} → storyboard.json`);
       return 0;
     }
     if (cmd === 'compose') {

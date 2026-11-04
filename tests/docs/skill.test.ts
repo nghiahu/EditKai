@@ -134,3 +134,9 @@ describe('SKILL.md documents the playbook', () => {
     expect(missing(['playbook.json', 'recipe', 'rotate', 'maxShare', 'sameTypeGapSec', 'section', 'cta', 'notTools'])).toEqual([]);
   });
 });
+
+describe('SKILL.md describes reading the talk and the guessed inserts', () => {
+  it('asks for outline.md before the storyboard and explains maybe inserts', () => {
+    expect(missing(['outline.md', 'maybe', 'chưa chắc'])).toEqual([]);
+  });
+});

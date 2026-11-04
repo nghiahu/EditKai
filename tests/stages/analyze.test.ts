@@ -105,3 +105,14 @@ describe('analyzeStage', () => {
     await expect(analyzeStage(dir)).rejects.toThrow(/assets\.json/);
   });
 });
+
+describe('analyzeStage fills long stretches without an insert', () => {
+  const long = Array.from({ length: 14 }, () => 'Mình nói tiếp về chủ đề này một cách bình thường.');
+  it('a long plain talk gets maybe-fillers in the storyboard, each one saying words of its beat', async () => {
+    const dir = writeProject(long, { style: 'm1' });
+    const sb = await analyzeStage(dir);
+    const fillers = sb.beats.flatMap(b => b.treatment.inserts.filter(i => i.maybe));
+    expect(fillers.length).toBeGreaterThan(2);
+    expect(JSON.stringify(fillers[0].props).toUpperCase()).toMatch(/MÌNH|NÓI|TIẾP|VỀ|CHỦ/);
+  });
+});

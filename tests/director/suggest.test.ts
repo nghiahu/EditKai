@@ -180,7 +180,7 @@ describe('playbook: variety', () => {
     const spans = far(6);
     const pb = withPlaybook({ situations: { tool: [recipe('only', 'title-card')] }, variety: { rotate: true, maxShare: { 'title-card': 0.5 }, sameTypeGapSec: 0 } });
     const out = runPb(spans, spans.map(s => tool(s)), pb);
-    const total = out.reduce((n, t) => n + t.inserts.length, 0);
+    const total = out.reduce((n, t) => n + t.inserts.filter(i => !i.maybe).length, 0); // fillers are another matter
     expect(total).toBe(4); // the first four are kept (too few inserts to judge), the others would push the share over 50%
   });
   it('sameTypeGapSec: two inserts of one type closer than the gap use another recipe, or are skipped when there is none', () => {
@@ -224,5 +224,97 @@ describe('playbook: every recipe says something', () => {
         }
       }
     }
+  });
+});
+
+describe('gap filler (insert-gap, suggested with maybe: true)', () => {
+  const NAMES = ['một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
+  /** n beats of 5 words (2 s each), real words so the filler's title can be checked. */
+  const timeline = (n: number) => {
+    const w = Array.from({ length: n * 5 }, (_, i) => ({ t: NAMES[i % NAMES.length] + (i < 100 ? '' : ''), s: i * 0.4, e: i * 0.4 + 0.3 }));
+    const spans = Array.from({ length: n }, (_, i): BeatSpan => ({ firstWord: i * 5, lastWord: i * 5 + 4, start: i * 2, end: i * 2 + 1.9, text: w.slice(i * 5, i * 5 + 5).map(x => x.t).join(' ') }));
+    return { w, spans };
+  };
+  const go = (n: number, cues: Cue[][] = [], opts: { director?: typeof m1; playbook?: Playbook } = {}) => {
+    const { w, spans } = timeline(n);
+    const out = suggestTreatments({ spans, cues: spans.map((_, i) => cues[i] ?? []), matches: spans.map(() => undefined), words: w, director: opts.director ?? m1, fps: FPS, playbook: opts.playbook });
+    return { out, w, spans, inserts: out.flatMap(t => t.inserts).sort((a, b) => a.at - b.at) };
+  };
+  const biggestGap = (inserts: { at: number; duration: number }[], end: number) => {
+    let cursor = 0, worst = 0;
+    for (const i of inserts) { worst = Math.max(worst, i.at - cursor); cursor = Math.max(cursor, i.at + i.duration); }
+    return Math.max(worst, end - cursor);
+  };
+
+  it('a long talk with no cues gets fillers so that no stretch is longer than insertGapMaxSec, each marked maybe', () => {
+    const { inserts, w } = go(15); // 30 s, m1 allows 10 s
+    expect(inserts.length).toBeGreaterThanOrEqual(2);
+    expect(inserts.every(i => i.maybe === true)).toBe(true);
+    expect(biggestGap(inserts, w[w.length - 1].e + 0.5)).toBeLessThanOrEqual(m1.insertGapMaxSec + 1e-6);
+  });
+  it('no filler where there is no gap: a short talk, or inserts already close enough', () => {
+    expect(go(4).inserts).toEqual([]); // 8 s
+    const cues = Array.from({ length: 15 }, (_, i) => (i % 3 === 0 ? [cue('tool', i * 5 + 1, { text: 'Claude' })] : [])); // a real insert every 6 s
+    const { inserts } = go(15, cues);
+    expect(inserts.filter(i => i.maybe)).toEqual([]);
+  });
+  it('s1 tolerates 35 s, so 30 s of talk gets none', () => {
+    expect(go(15, [], { director: s1 }).inserts).toEqual([]);
+  });
+  it('a filler keeps insertMinGapSec from the inserts around it, and a different type waits sameTypeGapSec after the same type', () => {
+    const { inserts } = go(30, [[cue('tool', 40, { text: 'Claude' })]]);
+    inserts.forEach((i, k) => { if (k) expect(i.at).toBeGreaterThanOrEqual(inserts[k - 1].at + inserts[k - 1].duration + m1.insertMinGapSec - 1e-6); });
+  });
+  it('the title is made of the beat\'s own words in capitals, short, and never empty', () => {
+    const { inserts, spans, w } = go(15);
+    for (const i of inserts) {
+      const title = String((i.props as { title?: string; label?: string }).title ?? (i.props as { label?: string }).label);
+      expect(title.length).toBeGreaterThan(0);
+      expect(title.length).toBeLessThanOrEqual(30);
+      expect(title).toBe(title.toUpperCase());
+      const beat = spans.find(s => s.start <= i.at + 1e-6 && i.at <= s.end + 1e-6)!;
+      const own = w.slice(beat.firstWord, beat.lastWord + 1).map(x => x.t.toUpperCase());
+      expect(title.split(' ').every(word => own.includes(word))).toBe(true);
+    }
+  });
+  it('an emphasised word of the beat is what the title is built around', () => {
+    const emph: Cue[][] = Array.from({ length: 15 }, (_, i) => [cue('emphasis', i * 5 + 2, { text: NAMES[(i * 5 + 2) % 10] })]);
+    const { inserts, spans, w } = go(15, emph);
+    const filler = inserts.filter(i => i.maybe);
+    expect(filler.length).toBeGreaterThan(0);
+    for (const i of filler) {
+      const beat = spans.find(s => s.start <= i.at + 1e-6 && i.at <= s.end + 1e-6)!;
+      const word = w[beat.firstWord + 2].t.toUpperCase();
+      expect(String((i.props as { title?: string; label?: string }).title ?? (i.props as { label?: string }).label)).toContain(word);
+    }
+  });
+  it('uses another allowed type when title-card is not allowed, and nothing when no recipe fits', () => {
+    const badge = go(15, [], { director: { ...m1, allowedInserts: ['logo-badge'] } }).inserts;
+    expect(badge.length).toBeGreaterThan(0);
+    expect(badge.every(i => i.type === 'logo-badge')).toBe(true);
+    expect(go(15, [], { director: { ...m1, allowedInserts: ['stat-card'] } }).inserts).toEqual([]);
+    expect(go(15, [], { playbook: withPlaybook({ situations: { filler: [] } }) }).inserts).toEqual([]);
+  });
+  it('a long talk (400 beats) finishes at once and still leaves no long gap', () => {
+    const t0 = Date.now();
+    const { inserts, w } = go(400);
+    expect(Date.now() - t0).toBeLessThan(3000);
+    expect(biggestGap(inserts, w[w.length - 1].e + 0.5)).toBeLessThanOrEqual(m1.insertGapMaxSec + 1e-6);
+  });
+  it('no beats, no crash', () => {
+    expect(suggestTreatments({ spans: [], cues: [], matches: [], words: [], director: m1, fps: FPS })).toEqual([]);
+  });
+});
+
+describe('gap filler placed before a later insert of the same type', () => {
+  it('a title-card later in the talk does not forbid a title-card filler earlier (the same-type gap counts in both directions)', () => {
+    const NAMES = ['một', 'hai', 'ba', 'bốn', 'năm'];
+    const w = Array.from({ length: 75 }, (_, i) => ({ t: NAMES[i % 5], s: i * 0.4, e: i * 0.4 + 0.3 }));
+    const spans = Array.from({ length: 15 }, (_, i): BeatSpan => ({ firstWord: i * 5, lastWord: i * 5 + 4, start: i * 2, end: i * 2 + 1.9, text: '' }));
+    const cues: Cue[][] = spans.map((_, i) => (i === 10 ? [cue('section', 51, { text: 'KẾT BÀI' })] : []));
+    const pb = withPlaybook({ variety: { rotate: false, maxShare: {}, sameTypeGapSec: 6 }, situations: { filler: [recipe('f', 'title-card', { title: '{TEXT}' }, 2)] } });
+    const out = suggestTreatments({ spans, cues, matches: spans.map(() => undefined), words: w, director: m1, fps: FPS, playbook: pb });
+    const inserts = out.flatMap(t => t.inserts).sort((a, b) => a.at - b.at);
+    expect(inserts.some(i => i.maybe && i.at < 18)).toBe(true);
   });
 });

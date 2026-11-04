@@ -22,6 +22,7 @@ export interface InsertSpec {
   props: Record<string, unknown>;
   at: number; // seconds on the cleaned.mp4 timeline
   duration: number;
+  maybe?: boolean; // a gap filler: a guess to confirm, reword or delete
 }
 
 export interface CameraSpec {
