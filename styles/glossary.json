@@ -1,18 +1,183 @@
 {
   "terms": [
-    { "term": "Claude", "label": "công cụ" },
-    { "term": "ChatGPT", "label": "công cụ" },
-    { "term": "Codex", "label": "công cụ" },
-    { "term": "Opus", "label": "mô hình" },
-    { "term": "Remotion", "label": "công cụ" },
-    { "term": "TikTok", "label": "kênh" },
-    { "term": "Typography", "label": "chữ" },
-    { "term": "Graphic", "label": "đồ họa" },
-    { "term": "Motion", "label": "chuyển động" },
-    { "term": "token", "label": "chi phí" }
+    {
+      "term": "Claude",
+      "label": "công cụ"
+    },
+    {
+      "term": "ChatGPT",
+      "label": "công cụ"
+    },
+    {
+      "term": "Codex",
+      "label": "công cụ"
+    },
+    {
+      "term": "Opus",
+      "label": "mô hình"
+    },
+    {
+      "term": "Remotion",
+      "label": "công cụ"
+    },
+    {
+      "term": "TikTok",
+      "label": "kênh"
+    },
+    {
+      "term": "Typography",
+      "label": "chữ"
+    },
+    {
+      "term": "Graphic",
+      "label": "đồ họa"
+    },
+    {
+      "term": "Motion",
+      "label": "chuyển động"
+    },
+    {
+      "term": "token",
+      "label": "chi phí"
+    }
   ],
-  "ui": ["giao diện", "editor", "timeline", "màn hình", "layer", "ứng dụng", "công cụ"],
-  "shortvideo": ["tiktok", "reels", "shorts", "video ngắn", "video dọc"],
-  "emphasis": ["đừng", "không", "rất", "cực kỳ", "quá", "nhất", "luôn", "hoàn toàn", "tuyệt đối"],
-  "promptVerbs": ["prompt", "bảo", "yêu cầu", "gõ", "nhập"]
+  "ui": [
+    "giao diện",
+    "editor",
+    "timeline",
+    "màn hình",
+    "layer",
+    "ứng dụng",
+    "công cụ"
+  ],
+  "shortvideo": [
+    "tiktok",
+    "reels",
+    "shorts",
+    "video ngắn",
+    "video dọc"
+  ],
+  "emphasis": [
+    "đừng",
+    "không",
+    "rất",
+    "cực kỳ",
+    "quá",
+    "nhất",
+    "luôn",
+    "hoàn toàn",
+    "tuyệt đối"
+  ],
+  "promptVerbs": [
+    "prompt",
+    "bảo",
+    "yêu cầu",
+    "gõ",
+    "nhập"
+  ],
+  "section": [
+    {
+      "term": "mở bài",
+      "label": "MỞ BÀI"
+    },
+    {
+      "term": "thân bài",
+      "label": "THÂN BÀI"
+    },
+    {
+      "term": "kết bài",
+      "label": "KẾT BÀI"
+    },
+    {
+      "term": "đầu tiên",
+      "label": "ĐẦU TIÊN"
+    },
+    {
+      "term": "tiếp theo",
+      "label": "TIẾP THEO"
+    },
+    {
+      "term": "thứ hai",
+      "label": "THỨ HAI"
+    },
+    {
+      "term": "thứ ba",
+      "label": "THỨ BA"
+    },
+    {
+      "term": "thứ tư",
+      "label": "THỨ TƯ"
+    },
+    {
+      "term": "cuối cùng",
+      "label": "CUỐI CÙNG"
+    }
+  ],
+  "cta": [
+    {
+      "term": "đăng ký",
+      "label": "ĐĂNG KÝ KÊNH"
+    },
+    {
+      "term": "theo dõi",
+      "label": "THEO DÕI"
+    },
+    {
+      "term": "bình luận",
+      "label": "BÌNH LUẬN"
+    },
+    {
+      "term": "comment",
+      "label": "BÌNH LUẬN"
+    },
+    {
+      "term": "subscribe",
+      "label": "SUBSCRIBE"
+    }
+  ],
+  "notTools": [
+    "trong",
+    "cho",
+    "khi",
+    "ban",
+    "ta",
+    "co",
+    "da",
+    "va",
+    "vi",
+    "ma",
+    "do",
+    "em",
+    "an",
+    "ai",
+    "cac",
+    "den",
+    "di",
+    "hay",
+    "la",
+    "lam",
+    "nay",
+    "the",
+    "nen",
+    "neu",
+    "vay",
+    "voi",
+    "thi",
+    "tai",
+    "tren",
+    "duoi",
+    "nhu",
+    "ve",
+    "de",
+    "se",
+    "rat",
+    "qua",
+    "minh",
+    "con",
+    "can",
+    "ung",
+    "tot",
+    "xem",
+    "bo"
+  ]
 }

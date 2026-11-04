@@ -91,7 +91,7 @@ describe('style filtering and spacing', () => {
   });
   it('an insert far enough after the previous one is kept', () => {
     const out = run([span(0, 5), span(20, 25)], [[cue('tool', 1, { text: 'Claude' })], [cue('tool', 21, { text: 'Opus' })]]); // 8.4 s start vs previous end 2.4 s + 2.5 s
-    expect(types(out[1])).toEqual(['logo-badge']);
+    expect(types(out[1])).toHaveLength(1); // the type itself rotates now (see the playbook tests)
   });
   it('within one beat the higher priority insert wins (footage over logo-badge)', () => {
     const [t] = run([span(0, 7)], [[cue('tool', 1, { text: 'Claude' }), cue('ui', 2, { text: 'giao diện' })]], { matches: [screen] });
@@ -139,5 +139,90 @@ describe('caption and camera suggestions', () => {
     expect(out.map(t => t.camera.length)).toEqual([1, 0, 1]);
     expect(out[0].camera[0]).toMatchObject({ type: 'zoom-punch', duration: 1.2 });
     expect(out[0].camera[0].at).toBeCloseTo(0.35, 5);
+  });
+});
+
+import { DEFAULT_PLAYBOOK, fillProps, loadPlaybook, type Playbook, type Recipe } from '../../src/director/playbook';
+
+const recipe = (id: string, type: string, props: Record<string, unknown> = { title: '{TEXT}' }, duration = 2): Recipe => ({ id, type, duration, props });
+const withPlaybook = (pb: Partial<Playbook>): Playbook => ({ situations: { ...DEFAULT_PLAYBOOK.situations, ...pb.situations }, variety: { ...DEFAULT_PLAYBOOK.variety, ...pb.variety } });
+const runPb = (spans: BeatSpan[], cues: Cue[][], playbook: Playbook, director = m1) =>
+  suggestTreatments({ spans, cues, matches: spans.map(() => undefined), words: words(Math.max(...spans.map(s => s.lastWord)) + 1), director, fps: FPS, playbook });
+
+describe('playbook: section and cta', () => {
+  it('a section cue is a title card that says the label; a cta cue too (default playbook)', () => {
+    const [a] = run([span(0, 5)], [[cue('section', 1, { text: 'MỞ BÀI' })]]);
+    expect(a.inserts[0]).toMatchObject({ type: 'title-card', props: { title: 'MỞ BÀI' }, duration: 2.6 });
+    expect(a.inserts[0].at).toBeCloseTo(0.4, 5);
+    const [b] = run([span(0, 5)], [[cue('cta', 2, { text: 'ĐĂNG KÝ KÊNH' })]], { director: s1 });
+    expect(b.inserts[0]).toMatchObject({ type: 'title-card', props: { title: 'ĐĂNG KÝ KÊNH' } });
+  });
+  it('a section wins over a tool cue in the same beat (priority), and the tool insert is dropped by the min gap', () => {
+    const [t] = run([span(0, 7)], [[cue('tool', 1, { text: 'Claude' }), cue('section', 2, { text: 'KẾT BÀI' })]]);
+    expect(t.inserts.map(i => i.type)).toEqual(['title-card']);
+  });
+});
+
+describe('playbook: variety', () => {
+  const far = (n: number) => Array.from({ length: n }, (_, i) => span(i * 40, i * 40 + 5)); // beats 16 s apart
+  const tool = (s: BeatSpan, text = 'Claude') => [cue('tool', s.firstWord + 1, { text })];
+  it('rotates: the same situation twice gives different recipes, the third goes back to the first', () => {
+    const spans = far(3);
+    const out = run(spans, spans.map(s => tool(s)));
+    expect(out.map(t => t.inserts[0].type)).toEqual(['logo-badge', 'title-card', 'logo-badge']);
+  });
+  it('rotation can be turned off: the first recipe every time', () => {
+    const spans = far(3);
+    const out = runPb(spans, spans.map(s => tool(s)), withPlaybook({ variety: { rotate: false, maxShare: {}, sameTypeGapSec: 0 } }));
+    expect(out.map(t => t.inserts[0].type)).toEqual(['logo-badge', 'logo-badge', 'logo-badge']);
+  });
+  it('maxShare: a type that already holds more than its share of the inserts is skipped once there are enough inserts', () => {
+    const spans = far(6);
+    const pb = withPlaybook({ situations: { tool: [recipe('only', 'title-card')] }, variety: { rotate: true, maxShare: { 'title-card': 0.5 }, sameTypeGapSec: 0 } });
+    const out = runPb(spans, spans.map(s => tool(s)), pb);
+    const total = out.reduce((n, t) => n + t.inserts.length, 0);
+    expect(total).toBe(4); // the first four are kept (too few inserts to judge), the others would push the share over 50%
+  });
+  it('sameTypeGapSec: two inserts of one type closer than the gap use another recipe, or are skipped when there is none', () => {
+    const spans = [span(0, 5), span(10, 15)]; // 4 s apart, the first ends at 0.4 + 2 s
+    const two = withPlaybook({ situations: { tool: [recipe('a', 'title-card'), recipe('b', 'logo-badge', { label: '{text}' })] }, variety: { rotate: false, maxShare: {}, sameTypeGapSec: 10 } });
+    expect(runPb(spans, spans.map(s => tool(s)), two, { ...m1, insertMinGapSec: 0.5 }).map(t => t.inserts.map(i => i.type))).toEqual([['title-card'], ['logo-badge']]);
+    const one = withPlaybook({ situations: { tool: [recipe('a', 'title-card')] }, variety: { rotate: false, maxShare: {}, sameTypeGapSec: 10 } });
+    expect(runPb(spans, spans.map(s => tool(s)), one, { ...m1, insertMinGapSec: 0.5 }).map(t => t.inserts.length)).toEqual([1, 0]);
+  });
+  it('a recipe whose type the style does not allow is never chosen', () => {
+    const spans = far(2);
+    const pb = withPlaybook({ situations: { tool: [recipe('a', 'prompt-box', { text: 'x' }), recipe('b', 'logo-badge', { label: '{text}' })] } });
+    const out = runPb(spans, spans.map(s => tool(s)), pb, s1); // s1 does not allow prompt-box
+    expect(out.map(t => t.inserts[0].type)).toEqual(['logo-badge', 'logo-badge']);
+  });
+  it('the number situation rotates too, and the title version says the number in capitals', () => {
+    const spans = far(2);
+    const out = run(spans, [[cue('number', 1, { text: '2-3%' })], [cue('number', 41, { text: '30 phút' })]]);
+    expect(out[0].inserts[0].type).toBe('stat-card');
+    expect(out[1].inserts[0]).toMatchObject({ type: 'title-card', props: { title: '30 PHÚT' } });
+  });
+  it('without a playbook argument the default playbook is used', () => {
+    const spans = far(2);
+    expect(suggestTreatments({ spans, cues: spans.map(s => tool(s)), matches: [undefined, undefined], words: words(50), director: m1, fps: FPS }))
+      .toEqual(runPb(spans, spans.map(s => tool(s)), DEFAULT_PLAYBOOK));
+  });
+});
+
+describe('playbook: every recipe says something', () => {
+  it('the second recipe of a section (a badge) carries the section text as its label, not an empty string', () => {
+    const spans = [span(0, 5), span(40, 45)];
+    const out = run(spans, [[cue('section', 1, { text: 'MỞ BÀI' })], [cue('section', 41, { text: 'THÂN BÀI' })]]);
+    expect(out[1].inserts[0]).toMatchObject({ type: 'logo-badge', props: { label: 'THÂN BÀI' } });
+  });
+  it('no shipped recipe fills a prop with an empty string for any situation', () => {
+    for (const [name, pb] of [['default', DEFAULT_PLAYBOOK], ['m1', loadPlaybook('styles/m1')], ['s1', loadPlaybook('styles/s1')]] as const) {
+      for (const [situation, recipes] of Object.entries(pb.situations)) {
+        for (const rec of recipes.filter(x => x.props)) {
+          const filled = JSON.stringify(fillProps(rec.props!, { text: 'Chữ', label: situation === 'tool' ? 'công cụ' : undefined }));
+          expect(filled, `${name} ${rec.id}`).not.toMatch(/":""/);
+        }
+      }
+    }
   });
 });

@@ -7,6 +7,7 @@ import { detectCues } from '../director/cues';
 import { matchAsset } from '../director/assets';
 import { loadGlossary } from '../director/glossary';
 import { readStoryboard, writeStoryboard } from '../director/storyboard';
+import { loadPlaybook } from '../director/playbook';
 import { suggestTreatments } from '../director/suggest';
 import type { Beat, Storyboard } from '../director/types';
 import { loadTheme } from '../style/theme';
@@ -41,7 +42,7 @@ export async function analyzeStage(projectDir: string, opts: { force?: boolean }
   const spans = segmentBeats(words);
   const cues = spans.map(span => detectCues(words, span, glossary));
   const matches = spans.map((span, i) => matchAsset(span.text, cues[i], assets)?.asset);
-  const treatments = suggestTreatments({ spans, cues, matches, words, director: theme.director, fps: project.fps ?? 30 });
+  const treatments = suggestTreatments({ spans, cues, matches, words, director: theme.director, fps: project.fps ?? 30, playbook: loadPlaybook(join(root, 'styles', project.style)) });
 
   const beats: Beat[] = spans.map((span, i) => ({
     id: `b${i + 1}`,

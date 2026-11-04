@@ -1,5 +1,5 @@
 // Shared shapes of the director pipeline: storyboard.json is Storyboard; the AI edits each beat's treatment.
-export type CueKind = 'tool' | 'number' | 'prompt' | 'list' | 'emphasis' | 'ui' | 'shortvideo' | 'question';
+export type CueKind = 'tool' | 'number' | 'prompt' | 'list' | 'emphasis' | 'ui' | 'shortvideo' | 'question' | 'section' | 'cta';
 
 /** A content signal found in a beat; `word` is an index into transcript.words. */
 export interface Cue {

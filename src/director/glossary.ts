@@ -3,8 +3,13 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeLoose, normalizeTone } from './text';
 
+export interface GlossaryTerm { term: string; label?: string }
+
 export interface Glossary {
-  terms: { term: string; label?: string }[];
+  terms: GlossaryTerm[];
+  section?: GlossaryTerm[]; // marks of a part of the talk ("mở bài", "đầu tiên", ...); the label is what the card says
+  cta?: GlossaryTerm[]; // calls to action ("đăng ký", "bình luận", ...)
+  notTools?: string[]; // Vietnamese words written without tone marks ("Trong", "Cho"): a capital letter on them is a sentence start, not a tool name
   ui: string[];
   shortvideo: string[];
   emphasis: string[];
@@ -12,7 +17,7 @@ export interface Glossary {
 }
 
 const defaultFile = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'styles', 'glossary.json');
-const LISTS = ['ui', 'shortvideo', 'emphasis', 'promptVerbs'] as const;
+const LISTS = ['ui', 'shortvideo', 'emphasis', 'promptVerbs', 'notTools'] as const;
 
 function dedupe<T>(items: T[], key: (item: T) => string): T[] {
   const seen = new Set<string>();
@@ -31,11 +36,15 @@ export function loadGlossary(projectDir: string): Glossary {
     try { extra = JSON.parse(readFileSync(file, 'utf8')) ?? {}; }
     catch (e) { throw new Error(`glossary.json không phải JSON hợp lệ: ${(e as Error).message}`); }
   }
-  const terms = [...(Array.isArray(extra.terms) ? extra.terms : []).map(asTerm).filter(<T>(t: T | undefined): t is T => t !== undefined), ...base.terms];
-  const merged: Glossary = { terms: dedupe(terms, t => normalizeLoose(t.term)), ui: [], shortvideo: [], emphasis: [], promptVerbs: [] };
+  // lists of { term, label }: the project's entries come first, so they win on repeats
+  const termList = (key: 'terms' | 'section' | 'cta'): GlossaryTerm[] => {
+    const own = (Array.isArray(extra[key]) ? extra[key]! : []).map(asTerm).filter(<T>(t: T | undefined): t is T => t !== undefined);
+    return dedupe([...own, ...(base[key] ?? [])], t => normalizeLoose(t.term));
+  };
+  const merged: Glossary = { terms: termList('terms'), section: termList('section'), cta: termList('cta'), ui: [], shortvideo: [], emphasis: [], promptVerbs: [], notTools: [] };
   for (const list of LISTS) {
     const own = (Array.isArray(extra[list]) ? extra[list]! : []).filter((x): x is string => typeof x === 'string');
-    merged[list] = dedupe([...own, ...base[list]], normalizeLoose);
+    merged[list] = dedupe([...own, ...(base[list] ?? [])], normalizeLoose);
   }
   return merged;
 }

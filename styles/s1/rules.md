@@ -47,3 +47,5 @@ Easing chính xác của icon/chữ, âm thanh và hiệu ứng tiếng — cầ
 
 ## Số liệu cho đạo diễn
 Các con số (khoảng cách tối đa giữa insert, loại insert được dùng, tỉ lệ caption `label`/`big`, nhịp zoom-punch) nằm trong khối `director` của `theme.json`; `analyze` và `validate` đọc chính khối này.
+
+Cách xử lý từng tình huống nội dung (công cụ, con số, dấu mốc phần, kêu gọi hành động, danh sách) và độ đa dạng giữa các lần nằm trong `playbook.json` cùng thư mục; sửa ở đó để đổi gợi ý của `analyze`.

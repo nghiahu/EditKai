@@ -1,0 +1,104 @@
+{
+  "situations": {
+    "tool": [
+      {
+        "id": "tool-badge",
+        "type": "logo-badge",
+        "duration": 2,
+        "props": {
+          "label": "{text}",
+          "icon": "sparkles"
+        }
+      },
+      {
+        "id": "tool-title",
+        "type": "title-card",
+        "duration": 2.6,
+        "props": {
+          "icon": "sparkles",
+          "title": "{TEXT}",
+          "sub": "{label}"
+        }
+      }
+    ],
+    "number": [
+      {
+        "id": "number-stat",
+        "type": "stat-card",
+        "duration": 3.5,
+        "props": {
+          "rows": [
+            {
+              "value": "{text}",
+              "icon": "{icon}"
+            }
+          ]
+        }
+      },
+      {
+        "id": "number-title",
+        "type": "title-card",
+        "duration": 3,
+        "props": {
+          "icon": "zap",
+          "title": "{TEXT}"
+        }
+      }
+    ],
+    "section": [
+      {
+        "id": "section-title",
+        "type": "title-card",
+        "duration": 3,
+        "props": {
+          "icon": "layers",
+          "title": "{TEXT}"
+        }
+      },
+      {
+        "id": "section-badge",
+        "type": "logo-badge",
+        "duration": 2,
+        "props": {
+          "label": "{text}",
+          "icon": "layers"
+        }
+      }
+    ],
+    "cta": [
+      {
+        "id": "cta-title",
+        "type": "title-card",
+        "duration": 3,
+        "props": {
+          "icon": "rocket",
+          "title": "{TEXT}"
+        }
+      },
+      {
+        "id": "cta-badge",
+        "type": "logo-badge",
+        "duration": 2,
+        "props": {
+          "label": "{text}",
+          "icon": "rocket"
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-explainer",
+        "type": "explainer-scene",
+        "duration": 5,
+        "builder": "explainer-list"
+      }
+    ]
+  },
+  "variety": {
+    "rotate": true,
+    "maxShare": {
+      "title-card": 0.7
+    },
+    "sameTypeGapSec": 6
+  }
+}

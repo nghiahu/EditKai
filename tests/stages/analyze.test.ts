@@ -46,6 +46,17 @@ describe('analyzeStage', () => {
     const box = (await analyzeStage(dir)).beats[0].treatment.inserts.find(i => i.type === 'prompt-box');
     expect(box?.props).toMatchObject({ strike: false });
   });
+  it('s1 puts a section mark on a title card, the insert that style was missing (playbook)', async () => {
+    const dir = writeProject(['Đầu tiên là phần mở bài của video này.'], { style: 's1' });
+    const sb = await analyzeStage(dir);
+    expect(sb.beats[0].cues.map(c => c.kind)).toContain('section');
+    expect(sb.beats[0].treatment.inserts[0]).toMatchObject({ type: 'title-card', props: { title: 'ĐẦU TIÊN' } });
+  });
+  it('a playbook.json in the style folder is used (the recipes come from it)', async () => {
+    // the m1 playbook offers a badge before a title for a tool: the first insert for Claude is a logo-badge
+    const dir = writeProject(['Hôm nay mình dùng Claude để edit video.'], { style: 'm1' });
+    expect((await analyzeStage(dir)).beats[0].treatment.inserts[0].type).toBe('logo-badge');
+  });
   it('an empty transcript gives a clear error, one word still works (Review Focus 1)', async () => {
     await expect(analyzeStage(writeProject([], { words: [] }))).rejects.toThrow('Không có lời để phân tích');
     const sb = await analyzeStage(writeProject(['Xin']));

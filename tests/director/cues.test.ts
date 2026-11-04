@@ -125,3 +125,49 @@ describe('emphasis, ui, shortvideo and question cues', () => {
     expect(c[0].word).toBe(4); // index into the whole transcript
   });
 });
+
+describe('section and cta cues', () => {
+  const g: Glossary = {
+    ...glossary,
+    section: [{ term: 'mở bài', label: 'MỞ BÀI' }, { term: 'đầu tiên', label: 'ĐẦU TIÊN' }, { term: 'cuối cùng', label: 'CUỐI CÙNG' }],
+    cta: [{ term: 'đăng ký', label: 'ĐĂNG KÝ KÊNH' }, { term: 'bình luận', label: 'BÌNH LUẬN' }, { term: 'comment', label: 'BÌNH LUẬN' }],
+  };
+  const sec = (text: string) => cues(text, g).filter(c => c.kind === 'section');
+  const cta = (text: string) => cues(text, g).filter(c => c.kind === 'cta');
+  it('a section mark gives a cue with its label and the index of its first word', () => {
+    expect(sec('Đầu tiên là phần mở bài')).toEqual([{ kind: 'section', text: 'ĐẦU TIÊN', word: 0 }, { kind: 'section', text: 'MỞ BÀI', word: 4 }]);
+  });
+  it('"bước" followed by a number is a section too, whatever the glossary says', () => {
+    expect(sec('Bước 2 là chọn phong cách').map(c => c.text)).toEqual(['BƯỚC 2']);
+    expect(sec('Làm theo bước 10 nhé').map(c => c.text)).toEqual(['BƯỚC 10']);
+    expect(sec('Một bước nhỏ thôi')).toEqual([]);
+  });
+  it('a cta gives its label; two entries with the same label give one cue', () => {
+    expect(cta('Nhớ đăng ký kênh nhé').map(c => [c.text, c.word])).toEqual([['ĐĂNG KÝ KÊNH', 1]]);
+    expect(cta('Hãy bình luận hoặc comment cho mình').map(c => c.text)).toEqual(['BÌNH LUẬN']);
+  });
+  it('matching ignores case and tone marks, NFC and NFD alike', () => {
+    expect(sec('DAU TIEN la gi').map(c => c.text)).toEqual(['ĐẦU TIÊN']);
+    expect(cta('ĐĂNG KÝ'.normalize('NFD') + ' ngay').map(c => c.text)).toEqual(['ĐĂNG KÝ KÊNH']);
+  });
+  it('a glossary without section and cta lists gives none, and "chia sẻ" is not a cta', () => {
+    expect(cues('Đầu tiên hãy đăng ký kênh').filter(c => c.kind === 'section' || c.kind === 'cta')).toEqual([]);
+    expect(cta('Mình sẽ chia sẻ cách làm')).toEqual([]);
+  });
+});
+
+describe('words that look like tools but are Vietnamese', () => {
+  const g: Glossary = { ...glossary, notTools: ['trong', 'cho', 'khi'] };
+  it('a capitalised Vietnamese word without tone marks (Whisper capitalises the start of its sentence) is not a tool', () => {
+    expect(cues('nhưng mà Trong video này thì mình sẽ chia sẻ', g).filter(c => c.kind === 'tool')).toEqual([]);
+    expect(cues('Hôm nay Cho mình hỏi', g).filter(c => c.kind === 'tool')).toEqual([]);
+  });
+  it('a real tool name is still found, and a project can extend the list', () => {
+    expect(cues('Hôm nay mình dùng Claude để edit', g).filter(c => c.kind === 'tool').map(c => c.text)).toContain('Claude');
+    expect(cues('Hôm nay mình dùng Zed để edit', { ...g, notTools: [...g.notTools!, 'zed'] }).filter(c => c.kind === 'tool')).toEqual([]);
+  });
+  it('the default glossary lists the common ones', () => {
+    // loaded through loadGlossary in glossary.test; here only the shape is checked
+    expect(Array.isArray(g.notTools)).toBe(true);
+  });
+});

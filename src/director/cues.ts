@@ -10,7 +10,7 @@ const SENTENCE_END = /[.?!…]$/;
 const MAX_PROMPT_WORDS = 8;
 const MIN_PROMPT_WORDS = 3;
 const MAX_LIST_ITEM_WORDS = 4;
-const KIND_ORDER: CueKind[] = ['tool', 'number', 'prompt', 'list', 'emphasis', 'ui', 'shortvideo', 'question'];
+const KIND_ORDER: CueKind[] = ['section', 'cta', 'tool', 'number', 'prompt', 'list', 'emphasis', 'ui', 'shortvideo', 'question'];
 
 const stripEnds = (s: string) => s.replace(/^[^\p{L}\p{N}%$]+|[^\p{L}\p{N}%$]+$/gu, '');
 const joinRaw = (toks: Tok[]) => toks.map(t => t.raw).join(' ');
@@ -43,7 +43,8 @@ export function detectCues(words: { t: string; s: number; e: number }[], span: B
   }
   toks.forEach((t, i) => {
     const c = stripEnds(t.raw);
-    if (i > 0 && c.length >= 2 && /^[A-Z][A-Za-z0-9.]*$/.test(c) && /[a-z]/.test(c) && !taken.has(t.idx)) cues.push({ kind: 'tool', text: c, word: t.idx, label: 'công cụ' });
+    const vietnamese = (glossary.notTools ?? []).includes(normalizeLoose(c)); // "Trong" at the start of a sentence is not a tool
+    if (i > 0 && c.length >= 2 && /^[A-Z][A-Za-z0-9.]*$/.test(c) && /[a-z]/.test(c) && !vietnamese && !taken.has(t.idx)) cues.push({ kind: 'tool', text: c, word: t.idx, label: 'công cụ' });
   });
 
   // number: digits followed by a unit or a percent sign, or "nửa tiếng" / "nửa giờ"
@@ -112,6 +113,18 @@ export function detectCues(words: { t: string; s: number; e: number }[], span: B
       if (at !== undefined) cues.push({ kind, text: joinRaw(toks.slice(at, at + pat.length)), word: toks[at].idx });
     }
   }
+
+  // section marks and calls to action: the first occurrence of each entry; entries with the same label give one cue. "bước <số>" is always a section.
+  for (const [kind, entries] of [['section', glossary.section ?? []], ['cta', glossary.cta ?? []]] as const) {
+    for (const { term, label } of entries) {
+      const at = findSeq(toks, patternOf(term))[0];
+      const text = label ?? term.toUpperCase();
+      if (at !== undefined && !cues.some(c => c.kind === kind && c.text === text)) cues.push({ kind, text, word: toks[at].idx });
+    }
+  }
+  toks.forEach((t, i) => {
+    if (t.norm === 'buoc' && /^\d+$/.test(toks[i + 1]?.norm ?? '')) cues.push({ kind: 'section', text: `BƯỚC ${toks[i + 1].norm}`, word: t.idx });
+  });
 
   if (toks.length > 0 && toks[toks.length - 1].raw.endsWith('?')) cues.push({ kind: 'question', text: span.text, word: span.lastWord });
 

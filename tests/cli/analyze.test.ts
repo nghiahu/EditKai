@@ -17,6 +17,11 @@ describe('analyze command', () => {
     expect(existsSync(join(dir, 'storyboard.json'))).toBe(true);
     expect(out.join('\n')).toMatch(/2 nhịp/);
   });
+  it('the summary counts the inserts by type so the variety can be seen', async () => {
+    const dir = writeProject(['Đầu tiên là phần mở bài.', 'Hôm nay mình dùng Claude để edit video nhé.', 'Chỉ mất hơn nửa tiếng thôi.'], { style: 's1' });
+    expect(await cli('analyze', dir)).toBe(0);
+    expect(out.join('\n')).toMatch(/title-card \d/);
+  });
   it('exits 2 for a missing project folder or no folder argument', async () => {
     expect(await cli('analyze', join(writeProject(['x']), 'không-có'))).toBe(2);
     expect(await cli('analyze')).toBe(2);

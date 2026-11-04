@@ -2,13 +2,16 @@ import type { Asset } from '../assets/manifest';
 import { strikeDoneFrame, typingDoneFrame } from '../../remotion/promptTyping';
 import type { Director } from '../style/director';
 import { isNegation } from './glossary';
+import { DEFAULT_PLAYBOOK, fillProps, type Playbook, type Recipe } from './playbook';
 import { normalizeLoose } from './text';
 import type { BeatSpan, Cue, InsertSpec, Treatment } from './types';
 
 type W = { t: string; s: number; e: number };
 
-const PRIORITY = ['footage', 'prompt-box', 'stat-card', 'logo-badge', 'chip-stack', 'explainer-scene'];
-const DURATION: Record<string, number> = { 'logo-badge': 2, 'stat-card': 3.5, 'chip-stack': 4, footage: 4, 'explainer-scene': 5 };
+// when two situations of one beat want an insert, the first of these wins (the other usually fails the minimum gap)
+const SITUATION_PRIORITY = ['footage', 'prompt', 'section', 'cta', 'number', 'tool', 'list'];
+const FOOTAGE_SEC = 4;
+const MIN_SHARE_JUDGED = 4; // maxShare only applies once this many inserts exist
 const PHONE_FOOTAGE_SEC = 3;
 const PROMPT_TAIL_SEC = 0.3;
 const PUNCH_SEC = 1.2;
@@ -37,9 +40,25 @@ export function suggestTreatments(input: {
   words: W[];
   director: Director;
   fps: number;
+  playbook?: Playbook;
 }): Treatment[] {
   const { spans, cues, matches, words, director, fps } = input;
-  const accepted: { at: number; end: number }[] = [];
+  const playbook = input.playbook ?? DEFAULT_PLAYBOOK;
+  const accepted: { at: number; end: number; type: string }[] = [];
+  const lastUsed: Record<string, number> = {}; // recipe id -> how many inserts had been accepted when it was last used (higher = more recent)
+
+  /** The recipe for a situation at time `at`: allowed by the style, within the type shares and the same-type gap, then the one used longest ago. */
+  const choose = (recipes: Recipe[], at: number): Recipe | undefined => {
+    const v = playbook.variety;
+    const ok = recipes.filter(r => {
+      if (!director.allowedInserts.includes(r.type)) return false;
+      const share = v.maxShare[r.type];
+      if (share !== undefined && accepted.length >= MIN_SHARE_JUDGED && (accepted.filter(a => a.type === r.type).length + 1) / (accepted.length + 1) > share) return false;
+      return !accepted.some(a => a.type === r.type && at < a.end + v.sameTypeGapSec);
+    });
+    if (!v.rotate) return ok[0];
+    return [...ok].sort((a, b) => (lastUsed[a.id] ?? 0) - (lastUsed[b.id] ?? 0))[0];
+  };
   let lastBigAt = -Infinity;
   let lastPunchAt = -Infinity;
   let labelCount = 0;
@@ -50,53 +69,50 @@ export function suggestTreatments(input: {
     const startOf = (cue?: Cue) => Math.min(span.end, Math.max(span.start, cue?.word !== undefined ? words[cue.word].s : span.start));
     const first = (kind: Cue['kind']) => beatCues.find(c => c.kind === kind);
 
-    // candidate inserts, then filtered by what the style allows
-    const candidates: InsertSpec[] = [];
+    // candidates: one per situation of the beat, each in the recipe the playbook's variety rules choose
+    type Candidate = InsertSpec & { situation: string; recipe?: string };
+    const candidates: Candidate[] = [];
     const ui = first('ui');
     const shortvideo = first('shortvideo');
+    const tool = first('tool'); // also decides the label caption below
     if (asset) {
       const phoneLike = asset.kind === 'phone';
       const cue = phoneLike ? shortvideo ?? ui : ui ?? shortvideo;
       candidates.push({
+        situation: 'footage',
         type: 'footage',
         props: phoneLike ? { src: asset.file, frame: 'phone', motion: 'none' } : { src: asset.file, frame: 'window', motion: 'zoom-in' },
         at: startOf(cue),
-        duration: phoneLike ? PHONE_FOOTAGE_SEC : DURATION.footage,
+        duration: phoneLike ? PHONE_FOOTAGE_SEC : FOOTAGE_SEC,
       });
     }
     const prompt = first('prompt');
     if (prompt) {
       const strike = beatCues.some(c => c.kind === 'emphasis' && isNegation(c.text));
       const frames = strike ? strikeDoneFrame(prompt.text, fps) : typingDoneFrame(prompt.text, fps);
-      candidates.push({ type: 'prompt-box', props: { text: prompt.text, strike }, at: startOf(prompt), duration: Math.max(1.5, frames / fps + PROMPT_TAIL_SEC) });
+      candidates.push({ situation: 'prompt', type: 'prompt-box', props: { text: prompt.text, strike }, at: startOf(prompt), duration: Math.max(1.5, frames / fps + PROMPT_TAIL_SEC) });
     }
-    const number = first('number');
-    if (number) {
-      const icon = iconForNumber(number.text);
-      candidates.push({ type: 'stat-card', props: { rows: [{ value: number.text, ...(icon ? { icon } : {}) }] }, at: startOf(number), duration: DURATION['stat-card'] });
-    }
-    const tool = first('tool');
-    if (tool) candidates.push({ type: 'logo-badge', props: { label: tool.text, icon: 'sparkles' }, at: startOf(tool), duration: DURATION['logo-badge'] });
-    const list = first('list');
-    if (list?.items) {
-      candidates.push({ type: 'chip-stack', props: { chips: list.items.map(label => ({ icon: 'check', label })) }, at: startOf(list), duration: DURATION['chip-stack'] });
-      candidates.push({
-        type: 'explainer-scene',
-        props: { title: span.text.split(/\s+/).slice(0, 3).join(' ').toUpperCase(), body: { kind: 'list', items: list.items } },
-        at: startOf(list),
-        duration: DURATION['explainer-scene'],
-      });
+    for (const situation of ['section', 'cta', 'number', 'tool', 'list'] as const) {
+      const cue = first(situation);
+      if (!cue || (situation === 'list' && !cue.items)) continue;
+      const at = startOf(cue);
+      const rec = choose(playbook.situations[situation] ?? [], at);
+      if (!rec) continue;
+      let props: Record<string, unknown>;
+      if (rec.builder === 'chips') props = { chips: cue.items!.map(label => ({ icon: 'check', label })) };
+      else if (rec.builder === 'explainer-list') props = { title: span.text.split(/\s+/).slice(0, 3).join(' ').toUpperCase(), body: { kind: 'list', items: cue.items } };
+      else props = fillProps(rec.props ?? {}, { text: cue.text, label: cue.label ?? (situation === 'tool' ? 'công cụ' : undefined), icon: situation === 'number' ? iconForNumber(cue.text) : undefined });
+      candidates.push({ situation, recipe: rec.id, type: rec.type, props, at, duration: rec.duration });
     }
 
     const inserts: InsertSpec[] = [];
-    const listed = new Set<string>();
-    for (const c of candidates.filter(c => director.allowedInserts.includes(c.type)).sort((a, b) => PRIORITY.indexOf(a.type) - PRIORITY.indexOf(b.type))) {
-      if (c.type === 'explainer-scene' && listed.has('chip-stack')) continue; // one list insert per beat
+    for (const c of candidates.sort((a, b) => SITUATION_PRIORITY.indexOf(a.situation) - SITUATION_PRIORITY.indexOf(b.situation))) {
+      if (!director.allowedInserts.includes(c.type)) continue;
       const clash = accepted.some(a => c.at < a.end + director.insertMinGapSec && a.at < c.at + c.duration + director.insertMinGapSec);
       if (clash) continue;
-      accepted.push({ at: c.at, end: c.at + c.duration });
-      inserts.push(c);
-      listed.add(c.type);
+      accepted.push({ at: c.at, end: c.at + c.duration, type: c.type });
+      if (c.recipe) lastUsed[c.recipe] = accepted.length;
+      inserts.push({ type: c.type, props: c.props, at: c.at, duration: c.duration });
     }
     inserts.sort((a, b) => a.at - b.at);
 

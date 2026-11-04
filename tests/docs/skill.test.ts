@@ -128,3 +128,9 @@ describe('SKILL.md describes the flow', () => {
     expect(wrong).toEqual([]);
   });
 });
+
+describe('SKILL.md documents the playbook', () => {
+  it('mentions playbook.json, its recipes and variety rules, and the glossary lists section, cta and notTools', () => {
+    expect(missing(['playbook.json', 'recipe', 'rotate', 'maxShare', 'sameTypeGapSec', 'section', 'cta', 'notTools'])).toEqual([]);
+  });
+});

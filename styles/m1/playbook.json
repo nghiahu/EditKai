@@ -1,0 +1,106 @@
+{
+  "situations": {
+    "tool": [
+      {
+        "id": "tool-badge",
+        "type": "logo-badge",
+        "duration": 2,
+        "props": {
+          "label": "{text}",
+          "icon": "sparkles"
+        }
+      },
+      {
+        "id": "tool-title",
+        "type": "title-card",
+        "duration": 2.2,
+        "props": {
+          "icon": "sparkles",
+          "title": "{TEXT}",
+          "sub": "{label}"
+        }
+      }
+    ],
+    "number": [
+      {
+        "id": "number-stat",
+        "type": "stat-card",
+        "duration": 3.5,
+        "props": {
+          "rows": [
+            {
+              "value": "{text}",
+              "icon": "{icon}"
+            }
+          ]
+        }
+      },
+      {
+        "id": "number-title",
+        "type": "title-card",
+        "duration": 2.6,
+        "props": {
+          "icon": "zap",
+          "title": "{TEXT}"
+        }
+      }
+    ],
+    "section": [
+      {
+        "id": "section-title",
+        "type": "title-card",
+        "duration": 2.4,
+        "props": {
+          "icon": "layers",
+          "title": "{TEXT}"
+        }
+      },
+      {
+        "id": "section-badge",
+        "type": "logo-badge",
+        "duration": 2,
+        "props": {
+          "label": "{text}",
+          "icon": "layers"
+        }
+      }
+    ],
+    "cta": [
+      {
+        "id": "cta-title",
+        "type": "title-card",
+        "duration": 2.4,
+        "props": {
+          "icon": "rocket",
+          "title": "{TEXT}"
+        }
+      },
+      {
+        "id": "cta-badge",
+        "type": "logo-badge",
+        "duration": 2,
+        "props": {
+          "label": "{text}",
+          "icon": "rocket"
+        }
+      }
+    ],
+    "list": [
+      {
+        "id": "list-chips",
+        "type": "chip-stack",
+        "duration": 4,
+        "builder": "chips"
+      }
+    ]
+  },
+  "variety": {
+    "rotate": true,
+    "maxShare": {
+      "title-card": 0.6,
+      "logo-badge": 0.5,
+      "stat-card": 0.5
+    },
+    "sameTypeGapSec": 4
+  }
+}

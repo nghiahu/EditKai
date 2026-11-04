@@ -57,3 +57,33 @@ describe('isNegation', () => {
     expect(isNegation('Đừng,'.normalize('NFD'))).toBe(true);
   });
 });
+
+describe('section and cta lists', () => {
+  it('the default glossary has them with labels', () => {
+    const dir = project();
+    const g = loadGlossary(dir);
+    expect(g.section!.map(s => s.term)).toEqual(expect.arrayContaining(['mở bài', 'thân bài', 'kết bài', 'đầu tiên', 'cuối cùng']));
+    expect(g.section!.find(s => s.term === 'mở bài')!.label).toBe('MỞ BÀI');
+    expect(g.cta!.map(s => s.term)).toEqual(expect.arrayContaining(['đăng ký', 'theo dõi', 'bình luận']));
+    expect(g.cta!.map(s => s.term)).not.toContain('chia sẻ');
+    rmSync(dir, { recursive: true, force: true });
+  });
+  it('a project glossary adds entries and its label wins for a repeated one', () => {
+    const dir = project({ section: [{ term: 'mở bài', label: 'PHẦN MỞ' }, { term: 'phần cuối', label: 'KẾT' }], cta: ['tải về'] });
+    const g = loadGlossary(dir);
+    expect(g.section!.filter(s => s.term === 'mở bài')).toEqual([{ term: 'mở bài', label: 'PHẦN MỞ' }]);
+    expect(g.section!.map(s => s.term)).toContain('phần cuối');
+    expect(g.section!.map(s => s.term)).toContain('thân bài'); // defaults stay
+    expect(g.cta!.find(s => s.term === 'tải về')).toBeTruthy();
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
+
+describe('notTools', () => {
+  it('the default glossary lists common Vietnamese words written without tone marks, and a project adds to it', () => {
+    const dir = project({ notTools: ['zed'] });
+    const g = loadGlossary(dir);
+    expect(g.notTools).toEqual(expect.arrayContaining(['trong', 'cho', 'khi', 'zed']));
+    rmSync(dir, { recursive: true, force: true });
+  });
+});

@@ -122,8 +122,11 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
     if (cmd === 'analyze') {
       const sb = await analyzeStage(projectDir, { force: 'force' in flags }); // --force is a bare flag
       const cues = sb.beats.reduce((n, b) => n + b.cues.length, 0);
-      const inserts = sb.beats.reduce((n, b) => n + b.treatment.inserts.length, 0);
-      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất → storyboard.json`);
+      const byType: Record<string, number> = {};
+      for (const b of sb.beats) for (const i of b.treatment.inserts) byType[i.type] = (byType[i.type] ?? 0) + 1;
+      const inserts = Object.values(byType).reduce((n, v) => n + v, 0);
+      const kinds = Object.entries(byType).map(([t, n]) => `${t} ${n}`).join(', ');
+      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất${kinds ? ` (${kinds})` : ''} → storyboard.json`);
       return 0;
     }
     if (cmd === 'compose') {
