@@ -51,7 +51,7 @@ describe('timing', () => {
   });
   it('repeated or backwards word times never make captions overlap and every caption lasts at least 0.1 s', () => {
     const w = words(12);
-    w[4] = { t: 'x', s: 0.2, e: 0.5 }; // backwards
+    w[4] = { t: 'x', s: 0, e: 0.1 }; // backwards
     w[5] = { ...w[4] };               // repeated
     w[8] = { t: 'y', s: 0, e: 0 };
     const { layers } = run(board(beat('b1', 0, 5), beat('b2', 6, 11)), w);
