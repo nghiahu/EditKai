@@ -90,6 +90,7 @@ Khi dựng, đọc `assets.json` và ghép **mô tả** với lời đang nói (
 | `emphasis` | `box`, `ink`, `underline` | theo phong cách (m1 `box`, s1 `underline`) | `box`: hộp vàng chữ đen quét qua cả cụm nhấn. `ink`: chữ màu nhấn. `underline`: màu nhấn và gạch chân |
 | `label` | chuỗi | không | Dòng nhỏ phía trên; **bắt buộc** (không rỗng) khi `variant` là `label` |
 | `handles` | `true`, `false` | `false` | Chỉ với `big`: bốn ô vuông ở góc khung chữ |
+| `backdrop` | `none`, `plate` | `none` | `plate`: nền tối mờ phía sau cả cụm chữ. Chữ luôn có viền đen; dùng `plate` khi nền phía sau gần trắng (bảng trắng, cảnh sáng của video gốc). `compose` tự thêm `plate` cho caption có hơn 15% bề ngang chữ nằm trên nền gần trắng; validator cảnh báo `caption-low-contrast` ở plan viết tay chưa có `plate` |
 
 Giá trị lạ làm validator báo `invalid-props`; số từ quá giới hạn (`big` ≤ 3, kiểu khác ≤ `limits.maxCaptionWords`) báo `caption-too-long`.
 

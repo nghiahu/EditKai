@@ -9,7 +9,8 @@ import { normalizeStoryboard, readStoryboard, validateStoryboard } from '../dire
 import { probe } from '../media/probe';
 import { readPlan } from '../plan/io';
 import type { Layer, Plan } from '../plan/types';
-import { validatePlan } from '../qa/validate';
+import { BRIGHT_SHARE, validatePlan } from '../qa/validate';
+import { measureCaptionBright } from './captionBright';
 import { loadTheme } from '../style/theme';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -62,6 +63,9 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   issues.push(...caps.issues);
   const ins = insertLayers(sb, durationSec, fileExists);
   const cam = cameraLayers(sb, theme.director, durationSec);
+  // white text on a bright picture (a white panel in the source, say) disappears: those captions get a dark plate behind them
+  const bright = await measureCaptionBright(video, caps.layers, theme, project.width);
+  for (const l of caps.layers) if ((bright.get(l.id) ?? 0) > BRIGHT_SHARE) l.props = { ...l.props, backdrop: 'plate' };
   let layers = [...caps.layers, ...ins.layers, ...cam.layers];
 
   // a regenerated plan is merged into plan.json later: its ids must not clash with the ones already there

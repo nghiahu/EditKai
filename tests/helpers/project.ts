@@ -42,6 +42,6 @@ export function writeProject(
 }
 
 /** A plain video of `seconds` s named cleaned.mp4 in the project (for tests that need a real duration). */
-export async function writeCleanedVideo(dir: string, seconds: number): Promise<void> {
-  await runFfmpeg(['-y', '-f', 'lavfi', '-i', `color=c=gray:s=320x240:r=30:d=${seconds}`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', join(dir, 'cleaned.mp4')]);
+export async function writeCleanedVideo(dir: string, seconds: number, color = 'gray'): Promise<void> {
+  await runFfmpeg(['-y', '-f', 'lavfi', '-i', `color=c=${color}:s=320x240:r=30:d=${seconds}`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', join(dir, 'cleaned.mp4')]);
 }

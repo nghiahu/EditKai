@@ -4,6 +4,7 @@ import type { ResolvedCaption } from '../../../src/plan/captionProps';
 import { clamp01, drawProgress, easeOut, enterExit, wordProgress } from '../../motion';
 import type { LayerComponent } from '../../registry';
 import { captionBox } from './layout';
+import { backdropStyle, legibleShadow } from './legibility';
 
 const WIPE_SEC = 0.25; // m1: how long the yellow box takes to sweep under a key word
 const UNDERLINE_FRAMES = 10; // s1: how long the underline takes to draw
@@ -29,7 +30,7 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
           color: theme.colors.white,
         }}
       >
-        <div>{/* one flex child, so the words stay on one flowing line when the box is a centred flex column */}
+        <div style={{ display: 'inline-block', ...backdropStyle(resolved.backdrop, theme.radius) }}>{/* one flex child, so the words stay on one flowing line when the box is a centred flex column */}
         {(layer.words ?? []).map((w, i) => {
           const p = wordProgress(w, tSec, theme.motion);
           const active = tSec >= w.s && tSec <= Math.max(w.e, w.s + 0.12);
@@ -46,7 +47,7 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
                 marginRight: 10,
                 opacity,
                 transform: `translateY(${(1 - clamp01(p)) * 14}px) scale(${0.6 + 0.4 * p})`,
-                textShadow: opacity > 0 && !(w.hl && m1) ? '0 2px 8px rgba(0,0,0,0.6)' : 'none',
+                textShadow: opacity > 0 && !(w.hl && m1) ? legibleShadow(3) : 'none',
                 color: w.hl ? (m1 ? (wipe > 0.35 ? theme.colors.black : theme.colors.white) : accent) : theme.colors.white,
               }}
             >

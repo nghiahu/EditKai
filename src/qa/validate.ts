@@ -13,11 +13,14 @@ export interface Ctx {
   fileExists: (path: string) => boolean;
   transcript?: { words: { t: string; s: number; e: number }[] };
   assets?: { file: string; durationSec?: number }[];
+  /** Share (0-1) of each caption layer's text width that sits on a near-white picture, by layer id; absent when the picture was not measured. */
+  captionBright?: Map<string, number>;
 }
 
 const DRIFT_SEC = 0.3;
 const MAX_BIG_WORDS = 3;
 const MAX_GAP_WARNINGS = 5;
+export const BRIGHT_SHARE = 0.15; // more of the text than this on a near-white picture: white text needs a plate behind it
 const INSERT_TRACKS = ['title', 'graphic', 'footage'];
 
 /** Where an insert layer sits on screen, for the caption overlap check. */
@@ -106,6 +109,9 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     // captions wrap at spaces, so only the longest unbreakable word can spill out of the safe zone
     const longest = Math.max(0, ...words.map(w => w.t.length));
     if (longest * size * 0.55 > usable) warn('text-overflow', `${l.id}: chữ có thể tràn khỏi vùng an toàn`, l.id);
+    const bg = ctx.captionBright?.get(l.id);
+    if (bg !== undefined && bg > BRIGHT_SHARE && resolved.backdrop !== 'plate')
+      warn('caption-low-contrast', `${l.id}: ${Math.round(bg * 100)}% chiều ngang chữ nằm trên nền gần trắng, chữ trắng khó đọc; thêm props.backdrop "plate"`, l.id);
     if (ctx.transcript) {
       const drift = words.find(w => !ctx.transcript!.words.some(
         tw => normalizeWord(tw.t) === normalizeWord(w.t) && Math.abs(tw.s - w.s) <= DRIFT_SEC));

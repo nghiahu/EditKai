@@ -4,6 +4,7 @@ import { groupRuns, type ResolvedCaption } from '../../../src/plan/captionProps'
 import { clamp01, drawProgress, easeOut, enterExit, pop } from '../../motion';
 import type { LayerComponent } from '../../registry';
 import { captionBox } from './layout';
+import { backdropStyle, legibleShadow } from './legibility';
 
 const BOX_DELAY_SEC = 0.15; // the emphasis box lands a moment after the text
 const BOX_SEC = 0.25;
@@ -35,7 +36,7 @@ export const PhraseCaption: React.FC<Props> = ({ layer, theme, resolved, sizeSca
   const runs = groupRuns(words);
   const wipe = easeOut((frame - Math.round(BOX_DELAY_SEC * fps)) / Math.max(1, Math.round(BOX_SEC * fps)));
   const underline = drawProgress(frame, UNDERLINE_START, UNDERLINE_FRAMES);
-  const shadow = '0 2px 8px rgba(0,0,0,0.6)';
+  const shadow = legibleShadow(3);
   const scale = springIn ? 0.5 + 0.5 * Math.max(0, enter) + 0.03 * exit : 0.92 + 0.08 * e + 0.03 * exit;
   const blur = springIn ? BLUR_PX * exit : BLUR_PX * (1 - e) + BLUR_PX * exit;
 
@@ -51,7 +52,7 @@ export const PhraseCaption: React.FC<Props> = ({ layer, theme, resolved, sizeSca
           color: theme.colors.white,
         }}
       >
-        <div style={{ position: 'relative', display: 'inline-block', padding: handles ? 24 : 0, transform: `scale(${scale})`, filter: `blur(${blur.toFixed(2)}px)` }}>
+        <div style={{ position: 'relative', display: 'inline-block', padding: handles ? 24 : 0, transform: `scale(${scale})`, filter: `blur(${blur.toFixed(2)}px)`, ...backdropStyle(resolved.backdrop, theme.radius) }}>
           {label ? (
             <div style={{ fontSize: '0.55em', opacity: 0.75 * visible * e, marginBottom: 6, textShadow: shadow }}>{label}</div>
           ) : null}
