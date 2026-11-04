@@ -16,6 +16,10 @@ const MAX_FILLERS = 200;
 const FILL_EMPHASIS_BONUS = 2; // seconds of distance a beat with an emphasised word is worth
 const MAX_PHRASE_WORDS = 3;
 const MAX_PHRASE_CHARS = 30;
+const JOIN_EDGE_SEC = 0.3; // a join this close to the start or the end of the video gets no transition
+const JOIN_ZONE_SEC = 0.3; // inserts keep this far from a join (the transition itself is 0.4 s centred on it)
+const MIN_KEEP_SEC = 1.2; // an insert shortened by a join must keep at least this much
+const TRANSITION_SEC = 0.4;
 const MIN_SHARE_JUDGED = 4; // maxShare only applies once this many inserts exist
 const PHONE_FOOTAGE_SEC = 3;
 const PROMPT_TAIL_SEC = 0.3;
@@ -59,9 +63,30 @@ export function suggestTreatments(input: {
   director: Director;
   fps: number;
   playbook?: Playbook;
+  joins?: number[]; // times on the cut video where two parts were joined (condense.json): each gets a transition
 }): Treatment[] {
   const { spans, cues, matches, words, director, fps } = input;
   const playbook = input.playbook ?? DEFAULT_PLAYBOOK;
+
+  // joins of a condensed video: each gets a transition, and graphics keep away from it
+  const lastWordEnd = words.length ? words[words.length - 1].e : 0;
+  const joins = [...new Set((input.joins ?? []).filter(j => Number.isFinite(j) && j >= JOIN_EDGE_SEC && j <= lastWordEnd - JOIN_EDGE_SEC))].sort((a, b) => a - b);
+  const intersectsJoin = (at: number, duration: number) => joins.some(j => at < j + JOIN_ZONE_SEC && at + duration > j - JOIN_ZONE_SEC);
+
+  /**
+   * An insert must not run across a join (the transition sits there; a card straddling a cut reads as a mistake): when it would, it is cut short
+   * before the join if at least MIN_KEEP_SEC of it remains (`shorten`), else it starts after the join. Undefined when no clear place is left.
+   */
+  const clearOfJoins = (at: number, duration: number, shorten: boolean): { at: number; duration: number } | undefined => {
+    let a = at, d = duration;
+    for (const j of joins) {
+      if (!(a < j + JOIN_ZONE_SEC && a + d > j - JOIN_ZONE_SEC)) continue;
+      const before = j - JOIN_ZONE_SEC - a;
+      if (shorten && a < j - JOIN_ZONE_SEC && before >= MIN_KEEP_SEC) d = before;
+      else a = j + JOIN_ZONE_SEC;
+    }
+    return intersectsJoin(a, d) ? undefined : { at: a, duration: d };
+  };
   const accepted: { at: number; end: number; type: string }[] = [];
   const lastUsed: Record<string, number> = {}; // recipe id -> how many inserts had been accepted when it was last used (higher = more recent)
 
@@ -80,6 +105,19 @@ export function suggestTreatments(input: {
   let lastBigAt = -Infinity;
   let lastPunchAt = -Infinity;
   let labelCount = 0;
+
+  /** One transition centred on each join, the kinds of the playbook in turn (neighbours always differ), in the beat that holds it. */
+  const addTransitions = (treatments: Treatment[]) => {
+    const kinds = playbook.transitions;
+    if (!kinds.length || !spans.length) return;
+    joins.forEach((j, i) => {
+      const at = Math.max(0, j - TRANSITION_SEC / 2);
+      let beat = 0;
+      spans.forEach((s, k) => { if (s.start <= at + 0.05) beat = k; });
+      treatments[beat].inserts.push({ type: 'transition', props: { kind: kinds[i % kinds.length] }, at, duration: TRANSITION_SEC });
+      treatments[beat].inserts.sort((a, b) => a.at - b.at);
+    });
+  };
 
   /**
    * Fills stretches longer than `insertGapMaxSec` with no insert: the biggest gap first, a filler (the playbook's `filler` situation, marked
@@ -107,7 +145,7 @@ export function suggestTreatments(input: {
         const at = s.start;
         if (at < lower) return;
         const rec = choose(recipes, at);
-        if (!rec || at + rec.duration > upper) return;
+        if (!rec || at + rec.duration > upper || intersectsJoin(at, rec.duration)) return;
         const score = Math.abs(at - mid) - (treatments[i].caption.hl.length ? FILL_EMPHASIS_BONUS : 0);
         if (!best || score < best.score) best = { i, rec, at, score };
       });
@@ -183,6 +221,10 @@ export function suggestTreatments(input: {
     const inserts: InsertSpec[] = [];
     for (const c of candidates.sort((a, b) => SITUATION_PRIORITY.indexOf(a.situation) - SITUATION_PRIORITY.indexOf(b.situation))) {
       if (!director.allowedInserts.includes(c.type)) continue;
+      const clear = clearOfJoins(c.at, c.duration, c.type !== 'prompt-box'); // a prompt box needs its full typing time
+      if (!clear) continue;
+      c.at = clear.at;
+      c.duration = clear.duration;
       const clash = accepted.some(a => c.at < a.end + director.insertMinGapSec && a.at < c.at + c.duration + director.insertMinGapSec);
       if (clash) continue;
       accepted.push({ at: c.at, end: c.at + c.duration, type: c.type });
@@ -215,5 +257,6 @@ export function suggestTreatments(input: {
     return { caption, inserts, camera };
   });
   fillGaps(treatments);
+  addTransitions(treatments);
   return treatments;
 }

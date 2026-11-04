@@ -140,3 +140,10 @@ describe('SKILL.md describes reading the talk and the guessed inserts', () => {
     expect(missing(['outline.md', 'maybe', 'chưa chắc'])).toEqual([]);
   });
 });
+
+describe('SKILL.md describes the automatic transitions on joins', () => {
+  it('says analyze puts them and which list sets the kinds', () => {
+    expect(missing(['transitions', 'chỗ ghép', 'condense.json'])).toEqual([]);
+    expect(skill).toContain('do `analyze` đặt');
+  });
+});

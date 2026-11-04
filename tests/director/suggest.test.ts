@@ -145,7 +145,7 @@ describe('caption and camera suggestions', () => {
 import { DEFAULT_PLAYBOOK, fillProps, loadPlaybook, type Playbook, type Recipe } from '../../src/director/playbook';
 
 const recipe = (id: string, type: string, props: Record<string, unknown> = { title: '{TEXT}' }, duration = 2): Recipe => ({ id, type, duration, props });
-const withPlaybook = (pb: Partial<Playbook>): Playbook => ({ situations: { ...DEFAULT_PLAYBOOK.situations, ...pb.situations }, variety: { ...DEFAULT_PLAYBOOK.variety, ...pb.variety } });
+const withPlaybook = (pb: Partial<Playbook>): Playbook => ({ situations: { ...DEFAULT_PLAYBOOK.situations, ...pb.situations }, variety: { ...DEFAULT_PLAYBOOK.variety, ...pb.variety }, transitions: pb.transitions ?? DEFAULT_PLAYBOOK.transitions });
 const runPb = (spans: BeatSpan[], cues: Cue[][], playbook: Playbook, director = m1) =>
   suggestTreatments({ spans, cues, matches: spans.map(() => undefined), words: words(Math.max(...spans.map(s => s.lastWord)) + 1), director, fps: FPS, playbook });
 

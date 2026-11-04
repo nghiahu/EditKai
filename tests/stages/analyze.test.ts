@@ -116,3 +116,25 @@ describe('analyzeStage fills long stretches without an insert', () => {
     expect(JSON.stringify(fillers[0].props).toUpperCase()).toMatch(/MÌNH|NÓI|TIẾP|VỀ|CHỦ/);
   });
 });
+
+describe('analyzeStage puts a transition on every join of a condensed video', () => {
+  const talk = Array.from({ length: 6 }, () => 'Mình nói tiếp về chủ đề này một cách bình thường.');
+  it('reads the joins from condense.json: one transition centred on each, kinds in turn', async () => {
+    const dir = writeProject(talk, { style: 'm1' });
+    writeFileSync(join(dir, 'condense.json'), JSON.stringify({ joins: [6.2, 13.7, 21.4] }));
+    const sb = await analyzeStage(dir);
+    const t = sb.beats.flatMap(b => b.treatment.inserts).filter(i => i.type === 'transition');
+    expect(t.map(x => +(x.at + x.duration / 2).toFixed(2))).toEqual([6.2, 13.7, 21.4]);
+    expect(new Set(t.map(x => x.props.kind)).size).toBe(3);
+  });
+  it('no condense.json, a corrupt one, or one without joins: no transitions and no error', async () => {
+    const none = writeProject(talk, { style: 'm1' });
+    expect((await analyzeStage(none)).beats.flatMap(b => b.treatment.inserts).some(i => i.type === 'transition')).toBe(false);
+    const bad = writeProject(talk, { style: 'm1' });
+    writeFileSync(join(bad, 'condense.json'), '{ nope');
+    expect((await analyzeStage(bad)).beats.flatMap(b => b.treatment.inserts).some(i => i.type === 'transition')).toBe(false);
+    const empty = writeProject(talk, { style: 'm1' });
+    writeFileSync(join(empty, 'condense.json'), JSON.stringify({ keep: [] }));
+    expect((await analyzeStage(empty)).beats.flatMap(b => b.treatment.inserts).some(i => i.type === 'transition')).toBe(false);
+  });
+});

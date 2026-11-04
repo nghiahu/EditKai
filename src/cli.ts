@@ -123,11 +123,12 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       const sb = await analyzeStage(projectDir, { force: 'force' in flags }); // --force is a bare flag
       const cues = sb.beats.reduce((n, b) => n + b.cues.length, 0);
       const byType: Record<string, number> = {};
-      for (const b of sb.beats) for (const i of b.treatment.inserts) byType[i.type] = (byType[i.type] ?? 0) + 1;
+      let joinsDone = 0;
+      for (const b of sb.beats) for (const i of b.treatment.inserts) { if (i.type === 'transition') joinsDone++; else byType[i.type] = (byType[i.type] ?? 0) + 1; }
       const inserts = Object.values(byType).reduce((n, v) => n + v, 0);
       const kinds = Object.entries(byType).map(([t, n]) => `${t} ${n}`).join(', ');
       const guesses = sb.beats.reduce((n, b) => n + b.treatment.inserts.filter(i => i.maybe).length, 0);
-      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất${kinds ? ` (${kinds})` : ''}${guesses ? `, trong đó ${guesses} chưa chắc (lấp khoảng trống, cần xem lại)` : ''} → storyboard.json`);
+      out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất${kinds ? ` (${kinds})` : ''}${guesses ? `, trong đó ${guesses} chưa chắc (lấp khoảng trống, cần xem lại)` : ''}${joinsDone ? `, ${joinsDone} chuyển cảnh ở các chỗ ghép` : ''} → storyboard.json`);
       return 0;
     }
     if (cmd === 'compose') {

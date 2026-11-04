@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { LAYER_TYPES } from '../plan/layerTypes';
+import { LAYER_TYPES, TRANSITION_KINDS } from '../plan/layerTypes';
 
 /** One way to show a situation: an insert (`type`) with props from a template, or one of the built-in builders that need the cue's list items. */
 export interface Recipe {
@@ -20,6 +20,7 @@ export interface Variety {
 export interface Playbook {
   situations: Record<string, Recipe[]>; // tool, number, section, cta, list
   variety: Variety;
+  transitions: string[]; // kinds of the transition put on every join of a condensed video, in turn (empty: none)
 }
 
 const r = (id: string, type: string, duration: number, props?: Record<string, unknown>, builder?: Recipe['builder']): Recipe => ({ id, type, duration, ...(props ? { props } : {}), ...(builder ? { builder } : {}) });
@@ -36,6 +37,8 @@ export const DEFAULT_PLAYBOOK: Playbook = {
     list: [r('list-chips', 'chip-stack', 4, undefined, 'chips'), r('list-explainer', 'explainer-scene', 5, undefined, 'explainer-list')],
   },
   variety: { rotate: true, maxShare: { 'title-card': 0.7 }, sameTypeGapSec: 5 },
+  // flash (a full white frame) is left out of the rotation: too harsh to repeat
+  transitions: ['zoom', 'whip', 'blur', 'dip', 'push', 'slide'],
 };
 
 const fail = (m: string): never => { throw new Error(`playbook.json: ${m}`); };
@@ -44,12 +47,18 @@ const fail = (m: string): never => { throw new Error(`playbook.json: ${m}`); };
 export function loadPlaybook(styleDir: string): Playbook {
   const file = join(styleDir, 'playbook.json');
   if (!existsSync(file)) return DEFAULT_PLAYBOOK;
-  let raw: { situations?: Record<string, Recipe[]>; variety?: Partial<Variety> };
+  let raw: { situations?: Record<string, Recipe[]>; variety?: Partial<Variety>; transitions?: unknown };
   try { raw = JSON.parse(readFileSync(file, 'utf8')) ?? {}; } catch (e) { throw new Error(`playbook.json không phải JSON hợp lệ: ${(e as Error).message}`); }
   const pb: Playbook = {
     situations: { ...DEFAULT_PLAYBOOK.situations, ...(raw.situations ?? {}) },
     variety: { ...DEFAULT_PLAYBOOK.variety, ...(raw.variety ?? {}), maxShare: { ...DEFAULT_PLAYBOOK.variety.maxShare, ...(raw.variety?.maxShare ?? {}) } },
+    transitions: DEFAULT_PLAYBOOK.transitions,
   };
+  if (raw.transitions !== undefined) {
+    if (!Array.isArray(raw.transitions)) fail('transitions phải là một mảng các kiểu chuyển cảnh');
+    for (const k of raw.transitions as unknown[]) if (typeof k !== 'string' || !TRANSITION_KINDS.includes(k)) fail(`kiểu chuyển cảnh "${String(k)}" không có; chọn trong: ${TRANSITION_KINDS.join(', ')}`);
+    pb.transitions = raw.transitions as string[];
+  }
   const seen = new Set<string>();
   for (const [situation, recipes] of Object.entries(pb.situations)) {
     if (!Array.isArray(recipes)) fail(`tình huống "${situation}" phải là một mảng công thức`);

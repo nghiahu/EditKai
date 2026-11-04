@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runCli } from '../../src/cli';
 import { writeStoryboard, readStoryboard } from '../../src/director/storyboard';
@@ -56,5 +56,15 @@ describe('analyze summary and fillers', () => {
     out.length = 0;
     expect(await cli('analyze', dir)).toBe(0);
     expect(out.join('\n')).toMatch(/chưa chắc/);
+  });
+});
+
+describe('analyze summary and transitions', () => {
+  it('counts the transitions on the joins apart from the other inserts', async () => {
+    const dir = writeProject(Array.from({ length: 6 }, () => 'Mình nói tiếp về chủ đề này một cách bình thường.'), { style: 'm1' });
+    writeFileSync(join(dir, 'condense.json'), JSON.stringify({ joins: [6.2, 13.7] }));
+    out.length = 0;
+    expect(await cli('analyze', dir)).toBe(0);
+    expect(out.join('\n')).toMatch(/2 chuyển cảnh/);
   });
 });

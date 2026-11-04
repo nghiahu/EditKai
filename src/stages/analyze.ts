@@ -39,10 +39,17 @@ export async function analyzeStage(projectDir: string, opts: { force?: boolean }
   const glossary = loadGlossary(projectDir);
   const assets = readManifest(projectDir).assets;
 
+  // a condensed video (condense.json) has joins: each gets a transition; a missing or unreadable file means none
+  let joins: number[] = [];
+  try {
+    const j = JSON.parse(readFileSync(join(projectDir, 'condense.json'), 'utf8')).joins;
+    if (Array.isArray(j)) joins = j.filter((x): x is number => typeof x === 'number');
+  } catch { /* no joins */ }
+
   const spans = segmentBeats(words);
   const cues = spans.map(span => detectCues(words, span, glossary));
   const matches = spans.map((span, i) => matchAsset(span.text, cues[i], assets)?.asset);
-  const treatments = suggestTreatments({ spans, cues, matches, words, director: theme.director, fps: project.fps ?? 30, playbook: loadPlaybook(join(root, 'styles', project.style)) });
+  const treatments = suggestTreatments({ spans, cues, matches, words, director: theme.director, fps: project.fps ?? 30, playbook: loadPlaybook(join(root, 'styles', project.style)), joins });
 
   const beats: Beat[] = spans.map((span, i) => ({
     id: `b${i + 1}`,
