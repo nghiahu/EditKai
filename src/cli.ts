@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { ASSET_KINDS, addAsset, readManifest, type AssetKind } from './assets/manifest';
 import { analyzeStage } from './stages/analyze';
 import { cleanStage } from './stages/clean';
+import { composeStage } from './stages/compose';
 import { mergeRegenerated } from './plan/merge';
 import { readPlan } from './plan/io';
 import { validatePlanSchema } from './plan/schema';
@@ -13,7 +14,7 @@ import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'init | clean | analyze | validate | merge | assets | editor | render';
+const COMMANDS = 'init | clean | analyze | compose | validate | merge | assets | editor | render';
 
 type Out = (s: string) => void;
 
@@ -61,7 +62,7 @@ function parse(argv: string[]) {
 export async function runCli(argv: string[], out: Out = console.log, err: Out = console.error): Promise<number> {
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'analyze', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  if (!['init', 'clean', 'analyze', 'compose', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -93,6 +94,14 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       const cues = sb.beats.reduce((n, b) => n + b.cues.length, 0);
       const inserts = sb.beats.reduce((n, b) => n + b.treatment.inserts.length, 0);
       out(`Đã phân tích: ${sb.beats.length} nhịp, ${cues} gợi ý, ${inserts} insert đề xuất → storyboard.json`);
+      return 0;
+    }
+    if (cmd === 'compose') {
+      const { planFile, report } = await composeStage(projectDir);
+      const c = report.captions;
+      out(`Đã compose → ${planFile}: ${c.phrase + c.label + c.big} caption (${c.label} label, ${c.big} big), ${report.inserts.kept} insert (${report.inserts.moved.length} dời, ${report.inserts.dropped.length} bỏ), ${report.camera.kept} camera, ${report.unreviewedBeats} nhịp chưa duyệt`);
+      if (report.unusedAssets.length) out(`Asset chưa dùng: ${report.unusedAssets.join(', ')}`);
+      report.issues.forEach(i => out(`! ${i}`));
       return 0;
     }
     if (cmd === 'validate') {
