@@ -118,3 +118,13 @@ describe('SKILL.md explains how to run and register the skill', () => {
     expect(missing(['scripts/ev.mjs', 'doctor', 'scripts/install-skill.mjs'])).toEqual([]);
   });
 });
+
+describe('SKILL.md describes the flow', () => {
+  it('has the three stopping points and the commands for cutting content and fixing the transcript', () => {
+    expect(missing(['Điểm dừng 1', 'Điểm dừng 2', 'Điểm dừng 3', 'condense', 'condense-spec.json', 'pauses', 'fix-transcript', 'transcript-fixes.json', 'full.mp4'])).toEqual([]);
+  });
+  it('keeps the commands in sync with the CLI', () => {
+    const wrong = ['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'analyze', 'compose', 'validate', 'merge', 'editor', 'render'].filter(c => !skill.includes('src/cli.ts ' + c));
+    expect(wrong).toEqual([]);
+  });
+});

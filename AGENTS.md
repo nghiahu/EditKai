@@ -8,6 +8,7 @@ Quy tắc ngắn:
 - Đọc `styles/<style>/rules.md` và `theme.json` trước khi dựng. Có thêm track `camera` (`zoom-punch`, `shake`), `explainer-scene.mode` (`full`/`overlay`) và nhiều `body.kind`: bảng đầy đủ nằm trong `SKILL.md`. Caption mặc định là `phrase` (nguyên cụm); các kiểu `big`, `label`, `word` và `position`, `emphasis` cũng ở đó.
 - Footage của người dùng: `npx tsx src/cli.ts assets add projects/<tên> "<file>" --desc "<mô tả>"` (và `assets list`); đọc `assets.json` để ghép footage với lời nói. Footage có `frame`, `motion`, `from` và mặc định tắt tiếng; thêm các layer `logo-badge`, `prompt-box`, `stat-card`: bảng đầy đủ ở `SKILL.md`.
 - Quy trình đạo diễn: `analyze` ghi `storyboard.json` (đề xuất theo từng nhịp), bạn sửa nó rồi đặt `reviewed: true`, `compose` dựng `plan.json` (hoặc `plan.next.json` khi đã có) và `compose-report.json`; chi tiết ở `SKILL.md`. Tự viết `plan.json` vẫn được.
+- Flow có ba điểm dừng để người dùng duyệt bằng lời (danh sách đoạn giữ lại trước khi cắt, kế hoạch đạo diễn tóm tắt, xem trước); chi tiết ở `SKILL.md`. Rút gọn nội dung: `pauses` (chỗ ngừng thật), `condense` (đọc `condense-spec.json`, cắt trọn câu, kiểm tra chỗ ghép); sửa lỗi chép lời: `fix-transcript` (đọc `transcript-fixes.json`).
 - Layer có `"locked": true` là của người dùng: không ghi đè, không xóa. Dựng lại thì ghi `plan.next.json` rồi chạy `merge`.
 - Tối đa 3 vòng `validate`; hết vòng còn cảnh báo thì liệt kê cho người dùng.
 - Lệnh lỗi thì báo thông báo của nó bằng lời rõ ràng, không bỏ qua.
