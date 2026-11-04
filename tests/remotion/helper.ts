@@ -11,7 +11,9 @@ let serveUrl: Promise<string> | undefined;
 const outDir = mkdtempSync(join(tmpdir(), 'editkai-still-'));
 let n = 0;
 
-export const bundled = () => (serveUrl ??= bundle({ entryPoint: resolve('remotion/index.ts') }));
+// One fixed folder, overwritten by every test file (they run one after another): a fresh temp bundle per file left ~36 MB each behind.
+const bundleDir = join(tmpdir(), 'editkai-test-bundle');
+export const bundled = () => (serveUrl ??= bundle({ entryPoint: resolve('remotion/index.ts'), outDir: bundleDir }));
 
 export function planOf(style: 's1' | 'm1', layers: Layer[], durationSec = 4): Plan {
   return {

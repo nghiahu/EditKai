@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, existsSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readdirSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -39,6 +39,13 @@ describe('renderStage', () => {
     await setup('s1', 0.8, 4.2);
     await expect(renderStage(dir)).rejects.toThrow(/out-of-bounds/);
   });
+  it('leaves no remotion-webpack-bundle folder behind in the temp dir (each render used to leave 36 MB)', async () => {
+    const bundles = () => readdirSync(tmpdir()).filter(n => n.startsWith('remotion-webpack-bundle-'));
+    const before = bundles();
+    await setup('s1', 1, 1);
+    await renderStage(dir);
+    expect(bundles().filter(n => !before.includes(n))).toEqual([]);
+  }, 300000);
   for (const style of ['s1', 'm1'] as const) {
     it(`renders a 2 s clip for ${style} in a folder with spaces and diacritics`, async () => {
       await setup(style, 2, 2);

@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundle } from '@remotion/bundler';
@@ -25,8 +25,9 @@ export async function renderStage(projectDir: string): Promise<string> {
   if (errors.length) throw new Error(`Không thể render, plan có lỗi:\n${errors.map(e => `- [${e.code}] ${e.message}`).join('\n')}`);
 
   const server = await serveDir(projectDir);
+  let serveUrl: string | undefined;
   try {
-    const serveUrl = await bundle({ entryPoint: resolve(root, 'remotion', 'index.ts') });
+    serveUrl = await bundle({ entryPoint: resolve(root, 'remotion', 'index.ts') });
     const inputProps = { plan, theme, videoSrc: `${server.url}/${plan.meta.source}`, assetBase: server.url, durationSec };
     const composition = await selectComposition({ serveUrl, id: 'PlanVideo', inputProps });
     const out = join(projectDir, 'out.mp4');
@@ -34,5 +35,7 @@ export async function renderStage(projectDir: string): Promise<string> {
     return out;
   } finally {
     await server.close();
+    // the bundle is a ~36 MB folder in the temp dir that Remotion never removes
+    if (serveUrl) rmSync(serveUrl, { recursive: true, force: true });
   }
 }
