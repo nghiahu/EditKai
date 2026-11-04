@@ -52,3 +52,17 @@ describe('fixTranscript', () => {
     expect(() => fixTranscript(noTranscript)).toThrow('transcript.json');
   });
 });
+
+describe('fixTranscript reports the fixes that matched nothing', () => {
+  it('lists each unmatched fix so a wrong "sau" or "tiep" is noticed', () => {
+    const dir = project(['cái', 'áp', 'thôi']);
+    const r = fixTranscript(dir, fixes(dir, [{ sai: 'áp', dung: 'ác', sau: 'cái' }, { sai: 'xyz', dung: 'abc' }, { sai: 'áp', dung: 'ạc', tiep: 'sai' }]));
+    expect(r.changed).toBe(1);
+    expect(r.unmatched.map(f => f.sai)).toEqual(['xyz', 'áp']);
+    expect(r.unmatched[1].tiep).toBe('sai');
+  });
+  it('nothing unmatched when every fix was used', () => {
+    const dir = project(['áp']);
+    expect(fixTranscript(dir, fixes(dir, [{ sai: 'áp', dung: 'ác' }])).unmatched).toEqual([]);
+  });
+});

@@ -119,6 +119,7 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
     if (cmd === 'fix-transcript') {
       const r = fixTranscript(projectDir, flags.fixes ? resolve(flags.fixes) : undefined);
       out(`Đã sửa ${r.changed} từ trong transcript.json (bản Whisper gốc ở transcript.whisper.json)`);
+      r.unmatched.forEach(u => out(`  không khớp chỗ nào: "${u.sai}" → "${u.dung}"${u.sau ? ` (sau "${u.sau}")` : ''}${u.tiep ? ` (trước "${u.tiep}")` : ''}: kiểm tra chính tả của "sai", "sau", "tiep"`));
       return 0;
     }
     if (cmd === 'pauses') {

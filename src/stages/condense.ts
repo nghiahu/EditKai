@@ -5,6 +5,7 @@ import { checkJoins, cutPoint, joinTimes, selectSpans, snapToShots, type Word } 
 import { cutVideo } from '../media/cut';
 import { findPauses, loudnessEnvelope } from '../media/pauses';
 import { shotChanges } from '../media/shots';
+import { fixTranscript } from './fixTranscript';
 import type { Range } from '../media/silence';
 import { transcribe as whisper, type Transcript } from '../media/transcribe';
 
@@ -75,5 +76,12 @@ export async function condenseStage(projectDir: string, specFile = join(projectD
   for (const c of checked) lines.push(`${c.odd.length ? '!! ' : 'ok '}chỗ ghép ${c.join.toFixed(2)} s: ${c.context}${c.odd.length ? `   <-- từ lạ: ${c.odd.map(w => `"${w}"`).join(', ')}` : ''}`);
   const problems = checked.filter(c => c.odd.length).length;
   lines.push(problems ? `${problems} chỗ ghép có mảnh từ lạ: chọn lại cụm đầu hoặc cuối của đoạn đó` : 'Các chỗ ghép không có mảnh từ lạ');
+  // the new transcript is Whisper's own again: the fixes the user wrote earlier are applied to it
+  const fixesFile = join(projectDir, 'transcript-fixes.json');
+  if (existsSync(fixesFile)) {
+    const f = fixTranscript(projectDir, fixesFile);
+    lines.push(`Đã sửa ${f.changed} từ theo transcript-fixes.json trên bản chép lời mới`);
+    f.unmatched.forEach(u => lines.push(`  không khớp chỗ nào: "${u.sai}" → "${u.dung}"${u.sau ? ` (sau "${u.sau}")` : ''}${u.tiep ? ` (trước "${u.tiep}")` : ''}`));
+  }
   return { segments, joins, keptSec, totalSec, problems, lines };
 }

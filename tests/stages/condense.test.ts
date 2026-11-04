@@ -84,3 +84,20 @@ describe('condenseStage', () => {
     await expect(condenseStage(dir, spec(dir, [{ from: 'không có đâu', to: 'bốn' }]), { transcribe: fakeHeard })).rejects.toThrow('không có đâu');
   }, 120000);
 });
+
+describe('condenseStage and transcript-fixes.json', () => {
+  it('applies the fixes again to the new transcript and says how many words changed', async () => {
+    const dir = await project();
+    writeFileSync(join(dir, 'transcript-fixes.json'), JSON.stringify([{ sai: 'tám', dung: 'tấm' }, { sai: 'không có', dung: 'x' }]));
+    const r = await condenseStage(dir, spec(dir, [{ from: 'một', to: 'bốn' }, { from: 'tám', to: 'chín' }]), { transcribe: fakeHeard });
+    const words = (JSON.parse(readFileSync(join(dir, 'transcript.json'), 'utf8')).words as W[]).map(w => w.t);
+    expect(words).toContain('tấm');
+    expect(r.lines.join('\n')).toMatch(/sửa 1 từ/);
+    expect(r.lines.join('\n')).toMatch(/không có/); // the fix that matched nothing is named
+  }, 120000);
+  it('without transcript-fixes.json nothing is said about fixes', async () => {
+    const dir = await project();
+    const r = await condenseStage(dir, spec(dir, [{ from: 'một', to: 'bốn' }]), { transcribe: fakeHeard });
+    expect(r.lines.join('\n')).not.toMatch(/sửa/);
+  }, 120000);
+});
