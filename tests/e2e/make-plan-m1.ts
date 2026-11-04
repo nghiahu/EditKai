@@ -78,7 +78,13 @@ const plan: Plan = {
       label: 'THAY VÌ PROMPT TỪNG LỖI', title: 'GIAO DIỆN EDITOR', mode: 'overlay', body: { kind: 'list', items: ['Prompt sửa từng chi tiết', 'Tốn thời gian', 'Tốn token'] }, avatar: false } },
     title('t3', 30.8, 34, 'zap', 'KHÔNG TỐN THÊM TOKEN', 'Chỉnh rồi render'),
     { id: 'x2', track: 'graphic', type: 'transition', start: 38.9, end: 39.3, props: { kind: 'flash' } },
-    title('t4', 39.4, 43.4, 'clock', 'HƠN NỬA TIẾNG', 'Claude làm + 50 phút tự chỉnh'),
+    // inserts chosen by what is being said (rules.md): footage from assets.json, then generated cards where there is none
+    { id: 'fw', track: 'footage', type: 'footage', start: 5, end: 9, props: { src: 'assets/screen.mp4', frame: 'window', title: 'Claude Editor', motion: 'zoom-in', from: 1 } },
+    { id: 'lb', track: 'graphic', type: 'logo-badge', start: 14.2, end: 16, props: { icon: 'sparkles', label: 'Claude Opus 5.5', sub: 'mô hình mới nhất' } },
+    { id: 'pb', track: 'graphic', type: 'prompt-box', start: 22.9, end: 24.5, props: { text: 'Sửa chữ này to hơn', strike: true } },
+    { id: 'fp', track: 'footage', type: 'footage', start: 37.4, end: 39.4, props: { src: 'assets/phone.mp4', frame: 'phone', motion: 'pan-left', from: 2 } },
+    { id: 'sc', track: 'graphic', type: 'stat-card', start: 39.6, end: 43.4, props: { title: 'Thời gian', rows: [
+      { icon: 'clock', value: '~30 phút', caption: 'Claude làm' }, { icon: 'zap', value: '+ 50 phút', caption: 'tự chỉnh theo ý' }] } },
     // camera: punch-ins on emphasised words about every 6-10 s, one light shake on the cost line
     ...[[0.3, 1.4], [10.2, 11.4], [17, 18.3], [23.2, 24.4], [34.5, 35.7], [39.7, 40.9]].map(([s, e], i): Layer => ({ id: `z${i + 1}`, track: 'camera', type: 'zoom-punch', start: s, end: e, props: {} })),
     { id: 'k2', track: 'camera', type: 'shake', start: 26, end: 26.6, props: { intensity: 1 } },

@@ -66,6 +66,9 @@ const plan: Plan = {
     scene('e2', 47.5, 57.5, { label: 'QUY TRÌNH CÀI SẴN', title: 'AI CHẠY QUY TRÌNH', body: { kind: 'progress', items: [{ label: 'Phân tích nội dung', value: 100 }, { label: 'Dựng theo workflow', value: 100 }, { label: 'Kiểm tra & render', value: 100 }] }, avatar: true }),
     title('t7', 58, 63, 'check', 'XEM LẠI & CHỈNH SỬA', 'Chỉ sửa cảnh chưa ưng'),
     title('t8', 66, 71, 'rocket', 'EDIT VIDEO PRO', 'Xây quy trình edit bằng AI'),
+    // inserts chosen by what is being said (rules.md): a window frame for the screen recording, a badge when the product is named
+    { id: 'fw', track: 'footage', type: 'footage', start: 43.5, end: 47, props: { src: 'assets/screen.mp4', frame: 'window', title: 'edit-video-pro', motion: 'zoom-in', from: 2 } },
+    { id: 'lb', track: 'graphic', type: 'logo-badge', start: 64, end: 66, props: { icon: 'rocket', label: 'Edit Video Pro' } },
     { id: 'z1', track: 'camera', type: 'zoom-punch', start: 36, end: 37.2, props: {} },
     { id: 'z2', track: 'camera', type: 'zoom-punch', start: 66, end: 67.2, props: {} },
   ],
