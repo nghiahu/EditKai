@@ -25,6 +25,22 @@
       "label": "kênh"
     },
     {
+      "term": "Facebook",
+      "label": "nền tảng"
+    },
+    {
+      "term": "Instagram",
+      "label": "nền tảng"
+    },
+    {
+      "term": "YouTube",
+      "label": "nền tảng"
+    },
+    {
+      "term": "Zalo",
+      "label": "nền tảng"
+    },
+    {
       "term": "Typography",
       "label": "chữ"
     },
@@ -136,6 +152,8 @@
     }
   ],
   "notTools": [
+    "anh",
+    "chi",
     "trong",
     "cho",
     "khi",

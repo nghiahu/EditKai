@@ -74,7 +74,7 @@ describe('segmentBeats', () => {
     for (let i = 1; i < spans.length; i++) expect(spans[i].firstWord).toBe(spans[i - 1].lastWord + 1);
   });
   it('start and end come from the first and last word', () => {
-    const w = say('một hai. ba');
+    const w = say('một hai. ba bốn');
     const [a, b] = segmentBeats(w);
     expect(a.start).toBe(w[0].s);
     expect(a.end).toBe(w[1].e);
@@ -87,3 +87,28 @@ describe('segmentBeats', () => {
     for (const s of spans) expect(Number.isFinite(s.start) && Number.isFinite(s.end)).toBe(true);
   });
 });
+
+describe('segmentBeats and tiny beats', () => {
+  it('a one-word beat joins the beat before it (captions never cross beats, so a stray word would flash alone)', () => {
+    const w = say('một hai ba bốn năm. nào');
+    const spans = segmentBeats(w);
+    expect(spans.map(s => [s.firstWord, s.lastWord])).toEqual([[0, 5]]);
+    expect(spans[0].text).toBe('một hai ba bốn năm. nào');
+    expect(spans[0].end).toBe(w[5].e);
+  });
+  it('a beat shorter than 0.4 s joins the previous one even with two words', () => {
+    const w = [word('một', 0), word('hai.', 0.4), word('à', 1.5, 1.6), word('ừ', 1.65, 1.75), word('ba', 3), word('bốn.', 3.4)];
+    const spans = segmentBeats(w);
+    expect(spans.map(s => [s.firstWord, s.lastWord])).toEqual([[0, 3], [4, 5]]);
+  });
+  it('a one-word beat at the very start joins the next beat', () => {
+    expect(segmentBeats(say('ừ. một hai ba bốn')).map(s => [s.firstWord, s.lastWord])).toEqual([[0, 4]]);
+  });
+  it('a two-word beat of normal length stays a beat', () => {
+    expect(segmentBeats(say('Quá đẳng cấp rồi. Tuyệt vời!')).map(s => [s.firstWord, s.lastWord])).toEqual([[0, 3], [4, 5]]);
+  });
+  it('a lone word is still one beat', () => {
+    expect(segmentBeats(say('xin'))).toHaveLength(1);
+  });
+});
+

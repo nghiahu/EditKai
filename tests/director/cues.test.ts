@@ -28,8 +28,13 @@ describe('tool cues', () => {
     expect(of('Mình có 5 video', 'tool')).toHaveLength(0);
     expect(of('Mình dùng AI để edit', 'tool')).toHaveLength(0);
   });
-  it('a capitalised tool carries the default label', () => {
-    expect(of('Mình dùng Remotion nhé', 'tool')[0]).toMatchObject({ text: 'Remotion', label: 'công cụ', word: 2 });
+  it('a capitalised word that is not in the glossary has no label: nobody knows what kind of thing it is', () => {
+    const [c] = of('Mình dùng Remotion nhé', 'tool');
+    expect(c).toMatchObject({ text: 'Remotion', word: 2 });
+    expect(c.label).toBeUndefined();
+  });
+  it('a pronoun such as "Anh" in the middle of a beat is not a tool', () => {
+    expect(cues('Hôm nay Anh nói về việc này', { ...glossary, notTools: ['anh'] }).filter(c => c.kind === 'tool')).toHaveLength(0);
   });
   it('a glossary term matches even at the start of the beat and carries its label', () => {
     expect(of('Claude vừa trả video', 'tool')[0]).toMatchObject({ text: 'Claude', label: 'mô hình', word: 0 });

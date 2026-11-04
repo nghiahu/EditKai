@@ -73,14 +73,14 @@ export function loadPlaybook(styleDir: string): Playbook {
   return pb;
 }
 
-/** Template → props: {text}, {label}, {TEXT} (upper case) in strings at any depth; a prop that is exactly {icon} is dropped when there is no icon. */
+/** Template → props: {text}, {label}, {TEXT} (upper case) in strings at any depth; a prop that is exactly {icon} (or {label}) is dropped when there is no icon (or label). */
 export function fillProps(template: Record<string, unknown>, vars: { text: string; label?: string; icon?: string }): Record<string, unknown> {
   const fill = (v: unknown): unknown => {
     if (typeof v === 'string') return v.replace(/\{TEXT\}/g, vars.text.toUpperCase()).replace(/\{text\}/g, vars.text).replace(/\{label\}/g, vars.label ?? '').replace(/\{icon\}/g, vars.icon ?? '');
     if (Array.isArray(v)) return v.map(fill);
     if (v && typeof v === 'object') {
       const out: Record<string, unknown> = {};
-      for (const [k, x] of Object.entries(v)) { if (x === '{icon}' && !vars.icon) continue; out[k] = fill(x); }
+      for (const [k, x] of Object.entries(v)) { if ((x === '{icon}' && !vars.icon) || (x === '{label}' && !vars.label)) continue; out[k] = fill(x); }
       return out;
     }
     return v;

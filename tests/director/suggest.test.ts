@@ -106,7 +106,7 @@ describe('caption and camera suggestions', () => {
   });
   it('label captions respect captionMix.label (m1 at most 20% of beats, s1 at most one in ten)', () => {
     const spans = Array.from({ length: 10 }, (_, i) => span(i * 20, i * 20 + 5));
-    const cues = spans.map(s => [cue('tool', s.firstWord + 1, { text: 'Claude' })]);
+    const cues = spans.map(s => [cue('tool', s.firstWord + 1, { text: `Claude${s.firstWord}`, label: 'mô hình' })]);
     const labels = (d: typeof m1) => run(spans, cues, { director: d }).filter(t => t.caption.variant === 'label').length;
     expect(labels(m1)).toBeGreaterThanOrEqual(1);
     expect(labels(m1)).toBeLessThanOrEqual(2);
@@ -165,7 +165,7 @@ describe('playbook: section and cta', () => {
 
 describe('playbook: variety', () => {
   const far = (n: number) => Array.from({ length: n }, (_, i) => span(i * 40, i * 40 + 5)); // beats 16 s apart
-  const tool = (s: BeatSpan, text = 'Claude') => [cue('tool', s.firstWord + 1, { text })];
+  const tool = (s: BeatSpan, text = `Công cụ${s.firstWord}`) => [cue('tool', s.firstWord + 1, { text })]; // each beat names another tool
   it('rotates: the same situation twice gives different recipes, the third goes back to the first', () => {
     const spans = far(3);
     const out = run(spans, spans.map(s => tool(s)));
@@ -254,7 +254,7 @@ describe('gap filler (insert-gap, suggested with maybe: true)', () => {
   });
   it('no filler where there is no gap: a short talk, or inserts already close enough', () => {
     expect(go(4).inserts).toEqual([]); // 8 s
-    const cues = Array.from({ length: 15 }, (_, i) => (i % 3 === 0 ? [cue('tool', i * 5 + 1, { text: 'Claude' })] : [])); // a real insert every 6 s
+    const cues = Array.from({ length: 15 }, (_, i) => (i % 3 === 0 ? [cue('tool', i * 5 + 1, { text: `Claude${i}` })] : [])); // a real insert every 6 s
     const { inserts } = go(15, cues);
     expect(inserts.filter(i => i.maybe)).toEqual([]);
   });
@@ -349,3 +349,30 @@ describe('playbook: the counter as a way to show a number', () => {
     expect(out.flatMap(t => t.inserts).some(i => i.type === 'counter')).toBe(false);
   });
 });
+
+describe('tool inserts: label and repeats', () => {
+  it('a tool with no label (a capitalised word nobody knows) gets a badge and no "công cụ" tag on a title card', () => {
+    const [t] = run([span(0, 5)], [[cue('tool', 2, { text: 'Zalo' })]]);
+    expect(t.inserts[0].props).toMatchObject({ label: 'Zalo' });
+    expect(t.caption.variant).not.toBe('label'); // there is nothing to put on the label line
+    for (const i of t.inserts) expect(JSON.stringify(i.props)).not.toContain('công cụ');
+  });
+  it('the same tool text is suggested once within a minute: later mentions are only highlighted in the caption', () => {
+    const spans = [span(0, 5), span(30, 35), span(60, 65)];
+    const ts = run(spans, spans.map(s => [cue('tool', s.firstWord + 2, { text: 'Claude', label: 'mô hình' })]));
+    const withBadge = ts.filter(t => t.inserts.some(i => i.props.label === 'Claude' || i.props.title === 'CLAUDE'));
+    expect(withBadge).toHaveLength(1);
+    expect(ts[1].caption.hl).toContain(32);
+  });
+  it('a tool mentioned again after a minute is announced again', () => {
+    const spans = [span(0, 5), span(200, 205)]; // 80 s later
+    const ts = run(spans, spans.map(s => [cue('tool', s.firstWord + 2, { text: 'Claude', label: 'mô hình' })]));
+    expect(ts.filter(t => t.inserts.length > 0)).toHaveLength(2);
+  });
+  it('two different tools both get their insert', () => {
+    const spans = [span(0, 5), span(30, 35)];
+    const ts = run(spans, [[cue('tool', 2, { text: 'Claude', label: 'mô hình' })], [cue('tool', 32, { text: 'Remotion' })]]);
+    expect(ts.filter(t => t.inserts.length > 0)).toHaveLength(2);
+  });
+});
+

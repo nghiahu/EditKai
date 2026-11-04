@@ -4,10 +4,12 @@ const MAX_WORDS = 14;
 const PAUSE_SEC = 0.6;
 const SENTENCE_END = /[.?!…]$/;
 const COMMA_END = /[,;:]$/;
+const TINY_SEC = 0.4;
 
 /**
  * Cuts a transcript into beats: at sentence punctuation or a pause longer than 0.6 s; a beat of more than 14 words is cut again at
- * a comma, else at the largest pause, else after 14 words. Spans are contiguous and cover every word once.
+ * a comma, else at the largest pause, else after 14 words. A beat of less than 0.4 s (one short word, say) is joined to the beat before it
+ * (the first one to the beat after it): captions never cross a beat, so it would flash up alone. Spans are contiguous and cover every word once.
  */
 export function segmentBeats(words: { t: string; s: number; e: number }[]): BeatSpan[] {
   const spans: BeatSpan[] = [];
@@ -40,5 +42,19 @@ export function segmentBeats(words: { t: string; s: number; e: number }[]): Beat
     const endsHere = i === words.length - 1 || SENTENCE_END.test(words[i].t) || words[i + 1].s - words[i].e > PAUSE_SEC;
     if (endsHere) { flush(first, i); first = i + 1; }
   }
-  return spans;
+  return mergeTiny(spans);
+}
+
+const isTiny = (s: BeatSpan) => s.end - s.start < TINY_SEC;
+
+function mergeTiny(spans: BeatSpan[]): BeatSpan[] {
+  const join = (a: BeatSpan, b: BeatSpan): BeatSpan => ({ firstWord: a.firstWord, lastWord: b.lastWord, start: a.start, end: b.end, text: `${a.text} ${b.text}` });
+  const out: BeatSpan[] = [];
+  for (const s of spans) {
+    const prev = out[out.length - 1];
+    if (prev && isTiny(s)) out[out.length - 1] = join(prev, s);
+    else out.push(s);
+  }
+  if (out.length > 1 && isTiny(out[0])) out.splice(0, 2, join(out[0], out[1]));
+  return out;
 }

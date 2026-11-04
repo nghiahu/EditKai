@@ -9,6 +9,7 @@ import type { BeatSpan, Cue, InsertSpec, Treatment } from './types';
 type W = { t: string; s: number; e: number };
 
 // when two situations of one beat want an insert, the first of these wins (the other usually fails the minimum gap)
+const TOOL_REPEAT_SEC = 60;
 const SITUATION_PRIORITY = ['footage', 'prompt', 'section', 'cta', 'number', 'tool', 'list'];
 const FOOTAGE_SEC = 4;
 const FILL_TAIL_SEC = 0.5; // the video is taken to end this long after the last word
@@ -173,6 +174,7 @@ export function suggestTreatments(input: {
     return picked.join(' ');
   };
 
+  const seenTools = new Map<string, number>(); // tool text → when it was last announced
   const treatments = spans.map((span, i): Treatment => {
     const beatCues = cues[i] ?? [];
     const asset = matches[i];
@@ -180,7 +182,7 @@ export function suggestTreatments(input: {
     const first = (kind: Cue['kind']) => beatCues.find(c => c.kind === kind);
 
     // candidates: one per situation of the beat, each in the recipe the playbook's variety rules choose
-    type Candidate = InsertSpec & { situation: string; recipe?: string };
+    type Candidate = InsertSpec & { situation: string; recipe?: string; key?: string };
     const candidates: Candidate[] = [];
     const ui = first('ui');
     const shortvideo = first('shortvideo');
@@ -205,7 +207,9 @@ export function suggestTreatments(input: {
     for (const situation of ['section', 'cta', 'number', 'tool', 'list'] as const) {
       const cue = first(situation);
       if (!cue || (situation === 'list' && !cue.items)) continue;
+      const key = situation === 'tool' ? normalizeLoose(cue.text) : undefined;
       const at = startOf(cue);
+      if (key && at - (seenTools.get(key) ?? -Infinity) < TOOL_REPEAT_SEC) continue; // a tool announced a moment ago is not announced again
       // a counter needs a plain number (with a percent sign or a unit): a range such as 2-3% cannot count up
       const usable = (playbook.situations[situation] ?? []).filter(x => x.builder !== 'counter' || parseCount(cue.text));
       const rec = choose(usable, at);
@@ -214,8 +218,8 @@ export function suggestTreatments(input: {
       if (rec.builder === 'counter') props = counterProps(cue.text);
       else if (rec.builder === 'chips') props = { chips: cue.items!.map(label => ({ icon: 'check', label })) };
       else if (rec.builder === 'explainer-list') props = { title: span.text.split(/\s+/).slice(0, 3).join(' ').toUpperCase(), body: { kind: 'list', items: cue.items } };
-      else props = fillProps(rec.props ?? {}, { text: cue.text, label: cue.label ?? (situation === 'tool' ? 'công cụ' : undefined), icon: situation === 'number' ? iconForNumber(cue.text) : undefined });
-      candidates.push({ situation, recipe: rec.id, type: rec.type, props, at, duration: rec.duration });
+      else props = fillProps(rec.props ?? {}, { text: cue.text, label: cue.label, icon: situation === 'number' ? iconForNumber(cue.text) : undefined });
+      candidates.push({ situation, recipe: rec.id, type: rec.type, props, at, duration: rec.duration, key });
     }
 
     const inserts: InsertSpec[] = [];
@@ -229,6 +233,7 @@ export function suggestTreatments(input: {
       if (clash) continue;
       accepted.push({ at: c.at, end: c.at + c.duration, type: c.type });
       if (c.recipe) lastUsed[c.recipe] = accepted.length;
+      if (c.key) seenTools.set(c.key, c.at);
       inserts.push({ type: c.type, props: c.props, at: c.at, duration: c.duration });
     }
     inserts.sort((a, b) => a.at - b.at);
@@ -237,8 +242,8 @@ export function suggestTreatments(input: {
     const emphasis = first('emphasis');
     const hl = [...new Set(beatCues.filter(c => (c.kind === 'emphasis' || c.kind === 'tool') && c.word !== undefined).map(c => c.word!))].sort((a, b) => a - b);
     let caption: Treatment['caption'] = { variant: 'phrase', hl, bigRange: null };
-    if (tool && wordCount(span) >= MIN_LABEL_WORDS && labelCount < director.captionMix.label * spans.length) {
-      caption = { ...caption, variant: 'label', label: tool.label ?? 'công cụ' };
+    if (tool?.label && wordCount(span) >= MIN_LABEL_WORDS && labelCount < director.captionMix.label * spans.length) {
+      caption = { ...caption, variant: 'label', label: tool.label };
       labelCount++;
     }
     const camera: Treatment['camera'] = [];

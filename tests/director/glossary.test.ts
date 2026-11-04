@@ -87,3 +87,12 @@ describe('notTools', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 });
+
+describe('the default glossary knows platforms and pronouns', () => {
+  it('Facebook is a platform term, and "anh" is not a tool name', () => {
+    const g = loadGlossary(project());
+    expect(g.terms.find(t => t.term === 'Facebook')?.label).toBe('nền tảng');
+    expect(g.notTools).toContain('anh');
+  });
+});
+

@@ -44,7 +44,7 @@ export function detectCues(words: { t: string; s: number; e: number }[], span: B
   toks.forEach((t, i) => {
     const c = stripEnds(t.raw);
     const vietnamese = (glossary.notTools ?? []).includes(normalizeLoose(c)); // "Trong" at the start of a sentence is not a tool
-    if (i > 0 && c.length >= 2 && /^[A-Z][A-Za-z0-9.]*$/.test(c) && /[a-z]/.test(c) && !vietnamese && !taken.has(t.idx)) cues.push({ kind: 'tool', text: c, word: t.idx, label: 'công cụ' });
+    if (i > 0 && c.length >= 2 && /^[A-Z][A-Za-z0-9.]*$/.test(c) && /[a-z]/.test(c) && !vietnamese && !taken.has(t.idx)) cues.push({ kind: 'tool', text: c, word: t.idx }); // no label: nothing says what kind of thing this is
   });
 
   // number: digits followed by a unit or a percent sign, or "nửa tiếng" / "nửa giờ"
