@@ -35,5 +35,22 @@
     "punchScale": 1.06
   },
   "captionEmphasis": "underline",
-  "captionBigScale": 1.8
+  "captionBigScale": 1.8,
+  "director": {
+    "insertGapMaxSec": 35,
+    "insertMinGapSec": 6,
+    "allowedInserts": [
+      "title-card",
+      "stat-card",
+      "footage",
+      "logo-badge",
+      "explainer-scene"
+    ],
+    "captionMix": {
+      "label": 0.05,
+      "big": 0
+    },
+    "bigSpacingSec": 8,
+    "punchSpacingSec": 20
+  }
 }

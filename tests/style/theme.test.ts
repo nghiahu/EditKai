@@ -55,3 +55,42 @@ describe('loadTheme', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 });
+
+import { DEFAULT_DIRECTOR } from '../../src/style/theme';
+
+describe('theme director block', () => {
+  it('s1 and m1 expose the director values', () => {
+    expect(loadTheme('styles/m1').director).toEqual({
+      insertGapMaxSec: 10, insertMinGapSec: 2.5,
+      allowedInserts: ['logo-badge', 'prompt-box', 'stat-card', 'footage', 'chip-stack', 'title-card'],
+      captionMix: { label: 0.2, big: 0.12 }, bigSpacingSec: 8, punchSpacingSec: 6,
+    });
+    expect(loadTheme('styles/s1').director).toEqual({
+      insertGapMaxSec: 35, insertMinGapSec: 6,
+      allowedInserts: ['title-card', 'stat-card', 'footage', 'logo-badge', 'explainer-scene'],
+      captionMix: { label: 0.05, big: 0 }, bigSpacingSec: 8, punchSpacingSec: 20,
+    });
+  });
+  it('a theme.json without director gets DEFAULT_DIRECTOR', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'editkai-style-'));
+    const raw = JSON.parse(readFileSync('styles/s1/theme.json', 'utf8'));
+    delete raw.director;
+    mkdirSync(join(dir, 's'));
+    writeFileSync(join(dir, 's', 'theme.json'), JSON.stringify(raw));
+    expect(loadTheme(join(dir, 's')).director).toEqual(DEFAULT_DIRECTOR);
+    rmSync(dir, { recursive: true, force: true });
+  });
+  it('a partial director keeps the other defaults and merges captionMix field by field', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'editkai-style-'));
+    const raw = JSON.parse(readFileSync('styles/s1/theme.json', 'utf8'));
+    raw.director = { insertGapMaxSec: 12, captionMix: { big: 0.3 } };
+    mkdirSync(join(dir, 's'));
+    writeFileSync(join(dir, 's', 'theme.json'), JSON.stringify(raw));
+    const d = loadTheme(join(dir, 's')).director;
+    expect(d.insertGapMaxSec).toBe(12);
+    expect(d.captionMix).toEqual({ label: DEFAULT_DIRECTOR.captionMix.label, big: 0.3 });
+    expect(d.allowedInserts).toEqual(DEFAULT_DIRECTOR.allowedInserts);
+    expect(d.punchSpacingSec).toBe(DEFAULT_DIRECTOR.punchSpacingSec);
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
