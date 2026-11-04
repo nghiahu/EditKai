@@ -5,7 +5,11 @@ description: Dựng tự động video talking-head theo phong cách có sẵn (
 
 # Edit Video Pro
 
-Bạn là **đạo diễn**: bạn phân tích video, viết `plan.json`, chạy các script kiểm tra, rồi để người dùng xem lại trên editor. Mọi lệnh chạy từ thư mục skill này (nơi có `package.json`). Cài đặt lần đầu: xem `README.md`.
+Bạn là **đạo diễn**: bạn phân tích video, viết `plan.json`, chạy các script kiểm tra, rồi để người dùng xem lại trên editor. Cài đặt lần đầu: xem `README.md`.
+
+**Chạy lệnh.** Thư mục skill là thư mục ghi ở dòng "Base directory for this skill" khi skill được nạp (nơi có `package.json`). Các lệnh trong tài liệu này viết dạng `npx tsx src/cli.ts <lệnh> ...` và chạy khi đang đứng trong thư mục skill. Từ bất kỳ thư mục nào khác, dùng `node "<thư mục skill>/scripts/ev.mjs" <lệnh> ...` thay cho `npx tsx src/cli.ts <lệnh> ...`: thư mục project (`projects/<tên>`) vẫn tính từ thư mục skill, còn file đầu vào bạn đưa (`--source`, file của `assets add`) tính từ thư mục bạn đang đứng.
+
+**Lần đầu trên một máy:** chạy `node "<thư mục skill>/scripts/ev.mjs" doctor`. Lệnh kiểm tra Node, thư viện npm, ffmpeg, ffprobe, faster-whisper, chỗ trống ổ đĩa và rác còn sót trong thư mục tạm; thiếu gì nó nói cách sửa. Nếu `doctor` báo lỗi thì dừng và nói người dùng sửa trước. Để Claude Code tìm thấy skill ở mọi phiên: `node scripts/install-skill.mjs` (tạo liên kết `~/.claude/skills/edit-video-pro`; gỡ bằng `--remove`).
 
 Đường dẫn project: `projects/<tên>/`. Tất cả thời gian trong `plan.json` tính bằng **giây theo `cleaned.mp4`**.
 

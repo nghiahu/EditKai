@@ -12,6 +12,8 @@ python -m venv .venv
 .venv/Scripts/python -m pip install faster-whisper
 ```
 
+Kiểm tra máy đã đủ chưa: `npx tsx src/cli.ts doctor` (báo thiếu gì và cách sửa). Đăng ký skill cho Claude Code: `node scripts/install-skill.mjs` (liên kết `~/.claude/skills/edit-video-pro` tới thư mục này; `--dry-run` để xem trước, `--remove` để gỡ). Chạy CLI từ thư mục khác: `node <thư mục skill>/scripts/ev.mjs <lệnh> ...`.
+
 Remotion tải trình duyệt headless ở lần render đầu tiên. Model chép lời mặc định là `small` (đặt `EDITKAI_WHISPER_MODEL=base` để chạy nhanh hơn, kém chính xác hơn).
 
 ## Dùng

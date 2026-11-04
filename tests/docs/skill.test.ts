@@ -112,3 +112,9 @@ describe('SKILL.md documents caption legibility', () => {
     for (const n of ['backdrop', ...CAPTION_BACKDROPS, 'caption-low-contrast']) expect(skill).toContain('`' + n + '`');
   });
 });
+
+describe('SKILL.md explains how to run and register the skill', () => {
+  it('mentions the launcher, doctor and the install script', () => {
+    expect(missing(['scripts/ev.mjs', 'doctor', 'scripts/install-skill.mjs'])).toEqual([]);
+  });
+});

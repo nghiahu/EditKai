@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSyn
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ASSET_KINDS, addAsset, readManifest, type AssetKind } from './assets/manifest';
+import { runDoctor } from './doctor';
 import { analyzeStage } from './stages/analyze';
 import { cleanStage } from './stages/clean';
 import { composeStage } from './stages/compose';
@@ -14,7 +15,7 @@ import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'init | clean | analyze | compose | validate | merge | assets | editor | render';
+const COMMANDS = 'doctor | init | clean | analyze | compose | validate | merge | assets | editor | render';
 
 type Out = (s: string) => void;
 
@@ -52,6 +53,16 @@ async function runAssets(args: string[], out: Out, err: Out): Promise<number> {
   }
 }
 
+/** doctor: checks the machine and prints one line per check; exit 1 when an error-level check fails. */
+async function runDoctorCommand(out: Out): Promise<number> {
+  const checks = await runDoctor(root);
+  for (const c of checks) out(`${c.ok ? '✓' : c.level === 'error' ? '✗' : '!'} ${c.name}: ${c.detail}${c.ok || !c.fix ? '' : `
+    → ${c.fix}`}`);
+  const errors = checks.filter(c => !c.ok && c.level === 'error').length;
+  out(errors ? `${errors} lỗi cần sửa trước khi chạy skill` : checks.some(c => !c.ok) ? 'Chạy được, còn vài cảnh báo ở trên' : 'Mọi thứ đã sẵn sàng');
+  return errors ? 1 : 0;
+}
+
 function parse(argv: string[]) {
   const [cmd, dir, ...rest] = argv;
   const flags: Record<string, string> = {};
@@ -61,6 +72,7 @@ function parse(argv: string[]) {
 
 export async function runCli(argv: string[], out: Out = console.log, err: Out = console.error): Promise<number> {
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
+  if (argv[0] === 'doctor') return runDoctorCommand(out);
   const { cmd, dir, flags } = parse(argv);
   if (!['init', 'clean', 'analyze', 'compose', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
