@@ -44,3 +44,6 @@ Chèn thưa: khoảng một cảnh chèn mỗi 20–30 s, ngoài các thẻ tiê
 
 ## Chưa đo được
 Easing chính xác của icon/chữ, âm thanh và hiệu ứng tiếng — cần mắt người xem lại bản dựng.
+
+## Số liệu cho đạo diễn
+Các con số (khoảng cách tối đa giữa insert, loại insert được dùng, tỉ lệ caption `label`/`big`, nhịp zoom-punch) nằm trong khối `director` của `theme.json`; `analyze` và `validate` đọc chính khối này.

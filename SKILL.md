@@ -16,8 +16,8 @@ Bạn là **đạo diễn**: bạn phân tích video, viết `plan.json`, chạy
    Hỏi thêm người dùng có **footage để chèn** không (quay màn hình, video dọc ngắn, ảnh chụp, logo). Mỗi file đăng ký một lần, kèm mô tả nội dung bằng lời của người dùng:
    `npx tsx src/cli.ts assets add projects/<tên> "<file>" --desc "<mô tả>"` (xem mục `assets.json` bên dưới). Không có footage thì dùng `logo-badge`, `prompt-box`, `stat-card`.
 2. **Làm sạch.** `npx tsx src/cli.ts clean projects/<tên>`. Lệnh chép lời theo từng từ, cắt khoảng lặng và nói lặp, ghi `cleaned.mp4`, `transcript.json` (đã khớp thời gian với `cleaned.mp4`), `cuts.json`. Đọc `cuts.json` và `transcript.raw.json` để kiểm tra không cắt nhầm lời có nghĩa; nếu nghi ngờ thì báo người dùng. Lệnh chỉ tự cắt khoảng lặng và cụm ≥ 2 từ lặp lại; từ đơn lặp lại (ví dụ "từ từ", "dần dần" là từ láy tiếng Việt) **không** bị cắt và được liệt kê trong `repeats-suspect.json` để bạn xem là nói vấp thật hay từ láy. Nếu báo "Không tìm thấy lời nói trong video" thì dừng và nói rõ cho người dùng.
-3. **Phân tích.** Đọc `transcript.json`; chia thành các cảnh theo ý (`scenes`): `talking-head` (người nói), `explainer` (đoạn giải thích có đồ họa), `insert` (chèn footage). Cảnh không ngắn hơn `minSceneSec` của phong cách.
-4. **Dựng.** Đọc `styles/<style>/rules.md` và `styles/<style>/theme.json`, rồi ghi `projects/<tên>/plan.json` (định dạng bên dưới). Footage người dùng đưa copy vào `projects/<tên>/assets/` và tham chiếu dạng `assets/<file>`.
+3. **Phân tích.** `npx tsx src/cli.ts analyze projects/<tên>` đọc `transcript.json`, `assets.json`, `glossary.json` và ghi `storyboard.json`: từng nhịp lời nói kèm các gợi ý (tên công cụ, con số, câu lệnh, danh sách, nhấn mạnh, giao diện, video ngắn) và một `treatment` đề xuất theo khối `director` của `theme.json`. Lệnh từ chối ghi đè khi đã có nhịp `reviewed: true` trừ khi thêm `--force`.
+4. **Dựng.** Đọc `styles/<style>/rules.md` và `styles/<style>/theme.json`. Là đạo diễn, **sửa `storyboard.json`** (xem mục `storyboard.json` bên dưới): đổi, thêm, xóa insert, đổi kiểu caption, rồi đặt `reviewed: true` cho từng nhịp đã xem. Sau đó chạy `npx tsx src/cli.ts compose projects/<tên>`: lệnh ghi `plan.json` (hoặc `plan.next.json` khi `plan.json` đã có, rồi chạy `merge`) và `compose-report.json`. Vẫn có thể tự viết `plan.json` bằng tay (định dạng bên dưới) khi cần. Footage người dùng đưa copy vào `projects/<tên>/assets/` và tham chiếu dạng `assets/<file>`.
 5. **QA.** `npx tsx src/cli.ts validate projects/<tên>` in JSON `{round, maxRounds, stop?, issues[]}`. Sửa `plan.json` theo từng issue rồi chạy lại. Dừng khi `issues` rỗng hoặc có `"stop": true` (hết 3 vòng): khi đó liệt kê rõ các cảnh báo còn lại cho người dùng. Exit code 1 nghĩa là còn **lỗi** (chặn render).
 6. **Review.** `npx tsx src/cli.ts editor projects/<tên>` mở editor ở `http://127.0.0.1:5187`. Người dùng sửa và bấm Lưu. Khi người dùng báo xong, đọc lại `plan.json`.
 7. **Render.** `npx tsx src/cli.ts render projects/<tên>` ghi `out.mp4` (hoặc người dùng bấm Render trong editor).
@@ -98,6 +98,20 @@ Icon có sẵn (vẽ dần và nảy khi hiện): `video`, `skill`, `chat`, `clo
 Camera là một track riêng (`camera`): hai layer cùng track không chồng nhau. Video người nói tự tối và mờ khi có cảnh giải thích `overlay` hoặc footage `fit: "contain"`; không cần khai báo.
 
 Quy tắc cứng (validator kiểm tra): schema đúng; id layer không trùng; `type` đúng bảng trên và đúng track, `props` có các trường bắt buộc (title-card/explainer-scene cần `title`, chip-stack cần `chips[].label`, transition cần `kind`); hai layer **cùng track không chồng thời gian**; footage tồn tại; không layer nào vượt độ dài video. Cảnh báo (không chặn): `footage-overrun` (`from` cộng độ dài layer vượt thời lượng clip trong `assets.json`, hình sẽ đứng ở khung cuối), `prompt-too-long` (`prompt-box` không đủ thời gian để gõ hết chữ và vẽ gạch), chữ tràn vùng an toàn, caption quá nhiều từ, cảnh quá ngắn, phụ đề lệch lời đã chép (phụ đề phải khớp từ trong `transcript.json` trong vòng 0.3 s).
+
+## `storyboard.json`, `glossary.json` và `compose-report.json`
+
+`storyboard.json` = `{ version: 1, style, beats[] }`. Mỗi nhịp: `id`, `start`, `end`, `firstWord`, `lastWord` (chỉ số từ trong `transcript.words`, gồm cả hai đầu), `text`, `cues[]` (`kind`: `tool`, `number`, `prompt`, `list`, `emphasis`, `ui`, `shortvideo`, `question`), `reviewed` và `treatment`:
+- `caption`: `{ variant: "phrase" | "label" | "big", label?, hl: number[], bigRange: [từ đầu, từ cuối] | null }`. `hl` là chỉ số từ được tô nhấn; `bigRange` tối đa 3 từ và nằm trong nhịp, thành một caption `big` riêng.
+- `inserts[]`: `{ type, props, at, duration }` với `type` là một layer type có track `title`, `graphic` hoặc `footage` (props như trong bảng layer); `at` tính bằng giây theo `cleaned.mp4`.
+- `camera[]`: `{ type: "zoom-punch" | "shake", at, duration, props? }`.
+- `note`: ghi chú tự do của đạo diễn.
+
+Phần đề xuất chỉ là điểm xuất phát: xem từng nhịp, hợp lý thì giữ, không thì sửa. `compose` bỏ qua và ghi vào `compose-report.json` (`issues`, `inserts.dropped`, `inserts.moved`, `camera.dropped`) mọi mục không hợp lệ (type lạ, `at` ngoài video, `duration` ≤ 0, `hl`/`bigRange` ngoài nhịp); đọc báo cáo rồi sửa storyboard. Báo cáo còn có số caption theo kiểu, `unreviewedBeats` và `unusedAssets`.
+
+`glossary.json` (tùy chọn, trong thư mục project) thêm thuật ngữ riêng cho phần phát hiện công cụ: `{ "terms": [{ "term": "Zorblax", "label": "phần mềm" }] }`; thuật ngữ của project thắng thuật ngữ mặc định cùng tên (`styles/glossary.json`).
+
+Hai cảnh báo mới của `validate`: `insert-gap` (một khoảng dài hơn `director.insertGapMaxSec` không có insert nào; tối đa 5 dòng rồi một dòng tóm tắt) và `asset-unused` (file trong `assets.json` mà không layer `footage` hay `logo-badge` nào dùng làm `src`). Cả hai chỉ là cảnh báo: thêm insert phù hợp hoặc bỏ asset.
 
 ## Khi nào dừng và hỏi người dùng
 

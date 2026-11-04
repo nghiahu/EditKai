@@ -22,7 +22,9 @@ Nhờ Claude Code (skill `edit-video-pro`, xem `SKILL.md`) hoặc Codex (xem `AG
 npx tsx src/cli.ts init projects/demo --source "video.mp4" --style m1 --aspect 9:16
 npx tsx src/cli.ts assets add projects/demo "man-hinh.mp4" --desc "quay man hinh editor"   # footage de chen (tuy chon)
 npx tsx src/cli.ts clean projects/demo
-# viết projects/demo/plan.json (AI làm bước này)
+npx tsx src/cli.ts analyze projects/demo   # ghi storyboard.json (đề xuất theo từng nhịp)
+# AI sửa projects/demo/storyboard.json rồi đặt reviewed: true
+npx tsx src/cli.ts compose projects/demo   # dựng plan.json + compose-report.json
 npx tsx src/cli.ts validate projects/demo
 npx tsx src/cli.ts merge projects/demo      # sau khi dựng lại: gộp plan.next.json, giữ layer đã khóa
 npx tsx src/cli.ts editor projects/demo     # http://127.0.0.1:5187

@@ -45,3 +45,6 @@ Footage trong `window` hoặc `phone` làm tối và mờ người nói; vẫn g
 
 ## Chưa đo được
 Kiểu easing chính xác của chip và hộp vàng, âm thanh/hiệu ứng tiếng.
+
+## Số liệu cho đạo diễn
+Các con số (khoảng cách tối đa giữa insert, loại insert được dùng, tỉ lệ caption `label`/`big`, nhịp zoom-punch) nằm trong khối `director` của `theme.json`; `analyze` và `validate` đọc chính khối này.

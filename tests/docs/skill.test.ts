@@ -95,3 +95,12 @@ describe('rules of both styles cover the inserts', () => {
     });
   }
 });
+
+describe('SKILL.md documents the director workflow', () => {
+  it('mentions analyze, compose, the storyboard files and their fields', () => {
+    expect(missing(['analyze', 'compose', 'storyboard.json', 'compose-report.json', 'glossary.json', 'reviewed', 'treatment', 'bigRange', 'insert-gap', 'asset-unused', 'plan.next.json'])).toEqual([]);
+  });
+  it('both rules files point to the director block of theme.json', () => {
+    for (const s of ['s1', 'm1']) expect(readFileSync(`styles/${s}/rules.md`, 'utf8')).toMatch(/director/);
+  });
+});
