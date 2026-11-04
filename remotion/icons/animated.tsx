@@ -7,6 +7,8 @@ const LUCIDE: Record<string, string> = {
   graphic: 'Shapes', motion: 'Activity', audio: 'AudioLines', sparkles: 'Sparkles', zap: 'Zap', scissors: 'Scissors',
   wand: 'Wand', layers: 'Layers', play: 'Play', mic: 'Mic', subtitles: 'Subtitles', image: 'Image', bot: 'Bot',
   gauge: 'Gauge', lightbulb: 'Lightbulb', rocket: 'Rocket', star: 'Star',
+  languages: 'Languages', flag: 'Flag', heart: 'Heart', 'thumbs-up': 'ThumbsUp', share: 'Share2', users: 'Users', trophy: 'Trophy',
+  camera: 'Camera', smartphone: 'Smartphone', eye: 'Eye', target: 'Target', 'book-open': 'BookOpen', globe: 'Globe',
 };
 
 export const iconNames = Object.keys(LUCIDE);

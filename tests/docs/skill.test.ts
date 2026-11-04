@@ -162,3 +162,10 @@ describe('SKILL.md describes how the source sits in the frame', () => {
     expect(missing(['meta.fit', 'meta.focus', '`cover`', '`contain`', '--fit', '--focus'])).toEqual([]);
   });
 });
+
+
+describe('SKILL.md documents the commands added after the clean-session test', () => {
+  it('frames, the unmatched fixes report and the whisper backup', () => {
+    expect(missing(['src/cli.ts frames', 'frames/sheet.png', 'transcript.whisper.json', 'không khớp chỗ nào', 'ngay trước', 'ngay sau'])).toEqual([]);
+  });
+});

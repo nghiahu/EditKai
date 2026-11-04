@@ -17,11 +17,12 @@ import { readPlan } from './plan/io';
 import { validatePlanSchema } from './plan/schema';
 import { resetQaRounds, runQa } from './stages/qa';
 import { previewStage, previewVideo } from './stages/preview';
+import { sampleFrames } from './stages/sampleFrames';
 import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | analyze | compose | validate | merge | assets | editor | preview | render';
+const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | frames | analyze | compose | validate | merge | assets | editor | preview | render';
 
 type Out = (s: string) => void;
 
@@ -80,7 +81,7 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   if (argv[0] === 'doctor') return runDoctorCommand(out);
   const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'analyze', 'compose', 'validate', 'merge', 'editor', 'preview', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'frames', 'analyze', 'compose', 'validate', 'merge', 'editor', 'preview', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -130,6 +131,12 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       const r = await condenseStage(projectDir, flags.spec ? resolve(flags.spec) : undefined);
       r.lines.forEach(l => out(l));
       resetQaRounds(projectDir); // new timeline
+      return 0;
+    }
+    if (cmd === 'frames') {
+      const r = await sampleFrames(projectDir, flags.count ? { count: Number(flags.count) } : {});
+      out(`Đã chụp ${r.frames.length} khung của cleaned.mp4 vào ${r.dir}; bảng tổng hợp: ${r.sheet}`);
+      r.frames.forEach(f => out(`  ${f.t.toFixed(1)} s  ${f.file}`));
       return 0;
     }
     if (cmd === 'analyze') {

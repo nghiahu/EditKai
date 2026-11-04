@@ -7,8 +7,9 @@ const html = (el: React.ReactElement) => renderToStaticMarkup(el);
 const props = { size: 40, color: '#fff' };
 
 describe('icons', () => {
-  it('has the 23 names from the spec', () => {
-    expect(iconNames).toHaveLength(23);
+  it('has the 23 names from the spec and 13 more for common topics', () => {
+    expect(iconNames).toHaveLength(36);
+    for (const n of ['languages', 'flag', 'heart', 'thumbs-up', 'share', 'users', 'trophy', 'camera', 'smartphone', 'eye', 'target', 'book-open', 'globe']) expect(iconNames).toContain(n);
     for (const n of ['video', 'skill', 'chat', 'clock', 'check', 'typography', 'graphic', 'motion', 'audio', 'sparkles', 'zap', 'scissors', 'wand', 'layers', 'play', 'mic', 'subtitles', 'image', 'bot', 'gauge', 'lightbulb', 'rocket', 'star'])
       expect(iconNames).toContain(n);
   });
