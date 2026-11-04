@@ -6,6 +6,9 @@ import { ASSET_KINDS, addAsset, readManifest, type AssetKind } from './assets/ma
 import { runDoctor } from './doctor';
 import { analyzeStage } from './stages/analyze';
 import { cleanStage } from './stages/clean';
+import { condenseStage } from './stages/condense';
+import { fixTranscript } from './stages/fixTranscript';
+import { listPauses } from './stages/pauses';
 import { composeStage } from './stages/compose';
 import { mergeRegenerated } from './plan/merge';
 import { readPlan } from './plan/io';
@@ -15,7 +18,7 @@ import { renderStage } from './stages/render';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'doctor | init | clean | analyze | compose | validate | merge | assets | editor | render';
+const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | analyze | compose | validate | merge | assets | editor | render';
 
 type Out = (s: string) => void;
 
@@ -74,7 +77,7 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   if (argv[0] === 'doctor') return runDoctorCommand(out);
   const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'analyze', 'compose', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'analyze', 'compose', 'validate', 'merge', 'editor', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -99,6 +102,21 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       const r = await cleanStage(projectDir);
       resetQaRounds(projectDir); // new timeline, new QA count
       out(`Đã làm sạch: ${r.cuts.length} đoạn cắt, ${r.transcript.words.length} từ → ${r.cleaned}`);
+      return 0;
+    }
+    if (cmd === 'fix-transcript') {
+      const r = fixTranscript(projectDir, flags.fixes ? resolve(flags.fixes) : undefined);
+      out(`Đã sửa ${r.changed} từ trong transcript.json (bản Whisper gốc ở transcript.whisper.json)`);
+      return 0;
+    }
+    if (cmd === 'pauses') {
+      (await listPauses(projectDir, flags.min ? Number(flags.min) : undefined)).forEach(l => out(l));
+      return 0;
+    }
+    if (cmd === 'condense') {
+      const r = await condenseStage(projectDir, flags.spec ? resolve(flags.spec) : undefined);
+      r.lines.forEach(l => out(l));
+      resetQaRounds(projectDir); // new timeline
       return 0;
     }
     if (cmd === 'analyze') {
