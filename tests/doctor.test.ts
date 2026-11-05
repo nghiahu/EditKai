@@ -30,6 +30,17 @@ describe('runDoctor', () => {
     expect(by(c, 'faster-whisper').ok).toBe(false);
     expect(by(c, 'faster-whisper').fix).toMatch(/pip|venv/i);
   });
+  it('a missing face model is a warning that says where it should be', async () => {
+    const c = await runDoctor('/skill', { ...good, exists: p => !p.includes('version-RFB-320') });
+    expect(by(c, 'mô hình mặt').ok).toBe(false);
+    expect(by(c, 'mô hình mặt').level).toBe('warn');
+    expect(by(c, 'mô hình mặt').fix).toContain('models');
+  });
+  it('python without onnxruntime is a warning for the face check', async () => {
+    const c = await runDoctor('/skill', { ...good, run: async (cmd, args) => { if (args.some(a => a.includes('onnxruntime'))) throw new Error('no module'); return 'x'; } });
+    expect(by(c, 'onnxruntime').ok).toBe(false);
+    expect(by(c, 'onnxruntime').level).toBe('warn');
+  });
   it('an old node is an error', async () => {
     expect(by(await runDoctor('/skill', { ...good, nodeVersion: () => 'v16.20.0' }), 'node').ok).toBe(false);
   });

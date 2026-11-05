@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -33,6 +33,12 @@ describe('cleanStage', () => {
     const d = (await probe(join(dir, 'cleaned.mp4'))).durationSec;
     expect(d).toBeGreaterThan(2.0);
     expect(d).toBeLessThan(2.5);
+  });
+  it('removes faces.json: it belonged to the picture before the cut', async () => {
+    await makeSource('tone-gap');
+    writeFileSync(join(dir, 'faces.json'), '{}');
+    await cleanStage(dir, { transcribe: stub([{ t: 'a', s: 0.1, e: 0.9 }, { t: 'b', s: 2.1, e: 2.9 }]) });
+    expect(existsSync(join(dir, 'faces.json'))).toBe(false);
   });
   it('throws a clear message for a video without audio', async () => {
     await makeSource('none');

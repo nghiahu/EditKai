@@ -58,6 +58,14 @@ export async function runDoctor(root: string, probes: Probes = realProbes): Prom
     add({ name: 'faster-whisper', ok: false, level: 'error', detail: 'không import được', fix: `tạo môi trường: python -m venv .venv rồi .venv\Scripts\pip install faster-whisper (trong ${root})` });
   }
 
+  // face avoidance (optional): the model file and onnxruntime; without them everything else works, graphics just are not moved off the face
+  add({ name: 'mô hình mặt', ok: probes.exists(join(root, 'models', 'version-RFB-320.onnx')), level: 'warn', detail: 'models/version-RFB-320.onnx', fix: `thiếu file mô hình trong ${join(root, 'models')} (xem docs của đợt 1)` });
+  try {
+    add({ name: 'onnxruntime', ok: true, level: 'warn', detail: `python ${firstLine(await probes.run(python, ['-c', 'import onnxruntime; print(onnxruntime.__version__)']))}` });
+  } catch {
+    add({ name: 'onnxruntime', ok: false, level: 'warn', detail: 'không import được', fix: `.venv\Scripts\pip install onnxruntime numpy (trong ${root})` });
+  }
+
   for (const [label, path] of [['chỗ trống ở thư mục tạm', probes.tmpDir()], ['chỗ trống ở thư mục skill', root]] as const) {
     try {
       const gib = probes.freeBytes(path) / GIB;

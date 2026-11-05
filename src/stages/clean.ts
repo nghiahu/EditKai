@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { probe } from '../media/probe';
 import { detectSilences, type Range } from '../media/silence';
@@ -46,6 +46,7 @@ export async function cleanStage(projectDir: string, deps: CleanDeps = {}) {
   const cleaned = join(projectDir, 'cleaned.mp4');
   await cutVideo(source, keep, cleaned);
   writeFileSync(join(projectDir, 'cuts.json'), JSON.stringify(cuts, null, 2));
+  rmSync(join(projectDir, 'faces.json'), { force: true }); // measured on the picture before this cut
   writeFileSync(join(projectDir, 'repeats-suspect.json'), JSON.stringify(findSuspectRepeats(raw), null, 2));
 
   const transcript = await transcribe(cleaned, join(projectDir, 'transcript.json'));

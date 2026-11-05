@@ -68,6 +68,7 @@ export async function condenseStage(projectDir: string, specFile = join(projectD
 
   await cutVideo(full, segments, cleaned, { fadeSec: FADE_SEC });
   rmSync(join(projectDir, 'transcript.whisper.json'), { force: true }); // the old fix backup belongs to the previous cut
+  rmSync(join(projectDir, 'faces.json'), { force: true }); // measured on the picture before this cut
   const heard = (await (deps.transcribe ?? whisper)(cleaned, join(projectDir, 'transcript.json'))).words;
   writeFileSync(join(projectDir, 'condense.json'), JSON.stringify({ keep, segments, joins }, null, 2));
 

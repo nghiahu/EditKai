@@ -101,3 +101,12 @@ describe('condenseStage and transcript-fixes.json', () => {
     expect(r.lines.join('\n')).not.toMatch(/sửa/);
   }, 120000);
 });
+
+describe('condenseStage and faces.json', () => {
+  it('removes faces.json, which belonged to the picture before the cut', async () => {
+    const dir = await project();
+    writeFileSync(join(dir, 'faces.json'), '{}');
+    await condenseStage(dir, spec(dir, [{ from: 'một', to: 'bốn' }]), { transcribe: fakeHeard });
+    expect(existsSync(join(dir, 'faces.json'))).toBe(false);
+  }, 120000);
+});
