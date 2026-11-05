@@ -35,4 +35,5 @@ export const registry: Record<string, LayerComponent> = {
   'step-number': StepNumber,
   'zoom-punch': Camera,
   shake: Camera,
+  freeze: Camera, // PlanVideo itself holds the picture; the layer draws nothing
 };

@@ -52,6 +52,7 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
   counter: { track: 'graphic', check: p => counterProblem(p) },
   callout: { track: 'graphic', check: p => calloutProblem(p) },
   'step-number': { track: 'graphic', check: p => stepNumberProblem(p) },
+  freeze: { track: 'camera', check: () => undefined }, // holds the picture still (the sound goes on); no props
   footage: { track: 'footage', check: p => footageProblem(p) }, // props.src is reported by the missing-file rule
   transition: { track: 'graphic', check: p => (TRANSITION_KINDS.includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur, slide, push, flash, whip hoặc dip') },
 };

@@ -44,7 +44,7 @@ Footage trong `window` hoặc `phone` làm tối và mờ người nói; vẫn g
 - Chuyển cảnh `blur`/`zoom` mỗi lần vào hoặc ra khỏi cảnh chèn; không dùng `slide` hai lần liên tiếp.
 
 ## Chỉ chỗ và đánh số
-- `callout` (vòng khoanh hoặc mũi tên vẽ tay) chỉ để trỏ vào một chi tiết trong footage hoặc ảnh chụp màn hình khi lời nói nhắc tới nó; đặt `x`, `y` sau khi xem khung hình, nhãn ngắn (vài từ), không đặt lên mặt người nói.
+- `callout` (vòng khoanh hoặc mũi tên vẽ tay) chỉ để trỏ vào một chi tiết trong footage hoặc ảnh chụp màn hình khi lời nói nhắc tới nó; đặt `x`, `y` sau khi xem khung hình, nhãn ngắn (vài từ), không đặt lên mặt người nói. Muốn chỉ vào một chi tiết trên hình người nói thì thêm `freeze` cùng khoảng thời gian để hình đứng yên (tiếng vẫn chạy).
 - `step-number` (số nghiêng khổng lồ) chỉ dùng khi video là danh sách bước hoặc mẹo; số tăng dần, tiêu đề là vài từ của chính bước đó; không dùng cho dấu mốc phần như "mở bài" (dùng thẻ tiêu đề).
 
 ## Chưa đo được

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, Audio, OffthreadVideo, Sequence, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Audio, Freeze, OffthreadVideo, Sequence, useCurrentFrame } from 'remotion';
 import type { Plan } from '../src/plan/types';
 import type { Theme } from '../src/style/theme';
 import './fonts'; // loads Be Vietnam Pro before the first frame (the render and the editor both import this file)
@@ -30,6 +30,12 @@ export const PlanVideo: React.FC<PlanVideoProps> = ({ plan, theme, videoSrc, ass
     <AbsoluteFill style={{ background: theme.colors.navy ?? theme.colors.black ?? '#000' }}>
       <AbsoluteFill style={mergeStyles(transitionStyle(plan.layers, frame / fps), cameraStyle(plan.layers, frame / fps, theme.motion), baseDim(plan.layers, frame / fps, theme.motion))}>
         {videoSrc ? <OffthreadVideo src={videoSrc} style={{ ...FILL, ...framingStyle(framing) }} /> : null}
+        {/* a freeze: a muted copy of the picture held at the frame where the layer starts, over the video that keeps playing, so the sound does not stop */}
+        {videoSrc ? plan.layers.filter(l => l.type === 'freeze').map(l => (
+          <Sequence key={l.id} from={Math.round(l.start * fps)} durationInFrames={Math.max(1, Math.round((l.end - l.start) * fps))}>
+            <Freeze frame={0}><OffthreadVideo src={videoSrc} muted startFrom={Math.round(l.start * fps)} style={{ ...FILL, ...framingStyle(framing) }} /></Freeze>
+          </Sequence>
+        )) : null}
       </AbsoluteFill>
       {plan.layers.map(l => {
         const Component = registry[l.type ?? l.track];

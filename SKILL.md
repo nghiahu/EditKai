@@ -90,6 +90,7 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 | `graphic` | `transition` | `{ kind: "zoom"\|"blur"\|"slide"\|"push"\|"flash"\|"whip"\|"dip" }`, dài ≤ 0.6 s; hiệu ứng áp lên video nền (`flash` là nháy sáng, `whip` hất ngang và nhòe như lia máy nhanh, `dip` tối dần gần đen rồi sáng lại), đặt ngay trước cảnh hoặc cân tâm ở chỗ ghép, không chồng layer `graphic` khác |
 | `camera` | `zoom-punch` | `{ scale?: số trong (1, 1.5], focus?: { x, y } trong 0–1 }`, 0.8–1.5 s; đẩy camera vào ở từ nhấn mạnh rồi trả lại (mặc định theo phong cách: s1 1.06, m1 1.12) |
 | `camera` | `shake` | `{ intensity?: 1–3 }`, rung nhẹ cho khoảnh khắc mạnh |
+| `camera` | `freeze` | không có props; dài bao nhiêu tùy ý. Giữ hình người nói đứng yên tại khung mà layer bắt đầu, **tiếng vẫn chạy**; dùng để vẽ `callout` lên một khung hình (đặt `callout` cùng khoảng thời gian, nó ở track `graphic` nên không chồng với `freeze`). Không dùng cùng lúc với `zoom-punch` (cùng track camera nên chồng thời gian là lỗi) |
 | `footage` | `footage` | `{ src: "assets/<file>", fit?, frame?, motion?, focus?, from?, title?, sound?, dim? }` (bảng props bên dưới) |
 
 **Footage (`props` của layer `footage`; chỉ `src` là bắt buộc).** Nội dung `assets/<file>` do `assets add` đưa vào. Footage mặc định **tắt tiếng** (tiếng của nó sẽ chồng lên giọng người nói); chỉ bật khi `sound` là `true`.
