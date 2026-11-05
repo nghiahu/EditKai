@@ -86,6 +86,11 @@ describe('placeCaptionsAwayFromFaces', () => {
     expect(['top', 'bottom']).toContain((out.props as { position?: string }).position);
     expect((out.props as { variant?: string }).variant).toBe('big');
   });
+  it('prefers the bottom (chin height, where captions normally sit, clear of badges at the top) when that clears the face; the top when only that does', () => {
+    expect((placeCaptionsAwayFromFaces([cap('c1', { variant: 'big' })], f, theme)[0].props as { position?: string }).position).toBe('bottom');
+    const low = faces(face(0.4, 0.3)); // a small face right where both the centre and the bottom bands are
+    expect((placeCaptionsAwayFromFaces([cap('c1', { variant: 'big' })], low, theme)[0].props as { position?: string }).position).toBe('top');
+  });
   it('leaves other captions, a position that was set, a face that is not there then, and no faces alone', () => {
     const phrase = cap('c2', { variant: 'phrase' });
     const fixed = cap('c3', { variant: 'big', position: 'center' });

@@ -52,7 +52,7 @@ export function placeAwayFromFaces(layers: Layer[], faces: Faces | undefined, th
 }
 
 /**
- * Moves a `big` caption (centred by default, so right on the speaker) to the top or the bottom, whichever covers the face less, when the centre
+ * Moves a `big` caption (centred by default, so right on the speaker) to the bottom, or to the top when the bottom covers the face more, when the centre
  * covers more than CAPTION_OVERLAP_LIMIT of it. Other captions (they sit low, at chin height) and captions with a `position` are left as they are.
  */
 export function placeCaptionsAwayFromFaces(layers: Layer[], faces: Faces | undefined, theme: ThemeBits): Layer[] {
@@ -63,7 +63,7 @@ export function placeCaptionsAwayFromFaces(layers: Layer[], faces: Faces | undef
     if (!region) return l;
     const covered = (p: 'top' | 'center' | 'bottom') => overlapShare(region, captionRegion(p, theme));
     if (covered('center') <= CAPTION_OVERLAP_LIMIT) return l;
-    const best = covered('top') <= covered('bottom') ? 'top' : 'bottom';
+    const best = covered('bottom') <= CAPTION_OVERLAP_LIMIT || covered('bottom') <= covered('top') ? 'bottom' : 'top'; // the bottom is where captions normally sit, and top badges are there
     return { ...l, props: { ...l.props, position: best } };
   });
 }
