@@ -10,6 +10,8 @@ import { probe } from '../media/probe';
 import { readPlan } from '../plan/io';
 import type { Layer, Plan } from '../plan/types';
 import { framingProblem, resolveFraming } from '../plan/framing';
+import { placeAwayFromFaces } from '../director/faceAvoid';
+import { mapFacesToFrame, readFaces } from '../media/faces';
 import { BRIGHT_SHARE, validatePlan } from '../qa/validate';
 import { measureCaptionBright } from './captionBright';
 import { loadTheme } from '../style/theme';
@@ -54,7 +56,8 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   if (!existsSync(video)) throw new Error('Chưa có cleaned.mp4 — chạy clean trước');
   const project = JSON.parse(readFileSync(join(projectDir, 'project.json'), 'utf8')) as { style: string; fps?: number; width: number; height: number; fit?: unknown; focus?: unknown };
   const theme = loadTheme(join(root, 'styles', project.style));
-  const durationSec = (await probe(video)).durationSec;
+  const info = await probe(video);
+  const durationSec = info.durationSec;
 
   const fileExists = (p: string) => existsSync(join(projectDir, p));
   const normalized = normalizeStoryboard(readStoryboard(projectDir));
@@ -68,7 +71,11 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   const framed = framingProblem({ fit: project.fit, focus: project.focus }) ? resolveFraming(undefined) : resolveFraming({ fit: project.fit, focus: project.focus } as Plan['meta']);
   const bright = await measureCaptionBright(video, caps.layers, theme, project.width, { width: project.width, height: project.height, ...framed });
   for (const l of caps.layers) if ((bright.get(l.id) ?? 0) > BRIGHT_SHARE) l.props = { ...l.props, backdrop: 'plate' };
-  let layers = [...caps.layers, ...ins.layers, ...cam.layers];
+  // a card that would sit on the speaker's face moves to the top or bottom (faces.json comes from the `faces` command)
+  const found = readFaces(projectDir);
+  const frameFaces = found && mapFacesToFrame(found, info, project, framed);
+  const insertLayersAway = placeAwayFromFaces(ins.layers, frameFaces, theme, project.width, project.height);
+  let layers = [...caps.layers, ...insertLayersAway, ...cam.layers];
 
   // a regenerated plan is merged into plan.json later: its ids must not clash with the ones already there
   const existingFile = join(projectDir, 'plan.json');

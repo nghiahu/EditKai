@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Framing } from '../plan/framing';
 
 /** A rectangle as shares (0-1) of the frame width and height. */
 export interface FaceBox { x: number; y: number; w: number; h: number }
@@ -38,4 +39,29 @@ export function overlapShare(face: FaceBox, other: FaceBox): number {
   const w = Math.min(face.x + face.w, other.x + other.w) - Math.max(face.x, other.x);
   const h = Math.min(face.y + face.h, other.y + other.h) - Math.max(face.y, other.y);
   return w > 0 && h > 0 ? (w * h) / area : 0;
+}
+
+/**
+ * Faces measured on the source picture, as they sit in the frame the video is rendered at (the picture is fitted by `framing`: cropped to fill
+ * with `cover`, centred with bars with `contain`). A face the crop cuts away becomes a null box; one it cuts partly is clipped to the frame.
+ */
+export function mapFacesToFrame(faces: Faces, src: { width: number; height: number }, frame: { width: number; height: number }, framing: Framing): Faces {
+  const scale = (framing.fit === 'contain' ? Math.min : Math.max)(frame.width / src.width, frame.height / src.height);
+  const dw = src.width * scale;
+  const dh = src.height * scale;
+  const fx = framing.fit === 'contain' ? 0.5 : framing.focus.x;
+  const fy = framing.fit === 'contain' ? 0.5 : framing.focus.y;
+  const offX = (frame.width - dw) * fx;
+  const offY = (frame.height - dh) * fy;
+  return {
+    ...faces,
+    samples: faces.samples.map(s => {
+      if (!s.box) return s;
+      const x1 = clamp01((s.box.x * dw + offX) / frame.width);
+      const y1 = clamp01((s.box.y * dh + offY) / frame.height);
+      const x2 = clamp01(((s.box.x + s.box.w) * dw + offX) / frame.width);
+      const y2 = clamp01(((s.box.y + s.box.h) * dh + offY) / frame.height);
+      return x2 > x1 && y2 > y1 ? { ...s, box: { x: x1, y: y1, w: x2 - x1, h: y2 - y1 } } : { ...s, box: null };
+    }),
+  };
 }

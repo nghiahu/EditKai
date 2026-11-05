@@ -195,3 +195,36 @@ describe('composeStage keeps the framing of project.json', () => {
     expect(r.report.issues.join('\n')).toMatch(/fit|focus/);
   }, 120000);
 });
+
+describe("composeStage and the speaker's face", () => {
+  const card = { type: 'stat-card', props: { rows: [{ value: '30 phút' }] }, at: 2, duration: 2.5 };
+  const withCard = async () => {
+    const dir = await project();
+    const sb = readStoryboard(dir);
+    sb.beats[0].treatment.inserts = [card];
+    writeStoryboard(dir, sb);
+    return dir;
+  };
+  const face = (dir: string) => writeFileSync(join(dir, 'faces.json'), JSON.stringify({ fps: 4, samples: Array.from({ length: 60 }, (_, i) => ({ t: i / 4, box: { x: 0.25, y: 0.3, w: 0.5, h: 0.4 }, conf: 0.99 })) }));
+  const statCard = (dir: string) => (json(dir, 'plan.json') as Plan).layers.find(l => l.type === 'stat-card')!;
+  it('a card that would sit on the face gets a position that covers it less', async () => {
+    const dir = await withCard();
+    face(dir);
+    await composeStage(dir);
+    expect(['top', 'bottom']).toContain((statCard(dir).props as { position?: string }).position);
+  }, 60000);
+  it('without faces.json the card keeps its default position', async () => {
+    const dir = await withCard();
+    await composeStage(dir);
+    expect((statCard(dir).props as { position?: string }).position).toBeUndefined();
+  }, 60000);
+  it('a position the storyboard sets is kept', async () => {
+    const dir = await withCard();
+    const sb = readStoryboard(dir);
+    sb.beats[0].treatment.inserts = [{ ...card, props: { ...card.props, position: 'center' } }];
+    writeStoryboard(dir, sb);
+    face(dir);
+    await composeStage(dir);
+    expect((statCard(dir).props as { position?: string }).position).toBe('center');
+  }, 60000);
+});
