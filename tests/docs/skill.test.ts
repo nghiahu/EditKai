@@ -181,3 +181,9 @@ describe('SKILL.md describes keeping graphics off the speaker\'s face', () => {
     expect(missing(['src/cli.ts faces', 'faces.json', 'insert-on-face', 'caption-on-face', 'preview/report.md', 'không che mặt'])).toEqual([]);
   });
 });
+
+describe('SKILL.md documents the side positions', () => {
+  it('names left and right for the badge and says why', () => {
+    expect(missing(['"left"', '"right"', 'cột bên'])).toEqual([]);
+  });
+});

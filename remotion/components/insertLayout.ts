@@ -1,10 +1,16 @@
 import type React from 'react';
-import type { InsertPosition } from '../../src/plan/insertProps';
+import { SIDE_SHARE, type InsertPosition } from '../../src/plan/insertProps';
 import type { Theme } from '../../src/style/theme';
 
 /** Full-frame flex column placing its child at the top, centre or bottom of the safe zone (used by the graphic inserts). */
 export function insertBox(position: InsertPosition, theme: Theme, width: number, height: number): React.CSSProperties {
   const sz = theme.limits.safeZone;
+  if (position === 'left' || position === 'right') {
+    return {
+      position: 'absolute', top: 0, bottom: 0, width: width * SIDE_SHARE, [position]: width * sz[position],
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    };
+  }
   const base: React.CSSProperties = {
     position: 'absolute', left: width * sz.left, right: width * sz.right, top: 0, bottom: 0,
     display: 'flex', flexDirection: 'column', alignItems: 'center',

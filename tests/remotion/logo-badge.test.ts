@@ -48,6 +48,14 @@ describe('logo-badge', () => {
     expect(c.equals(b)).toBe(false);
     expect(t.equals(b)).toBe(false);
   }, T);
+  it('left and right put the badge in the left or the right half of the frame, level with the centre', async () => {
+    const box = async (position: string) => inkBox(await stillOf(planOf('m1', [badge({ position })]), 40));
+    const [l, c, r] = [await box('left'), await box('center'), await box('right')];
+    expect(l.x + l.w).toBeLessThan(540);
+    expect(r.x).toBeGreaterThan(540);
+    expect(Math.abs(l.y - c.y)).toBeLessThan(40);
+    expect(Math.abs(r.y - c.y)).toBeLessThan(40);
+  }, T);
   it('an unknown icon renders like the check icon', async () => {
     expect((await bytes({ icon: 'zzz' }, 40)).equals(await bytes({ icon: 'check' }, 40))).toBe(true);
   }, T);

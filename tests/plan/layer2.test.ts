@@ -17,7 +17,7 @@ describe('quote-card props', () => {
     expect(quoteCardProblem({ quote: 5 })).toMatch(/quote/);
     expect(quoteCardProblem({ quote: 'a'.repeat(241) })).toMatch(/240/);
     expect(quoteCardProblem({ quote: 'ok', author: 3 })).toMatch(/author/);
-    expect(quoteCardProblem({ quote: 'ok', position: 'left' })).toMatch(/position/);
+    expect(quoteCardProblem({ quote: 'ok', position: 'middle' })).toMatch(/position/);
     expect(quoteCardProblem({ quote: 'ok', dim: 'yes' })).toMatch(/dim/);
     expect(quoteCardProblem({ quote: 'ok', author: 'Ai đó', position: 'bottom', dim: false })).toBeUndefined();
   });

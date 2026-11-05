@@ -252,7 +252,7 @@ describe('validatePlan', () => {
       expect(codes(withBadge({ src: 'assets/logo.png' }))).toEqual([]);
     });
     it('rejects position "left", icon 3, src 3, label 5, sub 5 and dim "yes"', () => {
-      for (const props of [{ position: 'left' }, { icon: 3 }, { src: 3 }, { label: 5 }, { sub: 5 }, { dim: 'yes' }])
+      for (const props of [{ position: 'middle' }, { icon: 3 }, { src: 3 }, { label: 5 }, { sub: 5 }, { dim: 'yes' }])
         expect(codes(withBadge(props))).toContain('error:invalid-props');
     });
   });
@@ -267,7 +267,7 @@ describe('validatePlan', () => {
       expect(codes(withPrompt({ text: 'x', placeholder: 'y', strike: true, position: 'bottom', dim: true }))).toEqual([]);
     });
     it('rejects missing or empty text, strike "yes", position "left", placeholder 3, dim "yes"', () => {
-      for (const props of [{}, { text: '' }, { text: 3 }, { text: 'x', strike: 'yes' }, { text: 'x', position: 'left' }, { text: 'x', placeholder: 3 }, { text: 'x', dim: 'yes' }])
+      for (const props of [{}, { text: '' }, { text: 3 }, { text: 'x', strike: 'yes' }, { text: 'x', position: 'middle' }, { text: 'x', placeholder: 3 }, { text: 'x', dim: 'yes' }])
         expect(codes(withPrompt(props))).toContain('error:invalid-props');
     });
   });
@@ -284,7 +284,7 @@ describe('validatePlan', () => {
       expect(codes(withCard({ rows: [{ value: '5–10 phút' }] }))).toEqual([]);
     });
     it('rejects no rows, five rows, a row without value, an empty value, rows as a string, a title of 3', () => {
-      for (const props of [{}, { rows: [] }, { rows: [row(), row(), row(), row(), row()] }, { rows: [{ icon: 'clock' }] }, { rows: [row('')] }, { rows: [row(5)] }, { rows: 'abc' }, { rows: [row()], title: 3 }, { rows: [row()], position: 'left' }, { rows: [{ value: 'x', icon: 3 }] }, { rows: [{ value: 'x', caption: 3 }] }, { rows: [null] }])
+      for (const props of [{}, { rows: [] }, { rows: [row(), row(), row(), row(), row()] }, { rows: [{ icon: 'clock' }] }, { rows: [row('')] }, { rows: [row(5)] }, { rows: 'abc' }, { rows: [row()], title: 3 }, { rows: [row()], position: 'middle' }, { rows: [{ value: 'x', icon: 3 }] }, { rows: [{ value: 'x', caption: 3 }] }, { rows: [null] }])
         expect(codes(withCard(props))).toContain('error:invalid-props');
     });
   });

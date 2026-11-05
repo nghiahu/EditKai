@@ -5,7 +5,7 @@ import {
 
 describe('constants', () => {
   it('list the allowed values', () => {
-    expect([...INSERT_POSITIONS]).toEqual(['top', 'center', 'bottom']);
+    expect([...INSERT_POSITIONS]).toEqual(['top', 'center', 'bottom', 'left', 'right']);
     expect([...FOOTAGE_FRAMES]).toEqual(['none', 'window', 'phone']);
     expect([...FOOTAGE_MOTIONS]).toEqual(['none', 'zoom-in', 'zoom-out', 'pan-left', 'pan-right']);
   });

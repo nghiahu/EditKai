@@ -1,6 +1,6 @@
 // Browser-safe (no node imports). Roughly where an insert with a `position` sits on the frame, for keeping it off the speaker's face.
 import type { FaceBox } from '../media/faces';
-import type { InsertPosition } from './insertProps';
+import { SIDE_SHARE, type InsertPosition } from './insertProps';
 import { resolveCounter, resolveLogoBadge, resolvePromptBox, resolveQuoteCard, resolveStatCard } from './insertTypes';
 
 type ThemeBits = { limits: { safeZone: { top: number; bottom: number; left: number; right: number } } };
@@ -36,10 +36,14 @@ function size(type: string, props: Record<string, unknown>, safeW: number): { w:
 export function insertFootprint(type: string, props: Record<string, unknown> | undefined, position: InsertPosition, theme: ThemeBits, width: number, height: number): FaceBox | undefined {
   const sz = theme.limits.safeZone;
   const safeW = width * (1 - sz.left - sz.right);
-  const s = size(type, props ?? {}, safeW);
+  const side = position === 'left' || position === 'right';
+  const columnW = side ? width * SIDE_SHARE : safeW; // a card is as wide as its column; one at a side is squeezed into the side column
+  const s = size(type, props ?? {}, columnW);
   if (!s) return undefined;
   const h = s.hPx / height;
   const y = position === 'top' ? sz.top : position === 'bottom' ? 1 - sz.bottom - h : 0.5 - h / 2;
   const w = s.w / width;
+  const column = columnW / width;
+  if (side) return { x: (position === 'left' ? sz.left : 1 - sz.right - column) + (column - w) / 2, y: 0.5 - h / 2, w, h };
   return { x: sz.left + (1 - sz.left - sz.right - w) / 2, y, w, h };
 }

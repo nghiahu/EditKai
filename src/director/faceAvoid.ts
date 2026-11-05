@@ -1,7 +1,7 @@
 import { faceRegion, overlapShare, type FaceBox, type Faces } from '../media/faces';
 import { captionRegion } from '../plan/captionRegion';
 import { FOOTPRINT_TYPES, insertFootprint } from '../plan/insertFootprint';
-import { INSERT_POSITIONS, type InsertPosition } from '../plan/insertProps';
+import type { InsertPosition } from '../plan/insertProps';
 import type { Layer } from '../plan/types';
 
 /** A card may cover this share of the face; more than that is "on the face". */
@@ -11,14 +11,24 @@ export const CAPTION_OVERLAP_LIMIT = 0.35;
 
 type ThemeBits = { name: string; limits: { safeZone: { top: number; bottom: number; left: number; right: number } } };
 const CAPTION_WEIGHT = 0.5; // sitting on the captions costs half as much as sitting on the face
-const ORDER: InsertPosition[] = ['center', ...INSERT_POSITIONS.filter(p => p !== 'center')]; // the default position comes first, so it wins a tie
+const ORDER: InsertPosition[] = ['center', 'top', 'bottom']; // the default position comes first, so it wins a tie
+const SIDES: InsertPosition[] = ['left', 'right'];
+const COUNTER_SIDE_MIN_WIDTH = 1500; // a counter's digits are about 840 px wide: they fit a side column only in a wide frame
+const CAPTION_TEXT_SHARE = 0.6; // captions are centred and wrap early: their text takes the middle of the band, not all of it
+
+/** The positions a `type` insert may take: a badge may go to a side, a counter too in a wide frame; cards stay on the vertical axis (they would be squeezed). */
+function positionsFor(type: string, width: number): InsertPosition[] {
+  if (type === 'logo-badge' || (type === 'counter' && width >= COUNTER_SIDE_MIN_WIDTH)) return [...ORDER, ...SIDES];
+  return ORDER;
+}
 
 /** The position for a `type` insert whose face region is `region`: the one that covers the face least, counting the bottom captions it would sit on (ties go to the default order). */
 export function bestPosition(type: string, props: Record<string, unknown> | undefined, region: FaceBox, theme: ThemeBits, width: number, height: number): InsertPosition {
   const footprint = (p: InsertPosition) => insertFootprint(type, props, p, theme, width, height)!;
-  const captions = captionRegion('bottom', theme);
+  const band = captionRegion('bottom', theme);
+  const captions = { ...band, x: band.x + (band.w * (1 - CAPTION_TEXT_SHARE)) / 2, w: band.w * CAPTION_TEXT_SHARE };
   const cost = (p: InsertPosition) => overlapShare(region, footprint(p)) + CAPTION_WEIGHT * overlapShare(footprint(p), captions);
-  return ORDER.reduce((a, p) => (cost(p) < cost(a) ? p : a));
+  return positionsFor(type, width).reduce((a, p) => (cost(p) < cost(a) ? p : a));
 }
 
 /**

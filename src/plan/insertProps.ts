@@ -1,5 +1,7 @@
 // Browser-safe (no node imports): Remotion components and the validator both read insert props through this module.
-export const INSERT_POSITIONS = ['top', 'center', 'bottom'] as const;
+export const INSERT_POSITIONS = ['top', 'center', 'bottom', 'left', 'right'] as const;
+/** The column a `left` or `right` insert is squeezed into, as a share of the frame width (the speaker keeps the middle). */
+export const SIDE_SHARE = 0.45;
 export const FOOTAGE_FRAMES = ['none', 'window', 'phone'] as const;
 export const FOOTAGE_MOTIONS = ['none', 'zoom-in', 'zoom-out', 'pan-left', 'pan-right'] as const;
 
