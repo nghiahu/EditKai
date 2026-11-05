@@ -45,7 +45,8 @@
       "footage",
       "chip-stack",
       "title-card",
-      "counter"
+      "counter",
+      "step-number"
     ],
     "captionMix": {
       "label": 0.2,

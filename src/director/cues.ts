@@ -124,6 +124,7 @@ export function detectCues(words: { t: string; s: number; e: number }[], span: B
   }
   toks.forEach((t, i) => {
     if (t.norm === 'buoc' && /^\d+$/.test(toks[i + 1]?.norm ?? '')) cues.push({ kind: 'section', text: `BƯỚC ${toks[i + 1].norm}`, word: t.idx });
+    if (t.norm === 'meo' && toks[i + 1]?.norm === 'so' && /^\d+$/.test(toks[i + 2]?.norm ?? '')) cues.push({ kind: 'section', text: `MẸO SỐ ${toks[i + 2].norm}`, word: t.idx });
   });
 
   if (toks.length > 0 && toks[toks.length - 1].raw.endsWith('?')) cues.push({ kind: 'question', text: span.text, word: span.lastWord });

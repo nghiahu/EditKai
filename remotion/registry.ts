@@ -14,6 +14,7 @@ import { StatCard } from './components/StatCard';
 import { QuoteCard } from './components/QuoteCard';
 import { Counter } from './components/Counter';
 import { Callout } from './components/Callout';
+import { StepNumber } from './components/StepNumber';
 
 export type LayerComponent = React.FC<{ layer: Layer; theme: Theme; videoSrc?: string; assetBase?: string }>;
 
@@ -31,6 +32,7 @@ export const registry: Record<string, LayerComponent> = {
   'quote-card': QuoteCard,
   counter: Counter,
   callout: Callout,
+  'step-number': StepNumber,
   'zoom-punch': Camera,
   shake: Camera,
 };

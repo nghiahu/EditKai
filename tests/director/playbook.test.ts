@@ -37,7 +37,8 @@ describe('shipped playbooks', () => {
   });
   it('s1 puts section and cta on a title card, the style\'s main insert', () => {
     const s1 = loadPlaybook('styles/s1').situations;
-    expect(s1.section[0].type).toBe('title-card');
+    expect(s1.section[0]).toMatchObject({ id: 'section-step', type: 'step-number', builder: 'step' }); // used only for a spoken step mark ("thứ hai", "bước 3")
+    expect(s1.section[1].type).toBe('title-card');
     expect(s1.cta[0].type).toBe('title-card');
     expect(s1.list[0].type).toBe('explainer-scene');
   });

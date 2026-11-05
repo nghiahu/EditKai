@@ -53,6 +53,12 @@
     ],
     "section": [
       {
+        "id": "section-step",
+        "type": "step-number",
+        "duration": 3,
+        "builder": "step"
+      },
+      {
         "id": "section-title",
         "type": "title-card",
         "duration": 3,

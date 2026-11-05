@@ -215,3 +215,36 @@ export function calloutProblem(props: Record<string, unknown>): string | undefin
   if (props.color !== undefined && !(CALLOUT_COLORS as readonly unknown[]).includes(props.color)) return `props.color phải là ${CALLOUT_COLORS.join(' hoặc ')}`;
   return undefined;
 }
+
+const STEP_MAX_TITLE = 40;
+const STEP_MAX_SUB = 60;
+
+export interface ResolvedStepNumber {
+  number: number;
+  title?: string;
+  sub?: string;
+  position: InsertPosition;
+}
+
+const stepNumberOk = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 99;
+const shortText = (v: unknown, max: number): v is string => isString(v) && v.length > 0 && v.length <= max;
+
+/** Reads step-number props with safe defaults (step 1, position `top`); a bad value falls back; never throws. */
+export function resolveStepNumber(props: Record<string, unknown> | undefined): ResolvedStepNumber {
+  const p = props ?? {};
+  return {
+    number: stepNumberOk(p.number) ? p.number : 1,
+    ...(shortText(p.title, STEP_MAX_TITLE) ? { title: p.title } : {}),
+    ...(shortText(p.sub, STEP_MAX_SUB) ? { sub: p.sub } : {}),
+    position: positionOr(p.position, 'top'),
+  };
+}
+
+/** Why step-number props are invalid (Vietnamese message for the validator), or undefined. `number` (a whole number from 1 to 99) is required. */
+export function stepNumberProblem(props: Record<string, unknown>): string | undefined {
+  if (!stepNumberOk(props.number)) return 'props.number phải là số nguyên từ 1 đến 99';
+  if (props.title !== undefined && !shortText(props.title, STEP_MAX_TITLE)) return `props.title phải là chuỗi không rỗng, tối đa ${STEP_MAX_TITLE} ký tự`;
+  if (props.sub !== undefined && !shortText(props.sub, STEP_MAX_SUB)) return `props.sub phải là chuỗi không rỗng, tối đa ${STEP_MAX_SUB} ký tự`;
+  if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
+  return undefined;
+}

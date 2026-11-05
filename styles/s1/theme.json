@@ -45,7 +45,8 @@
       "footage",
       "logo-badge",
       "explainer-scene",
-      "counter"
+      "counter",
+      "step-number"
     ],
     "captionMix": {
       "label": 0.05,

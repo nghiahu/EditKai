@@ -1,5 +1,5 @@
 import { footageProblem } from './insertProps';
-import { calloutProblem, counterProblem, logoBadgeProblem, promptBoxProblem, quoteCardProblem, statCardProblem } from './insertTypes';
+import { calloutProblem, counterProblem, logoBadgeProblem, promptBoxProblem, quoteCardProblem, statCardProblem, stepNumberProblem } from './insertTypes';
 import type { Track } from './types';
 
 /** Kinds of the transition layer: zoom, blur, slide, push, whip, dip act on the base video; flash draws a white pulse. */
@@ -51,6 +51,7 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
   'quote-card': { track: 'graphic', check: p => quoteCardProblem(p) },
   counter: { track: 'graphic', check: p => counterProblem(p) },
   callout: { track: 'graphic', check: p => calloutProblem(p) },
+  'step-number': { track: 'graphic', check: p => stepNumberProblem(p) },
   footage: { track: 'footage', check: p => footageProblem(p) }, // props.src is reported by the missing-file rule
   transition: { track: 'graphic', check: p => (TRANSITION_KINDS.includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur, slide, push, flash, whip hoặc dip') },
 };

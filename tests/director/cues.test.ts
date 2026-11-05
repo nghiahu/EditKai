@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { detectCues } from '../../src/director/cues';
 import type { Glossary } from '../../src/director/glossary';
 import type { BeatSpan, Cue } from '../../src/director/types';
@@ -174,5 +175,18 @@ describe('words that look like tools but are Vietnamese', () => {
   it('the default glossary lists the common ones', () => {
     // loaded through loadGlossary in glossary.test; here only the shape is checked
     expect(Array.isArray(g.notTools)).toBe(true);
+  });
+});
+
+describe('step marks as section cues', () => {
+  it('"mẹo số 3" is a section cue with the number, like "bước 3"', () => {
+    const c = of('Và mẹo số 3 là nói chậm lại', 'section');
+    expect(c.map(x => x.text)).toEqual(['MẸO SỐ 3']);
+    expect(c[0].word).toBe(1);
+  });
+  it('the default glossary knows "thứ nhất" and "thứ năm" as well as "thứ hai"', () => {
+    const g = JSON.parse(readFileSync('styles/glossary.json', 'utf8'));
+    const labels = g.section.map((e: { label: string }) => e.label);
+    for (const l of ['THỨ NHẤT', 'THỨ HAI', 'THỨ NĂM', 'THỨ SÁU']) expect(labels).toContain(l);
   });
 });

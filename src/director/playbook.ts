@@ -8,7 +8,7 @@ export interface Recipe {
   type: string; // a key of LAYER_TYPES
   duration: number;
   props?: Record<string, unknown>; // template: {text}, {TEXT}, {label}, {icon}
-  builder?: 'template' | 'chips' | 'explainer-list' | 'counter';
+  builder?: 'template' | 'chips' | 'explainer-list' | 'counter' | 'step';
 }
 
 export interface Variety {
@@ -30,7 +30,7 @@ export const DEFAULT_PLAYBOOK: Playbook = {
   situations: {
     tool: [r('tool-badge', 'logo-badge', 2, { label: '{text}', icon: 'sparkles' }), r('tool-title', 'title-card', 2.4, { icon: 'sparkles', title: '{TEXT}', sub: '{label}' })],
     number: [r('number-stat', 'stat-card', 3.5, { rows: [{ value: '{text}', icon: '{icon}' }] }), r('number-title', 'title-card', 2.6, { icon: 'zap', title: '{TEXT}' }), r('number-counter', 'counter', 3.5, undefined, 'counter')],
-    section: [r('section-title', 'title-card', 2.6, { icon: 'layers', title: '{TEXT}' }), r('section-badge', 'logo-badge', 2, { label: '{text}', icon: 'layers' })],
+    section: [r('section-step', 'step-number', 3, undefined, 'step'), r('section-title', 'title-card', 2.6, { icon: 'layers', title: '{TEXT}' }), r('section-badge', 'logo-badge', 2, { label: '{text}', icon: 'layers' })],
     cta: [r('cta-title', 'title-card', 2.6, { icon: 'rocket', title: '{TEXT}' }), r('cta-badge', 'logo-badge', 2, { label: '{text}', icon: 'rocket' })],
     // a stretch with no insert at all gets one of these (see suggest.ts): the text is built from the beat's own words
     filler: [r('filler-title', 'title-card', 2.4, { icon: 'lightbulb', title: '{TEXT}' }), r('filler-badge', 'logo-badge', 2, { label: '{text}', icon: 'sparkles' })],

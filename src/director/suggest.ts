@@ -4,12 +4,16 @@ import type { Director } from '../style/director';
 import { isNegation } from './glossary';
 import { DEFAULT_PLAYBOOK, fillProps, type Playbook, type Recipe } from './playbook';
 import { normalizeLoose } from './text';
+import { parseStep } from '../plan/stepNumber';
 import type { BeatSpan, Cue, InsertSpec, Treatment } from './types';
 
 type W = { t: string; s: number; e: number };
 
 // when two situations of one beat want an insert, the first of these wins (the other usually fails the minimum gap)
 const TOOL_REPEAT_SEC = 60;
+const STEP_MARK_WORDS = 2; // "thứ hai" and "bước 3" are two words
+const STEP_TITLE_WORDS = 4;
+const STEP_TITLE_CHARS = 40;
 const SITUATION_PRIORITY = ['footage', 'prompt', 'section', 'cta', 'number', 'tool', 'list'];
 const FOOTAGE_SEC = 4;
 const FILL_TAIL_SEC = 0.5; // the video is taken to end this long after the last word
@@ -161,6 +165,18 @@ export function suggestTreatments(input: {
     }
   };
 
+  /** A step-number card: the step, and as its title the (up to) four words that follow the step mark in the beat, if any ("là" is skipped). */
+  const stepProps = (number: number, markWord: number | undefined, last: number): Record<string, unknown> => {
+    const picked: string[] = [];
+    for (let i = (markWord ?? 0) + STEP_MARK_WORDS; i <= last && picked.length < STEP_TITLE_WORDS; i++) {
+      const w = (words[i]?.t ?? '').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+      if (!w || (picked.length === 0 && normalizeLoose(w) === 'la')) continue;
+      if ([...picked, w].join(' ').length > STEP_TITLE_CHARS) break;
+      picked.push(w);
+    }
+    return picked.length ? { number, title: picked.join(' ').toUpperCase() } : { number };
+  };
+
   /** Up to MAX_PHRASE_WORDS words of the beat from its first emphasised word (else its start), upper case, at most MAX_PHRASE_CHARS characters. */
   const keyPhrase = (span: BeatSpan, hl: number[]): string => {
     const from = hl.find(i => i >= span.firstWord && i <= span.lastWord) ?? span.firstWord;
@@ -211,11 +227,12 @@ export function suggestTreatments(input: {
       const at = startOf(cue);
       if (key && at - (seenTools.get(key) ?? -Infinity) < TOOL_REPEAT_SEC) continue; // a tool announced a moment ago is not announced again
       // a counter needs a plain number (with a percent sign or a unit): a range such as 2-3% cannot count up
-      const usable = (playbook.situations[situation] ?? []).filter(x => x.builder !== 'counter' || parseCount(cue.text));
+      const usable = (playbook.situations[situation] ?? []).filter(x => (x.builder !== 'counter' || parseCount(cue.text)) && (x.builder !== 'step' || parseStep(cue.text)));
       const rec = choose(usable, at);
       if (!rec) continue;
       let props: Record<string, unknown>;
       if (rec.builder === 'counter') props = counterProps(cue.text);
+      else if (rec.builder === 'step') props = stepProps(parseStep(cue.text)!, cue.word, span.lastWord);
       else if (rec.builder === 'chips') props = { chips: cue.items!.map(label => ({ icon: 'check', label })) };
       else if (rec.builder === 'explainer-list') props = { title: span.text.split(/\s+/).slice(0, 3).join(' ').toUpperCase(), body: { kind: 'list', items: cue.items } };
       else props = fillProps(rec.props ?? {}, { text: cue.text, label: cue.label, icon: situation === 'number' ? iconForNumber(cue.text) : undefined });

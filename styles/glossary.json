@@ -113,6 +113,10 @@
       "label": "TIẾP THEO"
     },
     {
+      "term": "thứ nhất",
+      "label": "THỨ NHẤT"
+    },
+    {
       "term": "thứ hai",
       "label": "THỨ HAI"
     },
@@ -123,6 +127,18 @@
     {
       "term": "thứ tư",
       "label": "THỨ TƯ"
+    },
+    {
+      "term": "thứ năm",
+      "label": "THỨ NĂM"
+    },
+    {
+      "term": "thứ sáu",
+      "label": "THỨ SÁU"
+    },
+    {
+      "term": "thứ bảy",
+      "label": "THỨ BẢY"
     },
     {
       "term": "cuối cùng",

@@ -376,3 +376,26 @@ describe('tool inserts: label and repeats', () => {
   });
 });
 
+
+describe('step marks become a step-number card', () => {
+  it('"thứ hai" gives step 2 with the next few words of the beat as its title; "kết bài" stays a title card', () => {
+    const [a] = run([span(0, 8)], [[cue('section', 1, { text: 'THỨ HAI' })]]);
+    expect(a.inserts[0]).toMatchObject({ type: 'step-number', props: { number: 2, title: 'W3 W4 W5 W6' } });
+    const [b] = run([span(0, 8)], [[cue('section', 1, { text: 'KẾT BÀI' })]]);
+    expect(b.inserts[0].type).toBe('title-card');
+  });
+  it('"bước 3" gives step 3; a leading "là" is not part of the title; the title stops at the end of the beat', () => {
+    const w = (n: number) => Array.from({ length: n }, (_, i) => ({ t: i === 3 ? 'là' : `w${i}.`, s: i * 0.4, e: i * 0.4 + 0.3 }));
+    const ts = suggestTreatments({ spans: [span(0, 5)], cues: [[cue('section', 1, { text: 'BƯỚC 3' })]], matches: [undefined], words: w(6), director: m1, fps: FPS });
+    expect(ts[0].inserts[0]).toMatchObject({ type: 'step-number', props: { number: 3, title: 'W4 W5' } });
+  });
+  it('a step mark with nothing after it still gives the card, without a title', () => {
+    const [t] = run([span(0, 2)], [[cue('section', 1, { text: 'THỨ BA' })]]);
+    expect(t.inserts[0]).toEqual(expect.objectContaining({ type: 'step-number', props: { number: 3 } }));
+  });
+  it('the style must allow it: without step-number in allowedInserts the card is a title card', () => {
+    const narrow = { ...m1, allowedInserts: m1.allowedInserts.filter(t => t !== 'step-number') };
+    const [t] = run([span(0, 8)], [[cue('section', 1, { text: 'THỨ HAI' })]], { director: narrow });
+    expect(t.inserts[0].type).toBe('title-card');
+  });
+});
