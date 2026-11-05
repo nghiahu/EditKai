@@ -228,7 +228,7 @@ describe('style rules state the motion rules', () => {
 
 describe('SKILL.md and the rules describe the free scene', () => {
   it('names the layer, its blocks, the animation, the word anchors, the recipes and the check loop', () => {
-    expect(missing(['`scene`', '`root`', '`grid`', '`stack`', '`highlight`', '`stagger`', '`keys`', '`enter`', 'word', 'offset', 'scene-on-face', 'scene-unresolved-anchor', 'tests/fixtures/scenes', 'grid-highlight', 'preview projects/<tên> --at', 'Vòng kiểm bắt buộc'])).toEqual([]);
+    expect(missing(['`scene`', '`root`', '`grid`', '`stack`', '`highlight`', '`stagger`', '`keys`', '`enter`', 'word', 'offset', 'scene-on-face', 'scene-unresolved-anchor', 'scene-overlaps-caption', '`offset`', 'tests/fixtures/scenes', 'grid-highlight', 'preview projects/<tên> --at', 'Vòng kiểm bắt buộc'])).toEqual([]);
   });
   for (const style of ['s1', 'm1']) {
     it(`${style} rules say when to use a scene instead of a ready-made card`, () => {

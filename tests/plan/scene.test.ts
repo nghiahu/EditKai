@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LAYER_TYPES } from '../../src/plan/layerTypes';
-import { MAX_NODES, sceneProblem, type SceneNode } from '../../src/plan/scene';
+import { MAX_NODES, sceneBox, sceneProblem, type SceneNode } from '../../src/plan/scene';
 
 const card = (id: string, extra: Partial<SceneNode> = {}): SceneNode => ({ id, kind: 'box', w: 300, h: 120, fill: 'panel', radius: 24, ...extra });
 const scene = (root: SceneNode, extra: Record<string, unknown> = {}) => ({ anchor: 'top', w: 0.9, h: 0.3, root, ...extra });
@@ -89,5 +89,23 @@ describe('scene is a graphic layer type', () => {
     expect(LAYER_TYPES.scene.track).toBe('graphic');
     expect(LAYER_TYPES.scene.check(scene(card('a')))).toBeUndefined();
     expect(LAYER_TYPES.scene.check({})).toMatch(/root/);
+  });
+});
+
+describe('scene offset: the box can be moved off its anchor', () => {
+  const sz = { top: 0.05, bottom: 0.1, left: 0.08, right: 0.08 };
+  it('shifts the box by shares of the frame, in x and y', () => {
+    const base = sceneBox({ anchor: 'left', w: 0.3, h: 0.3 }, sz);
+    const moved = sceneBox({ anchor: 'left', w: 0.3, h: 0.3, offset: { x: 0.05, y: -0.12 } }, sz);
+    expect(moved.x).toBeCloseTo(base.x + 0.05, 9);
+    expect(moved.y).toBeCloseTo(base.y - 0.12, 9);
+    expect([moved.w, moved.h]).toEqual([0.3, 0.3]);
+  });
+  it('is checked: an object of numbers within 0.5 either way', () => {
+    const bad = (offset: unknown) => sceneProblem({ ...scene(card('a')), offset }) ?? '';
+    expect(bad({ x: 0.1, y: -0.2 })).toBe('');
+    expect(bad({ y: 0.9 })).toMatch(/props\.offset\.y/);
+    expect(bad({ x: 'a' })).toMatch(/props\.offset\.x/);
+    expect(bad(3)).toMatch(/props\.offset/);
   });
 });

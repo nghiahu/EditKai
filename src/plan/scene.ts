@@ -36,7 +36,7 @@ export interface SceneNode {
   keys?: Keys; enter?: Enter; exit?: boolean | { at?: Anchor }; highlight?: Highlight | Highlight[]; stagger?: number;
 }
 
-export interface SceneProps { anchor?: (typeof SCENE_ANCHORS)[number]; w: number; h: number; root: SceneNode }
+export interface SceneProps { anchor?: (typeof SCENE_ANCHORS)[number]; w: number; h: number; offset?: { x?: number; y?: number }; root: SceneNode }
 
 class Bad extends Error {}
 const bad = (path: string, msg: string): never => { throw new Bad(`${path}: ${msg}`); };
@@ -152,6 +152,10 @@ export function sceneProblem(props: Record<string, unknown>): string | undefined
   try {
     if (props.root === undefined) bad('props.root', 'bắt buộc: phần tử gốc của cảnh');
     if (props.anchor !== undefined && !inList(props.anchor, SCENE_ANCHORS)) bad('props.anchor', `phải là một trong: ${SCENE_ANCHORS.join(', ')}`);
+    if (props.offset !== undefined) {
+      if (!isObj(props.offset)) bad('props.offset', 'phải là { x?, y? } (tỉ lệ khung, từ -0,5 đến 0,5)');
+      for (const k of ['x', 'y'] as const) { const v = (props.offset as Record<string, unknown>)[k]; if (v !== undefined && !(isNum(v) && Math.abs(v) <= 0.5)) bad(`props.offset.${k}`, 'phải là số từ -0,5 đến 0,5 (tỉ lệ khung)'); }
+    }
     for (const k of ['w', 'h'] as const) if (!(isNum(props[k]) && (props[k] as number) >= 0.05 && (props[k] as number) <= 1)) bad(`props.${k}`, 'bắt buộc, số từ 0,05 đến 1 (tỉ lệ khung, để kiểm né mặt)');
     walk(props.root, 'root', 1, new Set(), { n: 0 });
     return undefined;
@@ -161,15 +165,16 @@ export function sceneProblem(props: Record<string, unknown>): string | undefined
   }
 }
 
-/** Where a scene's box sits: shares of the frame, from the anchor (default top) and the safe zone. The renderer and the face check use the same numbers. */
-export function sceneBox(props: Pick<SceneProps, 'anchor' | 'w' | 'h'>, sz: { top: number; bottom: number; left: number; right: number }): { x: number; y: number; w: number; h: number } {
+/** Where a scene's box sits: shares of the frame, from the anchor (default top), the safe zone and `offset`. The renderer and the face check use the same numbers. */
+export function sceneBox(props: Pick<SceneProps, 'anchor' | 'w' | 'h' | 'offset'>, sz: { top: number; bottom: number; left: number; right: number }): { x: number; y: number; w: number; h: number } {
   const { w, h } = props;
+  const at = (x: number, y: number) => ({ x: x + (props.offset?.x ?? 0), y: y + (props.offset?.y ?? 0), w, h });
   switch (props.anchor ?? 'top') {
-    case 'bottom': return { x: 0.5 - w / 2, y: 1 - sz.bottom - h, w, h };
-    case 'center': return { x: 0.5 - w / 2, y: 0.5 - h / 2, w, h };
-    case 'left': return { x: sz.left, y: 0.5 - h / 2, w, h };
-    case 'right': return { x: 1 - sz.right - w, y: 0.5 - h / 2, w, h };
-    default: return { x: 0.5 - w / 2, y: sz.top, w, h };
+    case 'bottom': return at(0.5 - w / 2, 1 - sz.bottom - h);
+    case 'center': return at(0.5 - w / 2, 0.5 - h / 2);
+    case 'left': return at(sz.left, 0.5 - h / 2);
+    case 'right': return at(1 - sz.right - w, 0.5 - h / 2);
+    default: return at(0.5 - w / 2, sz.top);
   }
 }
 

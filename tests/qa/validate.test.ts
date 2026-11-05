@@ -484,3 +484,18 @@ describe('scene images', () => {
     expect(validatePlan(withImage('assets/co.png'), theme, ctx()).filter(i => i.code === 'missing-file')).toEqual([]);
   });
 });
+
+describe('scene against the captions', () => {
+  const m1 = loadTheme('styles/m1');
+  const sceneAt = (anchor: string, offset?: { x?: number; y?: number }): Layer => ({ id: 's1', track: 'graphic', type: 'scene', start: 1, end: 4, props: { anchor, w: 0.4, h: 0.3, ...(offset ? { offset } : {}), root: { id: 'a', kind: 'box', w: 100, h: 100 } } } as Layer);
+  const withCaption = (l: Layer): Plan => { const p = plan(); p.layers = [p.layers[0], l, { id: 'c1', track: 'caption', start: 1, end: 4, words: [{ t: 'xin', s: 1, e: 1.5, hl: false }, { t: 'chào', s: 1.5, e: 2, hl: false }] } as Layer]; return p; };
+  const warns = (l: Layer) => validatePlan(withCaption(l), m1, ctx()).filter(i => i.code === 'scene-overlaps-caption');
+  it('a scene whose box sits over the caption band at the same time warns scene-overlaps-caption; one clear of it, or at another time, does not', () => {
+    const [w] = warns(sceneAt('bottom'));
+    expect(w.severity).toBe('warning');
+    expect(w.layerId).toBe('s1');
+    expect(warns(sceneAt('top'))).toEqual([]);
+    expect(warns({ ...sceneAt('bottom'), start: 6, end: 8 } as Layer)).toEqual([]);
+    expect(warns(sceneAt('center', { y: -0.3 }))).toEqual([]);
+  });
+});

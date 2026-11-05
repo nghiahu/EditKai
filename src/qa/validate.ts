@@ -127,6 +127,19 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     }
   }
 
+  // a scene over the captions that are up at the same time (the caption text is centred and takes the middle of its band)
+  for (const l of plan.layers) {
+    if (l.type !== 'scene' || !l.props || typeof l.props.w !== 'number' || typeof l.props.h !== 'number') continue;
+    const box = sceneBox(l.props as unknown as SceneProps, theme.limits.safeZone);
+    const hit = plan.layers.find(c => {
+      if (c.track !== 'caption' || !(c.start < l.end && l.start < c.end)) return false;
+      const band = captionRegion(resolveCaptionProps(c.props, theme).position, theme);
+      const text = { ...band, x: band.x + band.w * 0.2, w: band.w * 0.6 };
+      return overlapShare(text, box) > 0.1;
+    });
+    if (hit) warn('scene-overlaps-caption', `${l.id}: hộp cảnh nằm đè lên phụ đề ${hit.id} cùng lúc; đổi props.offset (ví dụ y âm để nhấc lên) hoặc thu nhỏ props.h`, l.id);
+  }
+
   // a scene's times must be seconds by now (compose turns spoken words into seconds)
   for (const l of plan.layers) if (l.type === 'scene' && l.props) {
     const open = unresolvedAnchors(l.props);

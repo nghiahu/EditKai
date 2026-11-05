@@ -158,7 +158,7 @@ Các thành phần dựng sẵn ở bảng trên không ghép được với nha
 
 Layer (trong `plan.json`, hoặc làm insert `type: "scene"` trong `storyboard.json`):
 `{ "id": "s1", "track": "graphic", "type": "scene", "start": 12.3, "end": 17, "props": { "anchor": "top", "w": 0.9, "h": 0.34, "root": { ...phần tử } } }`
-- `anchor`: `top` (mặc định), `center`, `bottom`, `left`, `right`: nơi đặt hộp gốc trong vùng an toàn. `w`, `h` (0,05 đến 1, **bắt buộc**): kích thước hộp theo tỉ lệ khung; đặt sát nội dung, vì `validate` dùng hộp này để cảnh báo `scene-on-face` khi che mặt người nói (kèm gợi ý `anchor` khác). Nội dung nằm giữa hộp.
+- `anchor`: `top` (mặc định), `center`, `bottom`, `left`, `right`: nơi đặt hộp gốc trong vùng an toàn. `w`, `h` (0,05 đến 1, **bắt buộc**): kích thước hộp theo tỉ lệ khung; đặt sát nội dung, vì `validate` dùng hộp này để cảnh báo `scene-on-face` khi che mặt người nói (kèm gợi ý `anchor` khác). `offset` (tùy chọn, `{ "x": ..., "y": ... }`, từ -0,5 đến 0,5 theo tỉ lệ khung) dịch hộp khỏi `anchor` (ví dụ `"y": -0.12` nhấc lên để khỏi đè phụ đề, vốn nằm ở nửa dưới). `validate` cảnh báo `scene-overlaps-caption` khi hộp đè lên phụ đề đang hiện cùng lúc. Nội dung nằm giữa hộp.
 
 **Phần tử** (`root` và các `children`; tối đa 6 cấp lồng nhau, 40 phần tử, `id` duy nhất, chữ tối đa 80 ký tự):
 
@@ -173,7 +173,7 @@ Layer (trong `plan.json`, hoặc làm insert `type: "scene"` trong `storyboard.j
 | `grid` | Xếp con theo lưới | `cols` (1 đến 6), `gap` |
 | `stack` | Chồng các con lên nhau ở giữa | |
 
-Thuộc tính chung (đều tùy chọn): `w`, `h`, `padding`, `gap`, `radius`, `fill`, `stroke`, `strokeWidth`, `shadow`, `opacity`, `scale`, `x`, `y`, `rotate`. **Số là pixel của khung chuẩn 1080 rộng**, tự nhân theo khung nên cùng một cảnh đúng tỉ lệ ở 9:16, 16:9 và 1:1. **Màu**: token của phong cách (`accent` là vàng của `m1` hoặc xanh ngọc của `s1`, `white`, `ink`, `panel` là nền thẻ tối, `dim`) hoặc `#rrggbb`.
+Thuộc tính chung (đều tùy chọn): `w`, `h`, `padding`, `gap`, `radius`, `fill`, `stroke`, `strokeWidth`, `shadow`, `opacity`, `scale`, `x`, `y`, `rotate`. **Số là pixel của khung chuẩn có cạnh ngắn 1080**, tự nhân theo khung nên cùng một cảnh đúng tỉ lệ ở 9:16, 16:9 và 1:1; vì cạnh ngắn là chuẩn, ở khung ngang 1920×1080 chữ cỡ 38 trông nhỏ: dùng cỡ 48 đến 64 cho chữ chính và thẻ rộng 500 trở lên. **Màu**: token của phong cách (`accent` là vàng của `m1` hoặc xanh ngọc của `s1`, `white`, `ink`, `panel` là nền thẻ tối, `dim`) hoặc `#rrggbb`.
 
 **Hoạt cảnh.** Phần tử không khai báo gì thì đứng yên. Có hai cách:
 - Cú pháp tắt (`enter`, `exit`, `highlight`, `stagger`): `"enter": { "kind": "fade|rise|pop|slide-left|slide-right|draw", "at": giây, "duration": giây }` (`draw` cho `line`); `"exit": true` (hoặc `{ "at": giây }`) mờ dần đi; `"highlight": { "at", "until", "to": { "stroke": "accent", "strokeWidth": 6, "scale": 1.05 } }` (hoặc một mảng) đổi sang giá trị trong `to` từ `at` đến `until` rồi trở lại; trên một khối chứa, `"stagger": số khung` cùng với `enter` làm các con vào lần lượt (khối chứa không tự hiện).
