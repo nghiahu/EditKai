@@ -1,7 +1,6 @@
-import { existsSync, rmSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 import { sfxCues } from '../audio/cues';
 import { writeSfxFiles } from '../audio/files';
@@ -11,6 +10,7 @@ import { probe } from '../media/probe';
 import { serveDir } from '../media/serve';
 import { validatePlan } from '../qa/validate';
 import { loadTheme } from '../style/theme';
+import { bundleProject, type ProjectBundle } from './customBundle';
 import { readPlan } from '../plan/io';
 import type { Plan } from '../plan/types';
 import type { Theme } from '../style/theme';
@@ -44,13 +44,14 @@ export async function openRenderSession(projectDir: string): Promise<RenderSessi
 
   writeSfxFiles(projectDir); // the sound effects the plan may ask for, served with the project
   const server = await serveDir(projectDir);
-  let serveUrl: string | undefined;
+  let bundled: ProjectBundle | undefined;
   const close = async () => {
     await server.close();
-    if (serveUrl) rmSync(serveUrl, { recursive: true, force: true });
+    await bundled?.close();
   };
   try {
-    serveUrl = await bundle({ entryPoint: resolve(root, 'remotion', 'index.ts') });
+    bundled = await bundleProject(projectDir); // the composition plus the project's own components, if it has any
+    const serveUrl = bundled.serveUrl;
     // each sound effect follows the loudness of the voice around it (one pass over the sound)
     const sfxVolumes = sfxCues(plan).length ? cueVolumes(plan, await voiceLevels(video)) : [];
     const inputProps = { plan, theme, videoSrc: `${server.url}/${plan.meta.source}`, assetBase: server.url, durationSec, sfxVolumes };
