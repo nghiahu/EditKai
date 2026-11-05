@@ -6,7 +6,6 @@ import type { Layer } from '../../src/plan/types';
 const layers: Record<string, Layer> = {
   'stat-card': { id: 'l', track: 'graphic', type: 'stat-card', start: 0, end: 4, props: { rows: [{ value: '30 phút' }] } } as Layer,
   'quote-card': { id: 'l', track: 'graphic', type: 'quote-card', start: 0, end: 4, props: { quote: 'Không cần hoàn hảo khi bắt đầu' } } as Layer,
-  counter: { id: 'l', track: 'graphic', type: 'counter', start: 0, end: 4, props: { to: 200, suffix: ' view' } } as Layer,
   chart: { id: 'l', track: 'graphic', type: 'chart', start: 0, end: 4, props: { kind: 'bar', points: [{ label: 'a', value: 1 }, { label: 'b', value: 3 }] } } as Layer,
   'step-number': { id: 'l', track: 'graphic', type: 'step-number', start: 0, end: 4, props: { number: 2, title: 'MỞ MÁY' } } as Layer,
 };

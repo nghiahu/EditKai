@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { counterValue, formatCount } from '../../src/plan/counter';
 import { resolveCounter } from '../../src/plan/insertTypes';
-import { breathe, clamp01, drawProgress, easeOut, enterExit, pop } from '../motion';
+import { clamp01, drawProgress, easeOut, enterExit, pop } from '../motion';
 import type { LayerComponent } from '../registry';
 import { insertBox } from './insertLayout';
 
@@ -27,7 +27,7 @@ export const Counter: LayerComponent = ({ layer, theme }) => {
   return (
     <AbsoluteFill style={{ opacity: visible }}>
       <div style={{ ...insertBox(r.position, theme, width, height), fontFamily: theme.fonts.heading, color: theme.colors.white, textAlign: 'center' }}>
-        <div style={{ transform: `scale(${scale * breathe(frame, fps)})`, maxWidth: '100%' }}>
+        <div style={{ transform: `scale(${scale})`, maxWidth: '100%' }}>
           <div style={{ fontSize: size, fontWeight: 900, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums', color: theme.colors.white, textShadow: '0 6px 30px rgba(0,0,0,0.6)', overflowWrap: 'anywhere' }}>{text}</div>
           <div style={{ margin: '14px auto 0', height: 8, width: '45%', borderRadius: 4, background: accent, transformOrigin: 'left center', transform: `scaleX(${drawProgress(frame, LEAD_FRAMES, 14)})` }} />
           {r.label ? <div style={{ marginTop: 22, fontSize: 40, letterSpacing: 4, fontWeight: 700, color: accent, textTransform: 'uppercase', overflowWrap: 'anywhere' }}>{r.label}</div> : null}
