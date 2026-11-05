@@ -11,6 +11,7 @@ import { readPlan } from '../plan/io';
 import type { Layer, Plan } from '../plan/types';
 import { framingProblem, resolveFraming } from '../plan/framing';
 import { placeAwayFromFaces, placeCaptionsAwayFromFaces } from '../director/faceAvoid';
+import { resolveAnchors } from '../plan/sceneAnchors';
 import { mapFacesToFrame, readFaces } from '../media/faces';
 import { BRIGHT_SHARE, validatePlan } from '../qa/validate';
 import { measureCaptionBright } from './captionBright';
@@ -74,7 +75,14 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   // a card that would sit on the speaker's face moves to the top or bottom (faces.json comes from the `faces` command)
   const found = readFaces(projectDir);
   const frameFaces = found && mapFacesToFrame(found, info, project, framed);
-  const insertLayersAway = placeAwayFromFaces(ins.layers, frameFaces, theme, project.width, project.height);
+  // a scene's times may be spoken words: they become seconds since the scene started (a word that is not there stays, and the validator below drops the scene)
+  const withAnchors = ins.layers.map(l => {
+    if (l.type !== 'scene' || !l.props) return l;
+    const r = resolveAnchors(l.props, words, l.start);
+    issues.push(...r.issues.map(m => `${l.id}: ${m}`));
+    return { ...l, props: r.props };
+  });
+  const insertLayersAway = placeAwayFromFaces(withAnchors, frameFaces, theme, project.width, project.height);
   const captionLayersAway = placeCaptionsAwayFromFaces(caps.layers, frameFaces, theme);
   let layers = [...captionLayersAway, ...insertLayersAway, ...cam.layers];
 

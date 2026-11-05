@@ -441,3 +441,15 @@ describe('chart source', () => {
     expect(noSource(chart({ source: 'YouTube Studio' }))).toEqual([]);
   });
 });
+
+describe('scene anchors', () => {
+  const sceneLayer = (at: unknown): Layer => ({ id: 's1', track: 'graphic', type: 'scene', start: 1, end: 4, props: { anchor: 'top', w: 0.8, h: 0.2, root: { id: 'a', kind: 'box', w: 10, h: 10, keys: { opacity: [{ at: 0, v: 0 }, { at, v: 1 }] } } } } as Layer);
+  const only = (l: Layer): Plan => { const p = plan(); p.layers = [p.layers[0], l]; return p; };
+  it('a word anchor left in plan.json is an error that says where, and how to fix it', () => {
+    const e = validatePlan(only(sceneLayer({ word: 3 })), theme, ctx()).filter(i => i.code === 'scene-unresolved-anchor');
+    expect(e).toHaveLength(1);
+    expect(e[0].severity).toBe('error');
+    expect(e[0].message).toContain('root.keys.opacity[1].at');
+    expect(validatePlan(only(sceneLayer(0.5)), theme, ctx()).filter(i => i.code === 'scene-unresolved-anchor')).toEqual([]);
+  });
+});

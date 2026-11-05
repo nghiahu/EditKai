@@ -8,6 +8,7 @@ import { captionRegion } from '../plan/captionRegion';
 import { FOOTPRINT_TYPES, insertFootprint } from '../plan/insertFootprint';
 import { bestPosition, CAPTION_OVERLAP_LIMIT, OVERLAP_LIMIT } from '../director/faceAvoid';
 import { faceRegion, overlapShare, type Faces } from '../media/faces';
+import { unresolvedAnchors } from '../plan/sceneAnchors';
 import { resolveCallout, resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
@@ -123,6 +124,12 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
         tw => normalizeWord(tw.t) === normalizeWord(w.t) && Math.abs(tw.s - w.s) <= DRIFT_SEC));
       if (drift) warn('caption-sync-drift', `${l.id}: từ "${drift.t}" lệch lời đã chép`, l.id);
     }
+  }
+
+  // a scene's times must be seconds by now (compose turns spoken words into seconds)
+  for (const l of plan.layers) if (l.type === 'scene' && l.props) {
+    const open = unresolvedAnchors(l.props);
+    if (open.length) err('scene-unresolved-anchor', `${l.id}: mốc theo từ chưa đổi thành giây (${open.join(', ')}); chạy lại compose, hoặc sửa chỉ số từ`, l.id);
   }
 
   // a chart shows numbers: say where they come from

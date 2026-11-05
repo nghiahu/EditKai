@@ -229,3 +229,33 @@ describe("composeStage and the speaker's face", () => {
     expect((statCard(dir).props as { position?: string }).position).toBe('center');
   }, 60000);
 });
+
+describe('composeStage turns word anchors of a scene into seconds', () => {
+  const scene = (anchor: unknown) => ({ anchor: 'top', w: 0.8, h: 0.2, root: { id: 'a', kind: 'box', w: 100, h: 50, keys: { opacity: [{ at: 0, v: 0 }, { at: anchor, v: 1 }] } } });
+  const insertScene = async (anchor: unknown) => {
+    const dir = await project();
+    const sb = readStoryboard(dir);
+    sb.beats[0].treatment.inserts = [{ type: 'scene', props: scene(anchor), at: 2, duration: 3 }];
+    writeStoryboard(dir, sb);
+    return dir;
+  };
+  it('a spoken word becomes the seconds since the scene started', async () => {
+    const dir = await project();
+    const words = json(dir, 'transcript.json').words as { s: number }[];
+    const w = words.findIndex(x => x.s > 3); // a word spoken after the scene starts (at 2 s)
+    const sb = readStoryboard(dir);
+    sb.beats[0].treatment.inserts = [{ type: 'scene', props: scene({ word: w, offset: 0.1 }), at: 2, duration: 3 }];
+    writeStoryboard(dir, sb);
+    await composeStage(dir);
+    const layer = (json(dir, 'plan.json') as Plan).layers.find(l => l.type === 'scene')!;
+    const at = ((layer.props as { root: { keys: { opacity: { at: number }[] } } }).root.keys.opacity[1].at);
+    expect(at).toBeCloseTo(words[w].s + 0.1 - layer.start, 6);
+  }, 60000);
+  it('a word that does not exist is reported and the scene is left out of plan.json', async () => {
+    const dir = await insertScene({ word: 9999 });
+    const r = await composeStage(dir);
+    expect(r.report.issues.join(' | ')).toMatch(/9999/);
+    expect((json(dir, 'plan.json') as Plan).layers.some(l => l.type === 'scene')).toBe(false);
+    expect((await checkProject(dir)).filter(i => i.severity === 'error')).toEqual([]);
+  }, 60000);
+});
