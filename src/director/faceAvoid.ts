@@ -5,6 +5,8 @@ import type { Layer } from '../plan/types';
 
 /** A card may cover this share of the face; more than that is "on the face". */
 export const OVERLAP_LIMIT = 0.15;
+/** A caption may cover more: it sits at chin height, so the lower part of the face box is its normal place; above this it covers the mouth. */
+export const CAPTION_OVERLAP_LIMIT = 0.35;
 
 type ThemeBits = { limits: { safeZone: { top: number; bottom: number; left: number; right: number } } };
 const ORDER: InsertPosition[] = ['center', ...INSERT_POSITIONS.filter(p => p !== 'center')]; // the default position comes first, so it wins a tie

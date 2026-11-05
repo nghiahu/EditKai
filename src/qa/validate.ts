@@ -6,7 +6,7 @@ import { captionPropsProblem, resolveCaptionProps } from '../plan/captionProps';
 import { INSERT_POSITIONS, resolveFootageProps, type InsertPosition } from '../plan/insertProps';
 import { captionRegion } from '../plan/captionRegion';
 import { FOOTPRINT_TYPES, insertFootprint } from '../plan/insertFootprint';
-import { OVERLAP_LIMIT } from '../director/faceAvoid';
+import { CAPTION_OVERLAP_LIMIT, OVERLAP_LIMIT } from '../director/faceAvoid';
 import { faceRegion, overlapShare, type Faces } from '../media/faces';
 import { resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
@@ -132,7 +132,7 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
       if (!face) continue;
       if (l.track === 'caption') {
         const share = overlapShare(face, captionRegion(resolveCaptionProps(l.props, theme).position, theme));
-        if (share > OVERLAP_LIMIT) warn('caption-on-face', `${l.id}: phụ đề che ${Math.round(share * 100)}% mặt người nói; đổi props.position`, l.id);
+        if (share > CAPTION_OVERLAP_LIMIT) warn('caption-on-face', `${l.id}: phụ đề che ${Math.round(share * 100)}% mặt người nói; đổi props.position`, l.id);
       } else if (l.type && (FOOTPRINT_TYPES as readonly string[]).includes(l.type)) {
         const at = (p: InsertPosition) => overlapShare(face, insertFootprint(l.type!, l.props, p, theme, plan.meta.width, plan.meta.height)!);
         const current = INSERT_POSITIONS.find(p => p === l.props?.position) ?? 'center';

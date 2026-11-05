@@ -416,5 +416,8 @@ describe("checks against the speaker's face", () => {
     const withCap = (position: string): Plan => ({ ...base, layers: [...base.layers.filter(l => l.track !== 'caption'), cap(position)] });
     expect(codes(withCap('center'), ctx({ faces: face(middle) })).map(i => i.code)).toEqual(['caption-on-face']);
     expect(codes(withCap('bottom'), ctx({ faces: face({ x: 0.4, y: 0.05, w: 0.2, h: 0.3 }) }))).toEqual([]);
+    // m1 puts its captions at chin height: covering the lowest part of the face box is normal, not "on the face"
+    const lowerThird = { x: 0.4, y: 0.2, w: 0.2, h: 0.5 }; // the m1 band starts at 0.54 of the frame height: it covers the lowest third of this face box
+    expect(codes(withCap('bottom'), ctx({ faces: face(lowerThird) }))).toEqual([]);
   });
 });
