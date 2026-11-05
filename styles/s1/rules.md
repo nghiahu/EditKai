@@ -45,6 +45,7 @@ Chèn thưa: khoảng một cảnh chèn mỗi 20–30 s, ngoài các thẻ tiê
 ## Chỉ chỗ và đánh số
 - `callout` (vòng khoanh hoặc mũi tên vẽ tay) chỉ để trỏ vào một chi tiết trong footage hoặc ảnh chụp màn hình khi lời nói nhắc tới nó; đặt `x`, `y` sau khi xem khung hình, nhãn ngắn (vài từ), không đặt lên mặt người nói. Muốn chỉ vào một chi tiết trên hình người nói thì thêm `freeze` cùng khoảng thời gian để hình đứng yên (tiếng vẫn chạy).
 - `step-number` (số nghiêng khổng lồ) chỉ dùng khi video là danh sách bước hoặc mẹo; số tăng dần, tiêu đề là vài từ của chính bước đó; không dùng cho dấu mốc phần như "mở bài" (dùng thẻ tiêu đề).
+- `chart` (cột hoặc đường vẽ dần) chỉ khi lời nói nêu từ hai số so sánh trở lên; luôn ghi `source`, không bịa số.
 
 ## Chưa đo được
 Easing chính xác của icon/chữ, âm thanh và hiệu ứng tiếng — cần mắt người xem lại bản dựng.

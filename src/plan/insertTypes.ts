@@ -248,3 +248,58 @@ export function stepNumberProblem(props: Record<string, unknown>): string | unde
   if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
   return undefined;
 }
+
+export const CHART_KINDS = ['bar', 'line'] as const;
+const CHART_MIN_POINTS = 2;
+const CHART_MAX_POINTS = 6;
+const CHART_MAX_LABEL = 16;
+const CHART_MAX_UNIT = 12;
+const CHART_MAX_TITLE = 40;
+const CHART_MAX_SOURCE = 60;
+
+export interface ChartPoint { label: string; value: number }
+
+export interface ResolvedChart {
+  kind: (typeof CHART_KINDS)[number];
+  points: ChartPoint[];
+  unit?: string;
+  title?: string;
+  source?: string;
+  position: InsertPosition;
+}
+
+const chartPointOk = (v: unknown): v is ChartPoint =>
+  typeof v === 'object' && v !== null && isString((v as ChartPoint).label) && (v as ChartPoint).label.length > 0 && (v as ChartPoint).label.length <= CHART_MAX_LABEL
+  && isFiniteNumber((v as ChartPoint).value) && (v as ChartPoint).value >= 0;
+const chartText = (v: unknown, max: number): v is string => isString(v) && v.length > 0 && v.length <= max;
+
+/** Reads chart props with safe defaults (a bar chart, position `center`); bad points are dropped, at most 6 kept; never throws. */
+export function resolveChart(props: Record<string, unknown> | undefined): ResolvedChart {
+  const p = props ?? {};
+  return {
+    kind: (CHART_KINDS as readonly unknown[]).includes(p.kind) ? (p.kind as ResolvedChart['kind']) : 'bar',
+    points: (Array.isArray(p.points) ? p.points : []).filter(chartPointOk).slice(0, CHART_MAX_POINTS).map(({ label, value }) => ({ label, value })),
+    ...(chartText(p.unit, CHART_MAX_UNIT) ? { unit: p.unit } : {}),
+    ...(chartText(p.title, CHART_MAX_TITLE) ? { title: p.title } : {}),
+    ...(chartText(p.source, CHART_MAX_SOURCE) ? { source: p.source } : {}),
+    position: positionOr(p.position, 'center'),
+  };
+}
+
+/** Why chart props are invalid (Vietnamese message for the validator), or undefined. `kind` and `points` (2 to 6 of { label, value >= 0 }) are required. */
+export function chartProblem(props: Record<string, unknown>): string | undefined {
+  if (!(CHART_KINDS as readonly unknown[]).includes(props.kind)) return `props.kind phải là ${CHART_KINDS.join(' hoặc ')}`;
+  const pts = props.points;
+  if (!Array.isArray(pts) || pts.length < CHART_MIN_POINTS || pts.length > CHART_MAX_POINTS) return `props.points phải là mảng từ ${CHART_MIN_POINTS} đến ${CHART_MAX_POINTS} điểm { label, value }`;
+  for (const [i, pt] of pts.entries()) {
+    const q = pt as Partial<ChartPoint> | null;
+    if (typeof q !== 'object' || q === null) return `props.points[${i}] phải là một đối tượng { label, value }`;
+    if (!isString(q.label) || q.label.length === 0 || q.label.length > CHART_MAX_LABEL) return `props.points[${i}].label phải là chuỗi không rỗng, tối đa ${CHART_MAX_LABEL} ký tự`;
+    if (!isFiniteNumber(q.value) || q.value < 0) return `props.points[${i}].value phải là số hữu hạn không âm`;
+  }
+  if (props.unit !== undefined && !chartText(props.unit, CHART_MAX_UNIT)) return `props.unit phải là chuỗi không rỗng, tối đa ${CHART_MAX_UNIT} ký tự`;
+  if (props.title !== undefined && !chartText(props.title, CHART_MAX_TITLE)) return `props.title phải là chuỗi không rỗng, tối đa ${CHART_MAX_TITLE} ký tự`;
+  if (props.source !== undefined && !chartText(props.source, CHART_MAX_SOURCE)) return `props.source phải là chuỗi không rỗng, tối đa ${CHART_MAX_SOURCE} ký tự`;
+  if (props.position !== undefined && !inPositions(props.position)) return `props.position phải là một trong: ${INSERT_POSITIONS.join(', ')}`;
+  return undefined;
+}

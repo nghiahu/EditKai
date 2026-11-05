@@ -206,3 +206,12 @@ describe('SKILL.md describes the sound effects following the voice', () => {
     expect(missing(['density', 'restrained', 'standard', 'rich', 'trần', 'bám theo giọng'])).toEqual([]);
   });
 });
+
+describe('SKILL.md and the rules describe the chart', () => {
+  it('names the layer, its kinds, the source rule and the warning', () => {
+    expect(missing(['`chart`', '"bar"', '"line"', 'points', 'chart-no-source', 'số thật'])).toEqual([]);
+  });
+  for (const style of ['s1', 'm1']) {
+    it(`${style} rules say when to use a chart`, () => expect(readFileSync(`styles/${style}/rules.md`, 'utf8')).toContain('chart'));
+  }
+});

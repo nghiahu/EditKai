@@ -427,3 +427,15 @@ describe("checks against the speaker's face", () => {
     expect(codes(withCap('bottom'), ctx({ faces: face(lowerThird) }))).toEqual([]);
   });
 });
+
+describe('chart source', () => {
+  const chart = (props: Record<string, unknown>): Layer => ({ id: 'ch1', track: 'graphic', type: 'chart', start: 1, end: 4, props: { kind: 'bar', points: [{ label: 'a', value: 1 }, { label: 'b', value: 2 }], ...props } } as Layer);
+  const only = (l: Layer): Plan => { const p = plan(); p.layers = [p.layers[0], l]; return p; };
+  const noSource = (l: Layer) => validatePlan(only(l), theme, ctx()).filter(i => i.code === 'chart-no-source');
+  it('a chart without a source warns chart-no-source; with one it does not', () => {
+    const [w] = noSource(chart({}));
+    expect(w.severity).toBe('warning');
+    expect(w.layerId).toBe('ch1');
+    expect(noSource(chart({ source: 'YouTube Studio' }))).toEqual([]);
+  });
+});

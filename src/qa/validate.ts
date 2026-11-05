@@ -125,6 +125,9 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     }
   }
 
+  // a chart shows numbers: say where they come from
+  for (const l of plan.layers) if (l.type === 'chart' && !(typeof l.props?.source === 'string' && l.props.source.length > 0)) warn('chart-no-source', `${l.id}: biểu đồ chưa có props.source (nguồn của số liệu)`, l.id);
+
   // graphics and captions over the speaker's face
   if (ctx.faces) {
     for (const l of plan.layers) {

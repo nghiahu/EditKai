@@ -7,7 +7,7 @@ const sz = theme.limits.safeZone;
 
 describe('insertFootprint', () => {
   it('covers the types that have a position', () => {
-    expect([...FOOTPRINT_TYPES].sort()).toEqual(['counter', 'logo-badge', 'prompt-box', 'quote-card', 'stat-card']);
+    expect([...FOOTPRINT_TYPES].sort()).toEqual(['chart', 'counter', 'logo-badge', 'prompt-box', 'quote-card', 'stat-card']);
   });
   it('top starts at the safe zone, bottom ends at it, centre is in the middle of the frame', () => {
     const top = insertFootprint('stat-card', { rows: [{ value: '30 phút' }] }, 'top', theme, 1920, 1080)!;

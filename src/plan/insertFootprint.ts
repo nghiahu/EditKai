@@ -6,7 +6,7 @@ import { resolveCounter, resolveLogoBadge, resolvePromptBox, resolveQuoteCard, r
 type ThemeBits = { limits: { safeZone: { top: number; bottom: number; left: number; right: number } } };
 
 /** Insert types whose box depends on a `position` prop. */
-export const FOOTPRINT_TYPES = ['logo-badge', 'stat-card', 'quote-card', 'counter', 'prompt-box'] as const;
+export const FOOTPRINT_TYPES = ['logo-badge', 'stat-card', 'quote-card', 'counter', 'prompt-box', 'chart'] as const;
 
 // The components are laid out in pixels (a 220 px badge, 28 px captions...), so heights below are pixels from their layout code, rounded up.
 const BADGE_PX = 220;
@@ -20,6 +20,7 @@ const COUNTER_PX = 340;
 const COUNTER_WIDTH = 0.7; // of the safe zone
 const BADGE_WIDTH_PX = 360;
 const PROMPT_PX = 200;
+const CHART_PX = 540; // title, plot, labels, source and the card's padding
 
 function size(type: string, props: Record<string, unknown>, safeW: number): { w: number; hPx: number } | undefined {
   switch (type) {
@@ -28,6 +29,7 @@ function size(type: string, props: Record<string, unknown>, safeW: number): { w:
     case 'quote-card': resolveQuoteCard(props); return { w: safeW, hPx: QUOTE_PX };
     case 'counter': resolveCounter(props); return { w: safeW * COUNTER_WIDTH, hPx: COUNTER_PX };
     case 'prompt-box': resolvePromptBox(props); return { w: safeW, hPx: PROMPT_PX };
+    case 'chart': return { w: safeW, hPx: CHART_PX };
     default: return undefined;
   }
 }

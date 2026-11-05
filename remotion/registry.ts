@@ -15,6 +15,7 @@ import { QuoteCard } from './components/QuoteCard';
 import { Counter } from './components/Counter';
 import { Callout } from './components/Callout';
 import { StepNumber } from './components/StepNumber';
+import { Chart } from './components/Chart';
 
 export type LayerComponent = React.FC<{ layer: Layer; theme: Theme; videoSrc?: string; assetBase?: string }>;
 
@@ -33,6 +34,7 @@ export const registry: Record<string, LayerComponent> = {
   counter: Counter,
   callout: Callout,
   'step-number': StepNumber,
+  chart: Chart,
   'zoom-punch': Camera,
   shake: Camera,
   freeze: Camera, // PlanVideo itself holds the picture; the layer draws nothing
