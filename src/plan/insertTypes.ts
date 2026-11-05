@@ -170,3 +170,48 @@ export function counterProblem(props: Record<string, unknown>): string | undefin
   if (props.dim !== undefined && typeof props.dim !== 'boolean') return 'props.dim phải là true hoặc false';
   return undefined;
 }
+
+export const CALLOUT_KINDS = ['ring', 'arrow'] as const;
+export const CALLOUT_COLORS = ['accent', 'white'] as const;
+const CALLOUT_MIN_SIZE = 0.05;
+const CALLOUT_MAX_SIZE = 0.6;
+const CALLOUT_MAX_LABEL = 24;
+
+export interface ResolvedCallout {
+  kind: (typeof CALLOUT_KINDS)[number];
+  x: number;
+  y: number;
+  size: number; // the ring's width, or the arrow's length, as a share of the frame width
+  angle: number; // degrees, counter-clockwise from the right: the direction the arrow comes from (an arrow at 225 comes from the lower left)
+  label?: string;
+  color: (typeof CALLOUT_COLORS)[number];
+}
+
+const inFrame = (v: unknown): v is number => isFiniteNumber(v) && v >= 0 && v <= 1;
+const calloutSizeOk = (v: unknown): v is number => isFiniteNumber(v) && v >= CALLOUT_MIN_SIZE && v <= CALLOUT_MAX_SIZE;
+
+/** Reads callout props with safe defaults (a ring in the middle, size 0.18, an arrow from the lower left); a bad value falls back; never throws. */
+export function resolveCallout(props: Record<string, unknown> | undefined): ResolvedCallout {
+  const p = props ?? {};
+  return {
+    kind: (CALLOUT_KINDS as readonly unknown[]).includes(p.kind) ? (p.kind as ResolvedCallout['kind']) : 'ring',
+    x: inFrame(p.x) ? p.x : 0.5,
+    y: inFrame(p.y) ? p.y : 0.5,
+    size: calloutSizeOk(p.size) ? p.size : 0.18,
+    angle: isFiniteNumber(p.angle) ? p.angle : 225,
+    ...(isString(p.label) && p.label.length > 0 && p.label.length <= CALLOUT_MAX_LABEL ? { label: p.label } : {}),
+    color: (CALLOUT_COLORS as readonly unknown[]).includes(p.color) ? (p.color as ResolvedCallout['color']) : 'accent',
+  };
+}
+
+/** Why callout props are invalid (Vietnamese message for the validator), or undefined. `kind`, `x` and `y` are required. */
+export function calloutProblem(props: Record<string, unknown>): string | undefined {
+  if (!(CALLOUT_KINDS as readonly unknown[]).includes(props.kind)) return `props.kind phải là ${CALLOUT_KINDS.join(' hoặc ')}`;
+  if (!inFrame(props.x)) return 'props.x phải là số trong khoảng 0–1 (tỉ lệ chiều rộng khung)';
+  if (!inFrame(props.y)) return 'props.y phải là số trong khoảng 0–1 (tỉ lệ chiều cao khung)';
+  if (props.size !== undefined && !calloutSizeOk(props.size)) return `props.size phải là số trong khoảng ${CALLOUT_MIN_SIZE}–${CALLOUT_MAX_SIZE}`;
+  if (props.angle !== undefined && !isFiniteNumber(props.angle)) return 'props.angle phải là một số (độ)';
+  if (props.label !== undefined && !(isString(props.label) && props.label.length > 0 && props.label.length <= CALLOUT_MAX_LABEL)) return `props.label phải là chuỗi không rỗng, tối đa ${CALLOUT_MAX_LABEL} ký tự`;
+  if (props.color !== undefined && !(CALLOUT_COLORS as readonly unknown[]).includes(props.color)) return `props.color phải là ${CALLOUT_COLORS.join(' hoặc ')}`;
+  return undefined;
+}

@@ -8,7 +8,7 @@ import { captionRegion } from '../plan/captionRegion';
 import { FOOTPRINT_TYPES, insertFootprint } from '../plan/insertFootprint';
 import { bestPosition, CAPTION_OVERLAP_LIMIT, OVERLAP_LIMIT } from '../director/faceAvoid';
 import { faceRegion, overlapShare, type Faces } from '../media/faces';
-import { resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
+import { resolveCallout, resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
 
@@ -133,6 +133,9 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
       if (l.track === 'caption') {
         const share = overlapShare(face, captionRegion(resolveCaptionProps(l.props, theme).position, theme));
         if (share > CAPTION_OVERLAP_LIMIT) warn('caption-on-face', `${l.id}: phụ đề che ${Math.round(share * 100)}% mặt người nói; đổi props.position`, l.id);
+      } else if (l.type === 'callout') {
+        const c = resolveCallout(l.props);
+        if (c.x >= face.x && c.x <= face.x + face.w && c.y >= face.y && c.y <= face.y + face.h) warn('callout-on-face', `${l.id}: điểm chỉ nằm trên mặt người nói; kiểm tra props.x, props.y`, l.id);
       } else if (l.type && (FOOTPRINT_TYPES as readonly string[]).includes(l.type)) {
         const at = (p: InsertPosition) => overlapShare(face, insertFootprint(l.type!, l.props, p, theme, plan.meta.width, plan.meta.height)!);
         const current = INSERT_POSITIONS.find(p => p === l.props?.position) ?? 'center';

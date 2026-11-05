@@ -410,6 +410,12 @@ describe("checks against the speaker's face", () => {
     expect(codes(only(card()), ctx({ faces: { fps: 4, samples: [{ t: 8, box: middle, conf: 0.99 }] } }))).toEqual([]);
     expect(codes(only(card()), ctx())).toEqual([]);
   });
+  it('a callout pointing at the face warns callout-on-face; one pointing elsewhere does not', () => {
+    const callout = (x: number, y: number): Layer => ({ id: 'k1', track: 'graphic', type: 'callout', start: 2, end: 5, props: { kind: 'ring', x, y } } as Layer);
+    expect(codes(only(callout(0.5, 0.4)), ctx({ faces: face(middle) })).map(i => i.code)).toEqual(['callout-on-face']);
+    expect(codes(only(callout(0.85, 0.8)), ctx({ faces: face(middle) }))).toEqual([]);
+    expect(codes(only(callout(0.5, 0.4)), ctx())).toEqual([]);
+  });
   it('a caption over the face warns caption-on-face; a caption below it does not', () => {
     const cap = (position: string): Layer => ({ id: 'c9', track: 'caption', start: 1, end: 2, props: { position }, words: [{ t: 'xin', s: 1, e: 1.3, hl: false }] } as Layer);
     const base = plan();
