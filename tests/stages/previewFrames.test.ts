@@ -30,6 +30,10 @@ describe('previewFrames', () => {
     expect(f.length).toBeLessThanOrEqual(8);
     expect(f.some(x => x.label.includes('nền mờ'))).toBe(true);
   });
+  it('a caption with yellow ink (the fix for a bright picture) is sampled too, and named', () => {
+    const caps = Array.from({ length: 30 }, (_, i) => caption(`c${i}`, i * 2, i * 2 + 1.8, i === 7 ? { ink: 'accent' } : undefined));
+    expect(previewFrames(plan(caps)).some(x => x.label.includes('chữ vàng'))).toBe(true);
+  });
   it('two frames closer than minGapSec become one, the more important one wins', () => {
     const f = previewFrames(plan([L('t', 'graphic', 'transition', 10, 10.4, { kind: 'zoom' }), L('c', 'title', 'title-card', 8, 10.9, { title: 'X' })])); // the title card settles at 9.74, 0.46 s from the join
     const near = f.filter(x => Math.abs(x.t - 10.2) < 0.6);

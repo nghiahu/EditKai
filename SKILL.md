@@ -49,7 +49,7 @@ Mỗi bước ghi kết quả ra file trong thư mục project, nên có thể c
 - Video không có lời nói: dừng ở bước 2 và nói rõ cho người dùng; không tự dựng.
 - Chép lời quá tệ (nhiều từ lạ, nhiều đoạn không có nghĩa): đưa người dùng xem vài câu mẫu và hỏi có tự sửa tay hay dùng bản khác; đừng sửa những từ bạn không chắc.
 - Người dùng đưa footage giữa chừng: `assets add` kèm mô tả, quay lại bước 5.
-- Video gốc đã có đồ họa hoặc chữ dựng sẵn: báo người dùng, tránh chèn trùng; caption nằm trên nền gần trắng sẽ có nền mờ (`backdrop: "plate"`, tự thêm khi `compose`).
+- Video gốc đã có đồ họa hoặc chữ dựng sẵn: báo người dùng, tránh chèn trùng; caption nằm trên nền gần trắng sẽ được đặt chữ vàng của phong cách (`ink: "accent"`, tự thêm khi `compose`; vẫn có viền đen).
 - Còn cảnh báo sau 3 vòng `validate`: liệt kê cho người dùng, không tự bỏ qua.
 
 ## Dựng lại sau khi người dùng đã sửa
@@ -124,7 +124,8 @@ Khi dựng, đọc `assets.json` và ghép **mô tả** với lời đang nói (
 | `emphasis` | `box`, `ink`, `underline` | theo phong cách (m1 `box`, s1 `underline`) | `box`: hộp vàng chữ đen quét qua cả cụm nhấn. `ink`: chữ màu nhấn. `underline`: màu nhấn và gạch chân |
 | `label` | chuỗi | không | Dòng nhỏ phía trên; **bắt buộc** (không rỗng) khi `variant` là `label` |
 | `handles` | `true`, `false` | `false` | Chỉ với `big`: bốn ô vuông ở góc khung chữ |
-| `backdrop` | `none`, `plate` | `none` | `plate`: nền tối mờ phía sau cả cụm chữ. Chữ luôn có viền đen; dùng `plate` khi nền phía sau gần trắng (bảng trắng, cảnh sáng của video gốc). `compose` tự thêm `plate` cho caption có hơn 15% bề ngang chữ nằm trên nền gần trắng; validator cảnh báo `caption-low-contrast` ở plan viết tay chưa có `plate` |
+| `backdrop` | `none`, `plate` | `none` | `plate`: nền tối mờ phía sau cả cụm chữ (dùng khi chữ vàng cũng khó đọc, ví dụ nền gần trắng hoàn toàn). Chữ luôn có viền đen |
+| `ink` | `white`, `accent` | `white` | `accent`: chữ màu vàng của phong cách (`m1`) hoặc xanh ngọc (`s1`), viền đen dày hơn một chút. `compose` tự đặt cho caption có hơn 15% bề ngang chữ nằm trên nền gần trắng; validator cảnh báo `caption-low-contrast` ở plan viết tay chưa có `ink: "accent"` hay `plate` |
 
 Giá trị lạ làm validator báo `invalid-props`; số từ quá giới hạn (`big` ≤ 3, kiểu khác ≤ `limits.maxCaptionWords`) báo `caption-too-long`.
 

@@ -105,11 +105,11 @@ describe('SKILL.md documents the director workflow', () => {
   });
 });
 
-import { CAPTION_BACKDROPS } from '../../src/plan/captionProps';
+import { CAPTION_BACKDROPS, CAPTION_INKS } from '../../src/plan/captionProps';
 
 describe('SKILL.md documents caption legibility', () => {
   it('lists the backdrop prop with its values in code quotes and the low-contrast warning', () => {
-    for (const n of ['backdrop', ...CAPTION_BACKDROPS, 'caption-low-contrast']) expect(skill).toContain('`' + n + '`');
+    for (const n of ['backdrop', ...CAPTION_BACKDROPS, 'ink', ...CAPTION_INKS, 'caption-low-contrast']) expect(skill).toContain('`' + n + '`');
   });
 });
 

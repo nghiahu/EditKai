@@ -15,6 +15,8 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
   const { fps, width, height, durationInFrames } = useVideoConfig();
   const m1 = theme.name === 'm1';
   const accent = m1 ? theme.colors.yellow : theme.colors.teal;
+  const ink = resolved.ink === 'accent' ? accent : theme.colors.white;
+  const outline = legibleShadow(resolved.ink === 'accent' ? 4 : 3);
   const tSec = layer.start + frame / fps;
   const { visible } = enterExit(frame, durationInFrames, theme.motion, fps);
 
@@ -27,7 +29,7 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
           fontWeight: m1 ? 800 : 600,
           fontSize: theme.captionSize,
           lineHeight: 1.25,
-          color: theme.colors.white,
+          color: ink,
         }}
       >
         <div style={{ display: 'inline-block', ...backdropStyle(resolved.backdrop, theme.radius) }}>{/* one flex child, so the words stay on one flowing line when the box is a centred flex column */}
@@ -47,8 +49,8 @@ export const WordCaption: React.FC<Parameters<LayerComponent>[0] & { resolved: R
                 marginRight: 10,
                 opacity,
                 transform: `translateY(${(1 - clamp01(p)) * 14}px) scale(${0.6 + 0.4 * p})`,
-                textShadow: opacity > 0 && !(w.hl && m1) ? legibleShadow(3) : 'none',
-                color: w.hl ? (m1 ? (wipe > 0.35 ? theme.colors.black : theme.colors.white) : accent) : theme.colors.white,
+                textShadow: opacity > 0 && !(w.hl && m1) ? outline : 'none',
+                color: w.hl ? (m1 ? (wipe > 0.35 ? theme.colors.black : theme.colors.white) : accent) : ink,
               }}
             >
               {w.hl && m1 ? (

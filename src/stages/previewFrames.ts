@@ -26,8 +26,8 @@ export function previewFrames(plan: Plan, opts: { max?: number; minGapSec?: numb
     else add(1, l.start + SETTLED * (l.end - l.start), l.type ?? l.track);
   }
   const captions = plan.layers.filter(l => l.track === 'caption');
-  const plated = captions.filter(l => l.props?.backdrop === 'plate');
-  for (const l of [plated[0], plated.length > 1 ? plated[plated.length - 1] : undefined]) if (l) add(2, (l.start + l.end) / 2, 'caption nền mờ');
+  const plated = captions.filter(l => l.props?.backdrop === 'plate' || l.props?.ink === 'accent');
+  for (const l of [plated[0], plated.length > 1 ? plated[plated.length - 1] : undefined]) if (l) add(2, (l.start + l.end) / 2, l.props?.ink === 'accent' ? 'caption chữ vàng' : 'caption nền mờ');
   for (let k = 0; k < CAPTION_SAMPLES && captions.length; k++) {
     const l = captions[Math.floor(((2 * k + 1) * captions.length) / (2 * CAPTION_SAMPLES))];
     add(3, (l.start + l.end) / 2, 'caption');

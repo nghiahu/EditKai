@@ -161,16 +161,17 @@ describe('composeStage', () => {
     expect(merged.layers.some(l => l.type === 'stat-card')).toBe(true);
     expect(new Set(merged.layers.map(l => l.id)).size).toBe(merged.layers.length);
   }, 60000);
-  it('captions over a bright picture get a plate; over a mid-grey picture they do not (legibility)', async () => {
+  it('captions over a bright picture get yellow text (ink accent), not a plate; over a mid-grey picture they do not (legibility)', async () => {
     const bright = await project();
     await writeCleanedVideo(bright, 14, 'white');
     await composeStage(bright);
-    const plates = (json(bright, 'plan.json') as Plan).layers.filter(l => l.track === 'caption' && (l.props as { backdrop?: string } | undefined)?.backdrop === 'plate');
-    expect(plates.length).toBeGreaterThan(0);
+    const captions = (json(bright, 'plan.json') as Plan).layers.filter(l => l.track === 'caption');
+    expect(captions.filter(l => (l.props as { ink?: string } | undefined)?.ink === 'accent').length).toBeGreaterThan(0);
+    expect(captions.some(l => (l.props as { backdrop?: string } | undefined)?.backdrop === 'plate')).toBe(false);
     expect((await checkProject(bright)).filter(i => i.code === 'caption-low-contrast')).toEqual([]);
     const grey = await project();
     await composeStage(grey);
-    expect((json(grey, 'plan.json') as Plan).layers.some(l => (l.props as { backdrop?: string } | undefined)?.backdrop === 'plate')).toBe(false);
+    expect((json(grey, 'plan.json') as Plan).layers.some(l => (l.props as { ink?: string } | undefined)?.ink === 'accent')).toBe(false);
   }, 120000);
 });
 

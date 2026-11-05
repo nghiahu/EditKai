@@ -26,7 +26,7 @@ export interface Ctx {
 const DRIFT_SEC = 0.3;
 const MAX_BIG_WORDS = 3;
 const MAX_GAP_WARNINGS = 5;
-export const BRIGHT_SHARE = 0.15; // more of the text than this on a near-white picture: white text needs a plate behind it
+export const BRIGHT_SHARE = 0.15; // more of the text than this on a near-white picture: white text needs yellow ink or a plate behind it
 const INSERT_TRACKS = ['title', 'graphic', 'footage'];
 
 /** Where an insert layer sits on screen, for the caption overlap check. */
@@ -116,8 +116,8 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     const longest = Math.max(0, ...words.map(w => w.t.length));
     if (longest * size * 0.55 > usable) warn('text-overflow', `${l.id}: chữ có thể tràn khỏi vùng an toàn`, l.id);
     const bg = ctx.captionBright?.get(l.id);
-    if (bg !== undefined && bg > BRIGHT_SHARE && resolved.backdrop !== 'plate')
-      warn('caption-low-contrast', `${l.id}: ${Math.round(bg * 100)}% chiều ngang chữ nằm trên nền gần trắng, chữ trắng khó đọc; thêm props.backdrop "plate"`, l.id);
+    if (bg !== undefined && bg > BRIGHT_SHARE && resolved.backdrop !== 'plate' && resolved.ink !== 'accent')
+      warn('caption-low-contrast', `${l.id}: ${Math.round(bg * 100)}% chiều ngang chữ nằm trên nền gần trắng, chữ trắng khó đọc; đặt props.ink "accent" (chữ vàng) hoặc props.backdrop "plate"`, l.id);
     if (ctx.transcript) {
       const drift = words.find(w => !ctx.transcript!.words.some(
         tw => normalizeWord(tw.t) === normalizeWord(w.t) && Math.abs(tw.s - w.s) <= DRIFT_SEC));

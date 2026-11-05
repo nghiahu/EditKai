@@ -67,10 +67,10 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   issues.push(...caps.issues);
   const ins = insertLayers(sb, durationSec, fileExists);
   const cam = cameraLayers(sb, theme.director, durationSec);
-  // white text on a bright picture (a white panel in the source, say) disappears: those captions get a dark plate behind them
+  // white text on a bright picture (a white panel in the source, say) disappears: those captions are set in the style's yellow (with the dark outline)
   const framed = framingProblem({ fit: project.fit, focus: project.focus }) ? resolveFraming(undefined) : resolveFraming({ fit: project.fit, focus: project.focus } as Plan['meta']);
   const bright = await measureCaptionBright(video, caps.layers, theme, project.width, { width: project.width, height: project.height, ...framed });
-  for (const l of caps.layers) if ((bright.get(l.id) ?? 0) > BRIGHT_SHARE) l.props = { ...l.props, backdrop: 'plate' };
+  for (const l of caps.layers) if ((bright.get(l.id) ?? 0) > BRIGHT_SHARE) l.props = { ...l.props, ink: 'accent' };
   // a card that would sit on the speaker's face moves to the top or bottom (faces.json comes from the `faces` command)
   const found = readFaces(projectDir);
   const frameFaces = found && mapFacesToFrame(found, info, project, framed);

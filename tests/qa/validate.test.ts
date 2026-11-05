@@ -376,7 +376,7 @@ describe('density checks (director)', () => {
 
 describe('caption legibility', () => {
   const bright = (id: string, v: number) => ({ captionBright: new Map([[id, v]]) });
-  it('text over a near-white picture without a plate warns caption-low-contrast', () => {
+  it('text over a near-white picture without a plate or yellow ink warns caption-low-contrast', () => {
     const w = validatePlan(plan(), theme, ctx(bright('l1', 0.5))).filter(i => i.code === 'caption-low-contrast');
     expect(w).toHaveLength(1);
     expect(w[0].severity).toBe('warning');
@@ -385,6 +385,8 @@ describe('caption legibility', () => {
   it('a plate, or a picture that is not mostly white behind the text, does not warn', () => {
     const p = plan(); p.layers[0].props = { backdrop: 'plate' };
     expect(validatePlan(p, theme, ctx(bright('l1', 0.5))).filter(i => i.code === 'caption-low-contrast')).toEqual([]);
+    const y = plan(); y.layers[0].props = { ink: 'accent' }; // yellow text with the dark outline is the other fix
+    expect(validatePlan(y, theme, ctx(bright('l1', 0.5))).filter(i => i.code === 'caption-low-contrast')).toEqual([]);
     expect(validatePlan(plan(), theme, ctx(bright('l1', 0.05))).filter(i => i.code === 'caption-low-contrast')).toEqual([]);
     expect(validatePlan(plan(), theme, ctx()).filter(i => i.code === 'caption-low-contrast')).toEqual([]);
   });

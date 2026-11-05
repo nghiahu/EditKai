@@ -71,3 +71,19 @@ describe('caption backdrop', () => {
     expect(captionPropsProblem({ backdrop: 'none' })).toBeUndefined();
   });
 });
+
+import { CAPTION_INKS } from '../../src/plan/captionProps';
+
+describe('caption ink', () => {
+  it("white (the default, left out of the result) or accent (the style's yellow or teal)", () => {
+    expect([...CAPTION_INKS]).toEqual(['white', 'accent']);
+    expect(resolveCaptionProps({}, theme)).not.toHaveProperty('ink');
+    expect(resolveCaptionProps({ ink: 'accent' }, theme).ink).toBe('accent');
+    expect(resolveCaptionProps({ ink: 'white' }, theme)).not.toHaveProperty('ink');
+    expect(resolveCaptionProps({ ink: 'Accent' }, theme)).not.toHaveProperty('ink');
+  });
+  it('a value outside the set is named by the validator message', () => {
+    expect(captionPropsProblem({ ink: 'red' })).toMatch(/ink/);
+    expect(captionPropsProblem({ ink: 'accent' })).toBeUndefined();
+  });
+});

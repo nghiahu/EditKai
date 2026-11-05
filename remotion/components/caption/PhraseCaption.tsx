@@ -36,7 +36,8 @@ export const PhraseCaption: React.FC<Props> = ({ layer, theme, resolved, sizeSca
   const runs = groupRuns(words);
   const wipe = easeOut((frame - Math.round(BOX_DELAY_SEC * fps)) / Math.max(1, Math.round(BOX_SEC * fps)));
   const underline = drawProgress(frame, UNDERLINE_START, UNDERLINE_FRAMES);
-  const shadow = legibleShadow(3);
+  const ink = resolved.ink === 'accent' ? accent : theme.colors.white; // yellow text keeps the dark outline, a little thicker
+  const shadow = legibleShadow(resolved.ink === 'accent' ? 4 : 3);
   const scale = springIn ? 0.5 + 0.5 * Math.max(0, enter) + 0.03 * exit : 0.92 + 0.08 * e + 0.03 * exit;
   const blur = springIn ? BLUR_PX * exit : BLUR_PX * (1 - e) + BLUR_PX * exit;
 
@@ -49,7 +50,7 @@ export const PhraseCaption: React.FC<Props> = ({ layer, theme, resolved, sizeSca
           fontWeight: m1 ? 800 : 600,
           fontSize: theme.captionSize * sizeScale,
           lineHeight: 1.3,
-          color: theme.colors.white,
+          color: ink,
         }}
       >
         <div style={{ position: 'relative', display: 'inline-block', padding: handles ? 24 : 0, transform: `scale(${scale})`, filter: `blur(${blur.toFixed(2)}px)`, ...backdropStyle(resolved.backdrop, theme.radius) }}>
