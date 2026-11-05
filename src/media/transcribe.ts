@@ -8,7 +8,7 @@ export interface Transcript { words: TWord[] }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-function pythonBin(): string {
+export function pythonBin(): string {
   const venv = join(root, '.venv', 'Scripts', 'python.exe');
   return existsSync(venv) ? venv : 'python';
 }
