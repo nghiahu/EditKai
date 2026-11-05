@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { expandScene, valueAt, type Palette } from '../../src/plan/keyframes';
-import type { SceneNode, SceneProps } from '../../src/plan/scene';
+import { sceneBox, type SceneNode, type SceneProps } from '../../src/plan/scene';
 import type { Theme } from '../../src/style/theme';
 import { assetUrl } from '../assetUrl';
 import { AnimatedIcon } from '../icons';
@@ -107,18 +107,6 @@ const NodeView: React.FC<{ n: SceneNode } & Ctx> = ({ n, ...ctx }) => {
       return <div style={{ ...style, display: 'flex', flexDirection: 'column', gap: (n.gap ?? 0) * u, alignItems: align, justifyContent: 'center' }}>{kids}</div>;
   }
 };
-
-/** Where a scene's box sits: shares of the frame, from the anchor and the safe zone (the same numbers `insertFootprint` gives the validator). */
-export function sceneBox(props: Pick<SceneProps, 'anchor' | 'w' | 'h'>, sz: { top: number; bottom: number; left: number; right: number }): { x: number; y: number; w: number; h: number } {
-  const { w, h } = props;
-  switch (props.anchor ?? 'top') {
-    case 'bottom': return { x: 0.5 - w / 2, y: 1 - sz.bottom - h, w, h };
-    case 'center': return { x: 0.5 - w / 2, y: 0.5 - h / 2, w, h };
-    case 'left': return { x: sz.left, y: 0.5 - h / 2, w, h };
-    case 'right': return { x: 1 - sz.right - w, y: 0.5 - h / 2, w, h };
-    default: return { x: 0.5 - w / 2, y: sz.top, w, h };
-  }
-}
 
 /** A free composition of a few basic blocks (boxes, text, icons, images, lines; rows, columns, grids, stacks), each with its own keyframes; see SKILL.md. */
 export const Scene: LayerComponent = ({ layer, theme, assetBase }) => {

@@ -453,3 +453,34 @@ describe('scene anchors', () => {
     expect(validatePlan(only(sceneLayer(0.5)), theme, ctx()).filter(i => i.code === 'scene-unresolved-anchor')).toEqual([]);
   });
 });
+
+describe("scene over the speaker's face", () => {
+  const m1 = loadTheme('styles/m1');
+  const face = { x: 0.4, y: 0.25, w: 0.2, h: 0.3 };
+  const faces = { fps: 4, samples: Array.from({ length: 41 }, (_, i) => ({ t: i / 4, box: face, conf: 0.99 })) };
+  const sceneAt = (anchor: string): Layer => ({ id: 's1', track: 'graphic', type: 'scene', start: 1, end: 4, props: { anchor, w: 0.6, h: 0.3, root: { id: 'a', kind: 'box', w: 100, h: 100 } } } as Layer);
+  const only = (l: Layer): Plan => { const p = plan(); p.layers = [p.layers[0], l]; return p; };
+  const warns = (anchor: string) => validatePlan(only(sceneAt(anchor)), m1, ctx({ faces })).filter(i => i.code === 'scene-on-face');
+  it('a scene whose box covers the face warns scene-on-face and names the anchor to try; a scene clear of it does not', () => {
+    const [w] = warns('center');
+    expect(w.severity).toBe('warning');
+    expect(w.layerId).toBe('s1');
+    expect(w.message).toMatch(/top|bottom|left|right/);
+    expect(warns('bottom')).toEqual([]);
+    expect(validatePlan(only(sceneAt('center')), m1, ctx()).filter(i => i.code === 'scene-on-face')).toEqual([]);
+  });
+});
+
+describe('scene images', () => {
+  const withImage = (src: string): Plan => {
+    const p = plan();
+    p.layers = [p.layers[0], { id: 's1', track: 'graphic', type: 'scene', start: 1, end: 4, props: { anchor: 'top', w: 0.6, h: 0.3, root: { id: 'r', kind: 'row', children: [{ id: 'im', kind: 'image', src, w: 50, h: 50 }] } } } as Layer];
+    return p;
+  };
+  it('an image that is not in the project is an error missing-file naming it', () => {
+    const e = validatePlan(withImage('assets/khong-co.png'), theme, { ...ctx(), fileExists: path => path !== 'assets/khong-co.png' }).filter(i => i.code === 'missing-file');
+    expect(e).toHaveLength(1);
+    expect(e[0].message).toContain('assets/khong-co.png');
+    expect(validatePlan(withImage('assets/co.png'), theme, ctx()).filter(i => i.code === 'missing-file')).toEqual([]);
+  });
+});
