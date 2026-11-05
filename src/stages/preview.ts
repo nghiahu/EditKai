@@ -21,7 +21,7 @@ const even = (n: number) => 2 * Math.max(1, Math.round(n / 2));
  * A quick look instead of a full render: one picture of each moment worth checking (previewFrames) in `preview/`, and `preview/sheet.png`,
  * all of them on one sheet in time order. The same checks as a render apply (a plan with errors is refused).
  */
-export async function previewStage(projectDir: string, opts: { max?: number } = {}): Promise<PreviewResult> {
+export async function previewStage(projectDir: string, opts: { max?: number; at?: number[] } = {}): Promise<PreviewResult> {
   const session = await openRenderSession(projectDir);
   try {
     const dir = join(projectDir, 'preview');
@@ -31,7 +31,9 @@ export async function previewStage(projectDir: string, opts: { max?: number } = 
     const frames: PreviewResult['frames'] = [];
     const browser = await openBrowser('chrome'); // one browser for every picture: opening one costs seconds
     try {
-      const wanted = previewFrames(session.plan, { max: opts.max });
+      // `at` asks for exact moments (to check what a scene does before, during and after a word); otherwise the moments worth looking at
+      if (opts.at) for (const t of opts.at) if (!(t >= 0 && t <= session.durationSec)) throw new Error(`Mốc ${t} s nằm ngoài video (dài ${session.durationSec.toFixed(1)} s)`);
+      const wanted = opts.at ? [...opts.at].sort((a, b) => a - b).map(t => ({ t, label: `mốc ${t.toFixed(1)} s` })) : previewFrames(session.plan, { max: opts.max });
       // a few pictures at a time: each one seeks the video and loads a page, so they overlap well
       let next = 0;
       const results: PreviewResult['frames'] = new Array(wanted.length);

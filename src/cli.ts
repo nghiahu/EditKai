@@ -189,7 +189,7 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
         out(`Đã dựng bản xem nhanh (nhỏ, chất lượng thấp): ${file} trong ${Math.round((Date.now() - t0) / 1000)} giây`);
         return 0;
       }
-      const r = await previewStage(projectDir, flags.frames ? { max: Number(flags.frames) } : {}); // --frames N goes before --video
+      const r = await previewStage(projectDir, { ...(flags.frames ? { max: Number(flags.frames) } : {}), ...(flags.at ? { at: flags.at.split(',').map(Number) } : {}) }); // --frames N and --at t1,t2,... go before --video
       out(`Đã chụp ${r.frames.length} khung vào ${r.dir}; bảng tổng hợp: ${r.sheet}`);
       r.frames.forEach(f => out(`  ${f.t.toFixed(1)} s  ${f.label}  ${f.file}`));
       return 0;

@@ -63,6 +63,18 @@ describe('previewStage', () => {
     expect(existsSync(join(dir, 'preview', 'cu.png'))).toBe(false);
     expect(bundles().filter(n => !before.includes(n))).toEqual([]);
   }, 300000);
+  it('at: takes exactly those moments, in that order of time, named by the second, and report.md has a row for each', async () => {
+    await setup();
+    const r = await previewStage(dir, { at: [2.2, 0.4, 1.0] });
+    expect(r.frames.map(f => f.t)).toEqual([0.4, 1, 2.2]);
+    expect(r.frames.every(f => f.label.startsWith('mốc'))).toBe(true);
+    const report = readFileSync(join(dir, 'preview', 'report.md'), 'utf8');
+    expect(report.split('\n').filter(l => /^\| \d+ \|/.test(l))).toHaveLength(3);
+  }, 300000);
+  it('at: a moment outside the video is a clear error', async () => {
+    await setup();
+    await expect(previewStage(dir, { at: [99] })).rejects.toThrow(/99/);
+  }, 300000);
   it('max limits the pictures', async () => {
     await setup();
     expect((await previewStage(dir, { max: 2 })).frames).toHaveLength(2);
