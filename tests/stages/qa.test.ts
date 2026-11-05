@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -52,5 +52,22 @@ describe('checkProject with a malformed but parseable assets.json', () => {
     const codes = (await checkProject(dir)).map(i => i.code);
     expect(codes).toContain('asset-missing');
     expect(codes).toContain('asset-manifest-invalid');
+  });
+});
+
+describe('checkProject with faces.json', () => {
+  const plan = () => JSON.parse(readFileSync(join(dir, 'plan.json'), 'utf8'));
+  const withCard = () => {
+    const p = plan();
+    p.layers = [{ id: 'g1', track: 'graphic', type: 'stat-card', start: 0.5, end: 2.5, props: { rows: [{ value: '30 phút' }] } }];
+    writeFileSync(join(dir, 'plan.json'), JSON.stringify(p));
+  };
+  // the video is 320x240 and the frame 1080x1920: the face is mapped through the crop, so put it in the middle of the picture
+  const faces = () => writeFileSync(join(dir, 'faces.json'), JSON.stringify({ fps: 4, samples: Array.from({ length: 13 }, (_, i) => ({ t: i / 4, box: { x: 0.4, y: 0.3, w: 0.2, h: 0.4 }, conf: 0.99 })) }));
+  it('warns insert-on-face when the card sits on the face, and says nothing without faces.json', async () => {
+    withCard();
+    expect((await checkProject(dir)).some(i => i.code === 'insert-on-face')).toBe(false);
+    faces();
+    expect((await checkProject(dir)).some(i => i.code === 'insert-on-face')).toBe(true);
   });
 });

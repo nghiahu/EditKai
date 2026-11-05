@@ -9,6 +9,7 @@ import { validatePlan } from '../qa/validate';
 import { loadTheme } from '../style/theme';
 import { readPlan } from '../plan/io';
 import { resolveFraming } from '../plan/framing';
+import { mapFacesToFrame, readFaces } from '../media/faces';
 import { measureCaptionBright } from './captionBright';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -45,8 +46,11 @@ export async function checkProject(projectDir: string): Promise<Issue[]> {
     assets = undefined;
     extra.push({ severity: 'warning', code: 'asset-manifest-invalid', message: (e as Error).message });
   }
+  const info = await probe(video);
+  const faces = readFaces(projectDir);
   const issues = validatePlan(plan, theme, {
-    durationSec: (await probe(video)).durationSec,
+    durationSec: info.durationSec,
+    faces: faces && mapFacesToFrame(faces, info, plan.meta, resolveFraming(plan.meta)),
     fileExists: p => existsSync(join(projectDir, p)),
     transcript,
     assets,

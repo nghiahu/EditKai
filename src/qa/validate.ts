@@ -3,7 +3,11 @@ import type { Theme } from '../style/theme';
 import { validatePlanSchema } from '../plan/schema';
 import { typingDoneFrame, strikeDoneFrame } from '../../remotion/promptTyping';
 import { captionPropsProblem, resolveCaptionProps } from '../plan/captionProps';
-import { resolveFootageProps } from '../plan/insertProps';
+import { INSERT_POSITIONS, resolveFootageProps, type InsertPosition } from '../plan/insertProps';
+import { captionRegion } from '../plan/captionRegion';
+import { FOOTPRINT_TYPES, insertFootprint } from '../plan/insertFootprint';
+import { OVERLAP_LIMIT } from '../director/faceAvoid';
+import { faceRegion, overlapShare, type Faces } from '../media/faces';
 import { resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
@@ -15,6 +19,8 @@ export interface Ctx {
   assets?: { file: string; durationSec?: number }[];
   /** Share (0-1) of each caption layer's text width that sits on a near-white picture, by layer id; absent when the picture was not measured. */
   captionBright?: Map<string, number>;
+  /** The speaker's face over time, already in frame coordinates (`mapFacesToFrame`); absent when it was not measured. */
+  faces?: Faces;
 }
 
 const DRIFT_SEC = 0.3;
@@ -116,6 +122,25 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
       const drift = words.find(w => !ctx.transcript!.words.some(
         tw => normalizeWord(tw.t) === normalizeWord(w.t) && Math.abs(tw.s - w.s) <= DRIFT_SEC));
       if (drift) warn('caption-sync-drift', `${l.id}: từ "${drift.t}" lệch lời đã chép`, l.id);
+    }
+  }
+
+  // graphics and captions over the speaker's face
+  if (ctx.faces) {
+    for (const l of plan.layers) {
+      const face = faceRegion(ctx.faces, l.start, l.end, 0);
+      if (!face) continue;
+      if (l.track === 'caption') {
+        const share = overlapShare(face, captionRegion(resolveCaptionProps(l.props, theme).position, theme));
+        if (share > OVERLAP_LIMIT) warn('caption-on-face', `${l.id}: phụ đề che ${Math.round(share * 100)}% mặt người nói; đổi props.position`, l.id);
+      } else if (l.type && (FOOTPRINT_TYPES as readonly string[]).includes(l.type)) {
+        const at = (p: InsertPosition) => overlapShare(face, insertFootprint(l.type!, l.props, p, theme, plan.meta.width, plan.meta.height)!);
+        const current = INSERT_POSITIONS.find(p => p === l.props?.position) ?? 'center';
+        if (at(current) > OVERLAP_LIMIT) {
+          const best = INSERT_POSITIONS.reduce((a, p) => (at(p) < at(a) ? p : a));
+          warn('insert-on-face', `${l.id}: che ${Math.round(at(current) * 100)}% mặt người nói; ${best === current ? 'không vị trí nào tránh được' : `thử props.position "${best}"`}`, l.id);
+        }
+      }
     }
   }
 

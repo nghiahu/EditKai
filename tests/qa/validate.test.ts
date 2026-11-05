@@ -389,3 +389,32 @@ describe('caption legibility', () => {
     expect(validatePlan(plan(), theme, ctx()).filter(i => i.code === 'caption-low-contrast')).toEqual([]);
   });
 });
+
+describe("checks against the speaker's face", () => {
+  const m1 = loadTheme('styles/m1');
+  const face = (box: { x: number; y: number; w: number; h: number }, to = 10): Ctx['faces'] => ({ fps: 4, samples: Array.from({ length: to * 4 + 1 }, (_, i) => ({ t: i / 4, box, conf: 0.99 })) });
+  const middle = { x: 0.4, y: 0.25, w: 0.2, h: 0.3 };
+  const only = (...layers: Layer[]): Plan => { const p = plan(); p.layers = [p.layers[0], ...layers]; return p; };
+  const card = (props: Record<string, unknown> = {}): Layer => ({ id: 'g1', track: 'graphic', type: 'stat-card', start: 2, end: 5, props: { rows: [{ value: '30 phút' }], ...props } } as Layer);
+  const codes = (p: Plan, c: Ctx) => validatePlan(p, m1, c).filter(i => i.code.endsWith('-on-face'));
+
+  it('a card over the face warns insert-on-face and suggests another position', () => {
+    const [w] = codes(only(card()), ctx({ faces: face(middle) }));
+    expect(w.code).toBe('insert-on-face');
+    expect(w.layerId).toBe('g1');
+    expect(w.severity).toBe('warning');
+    expect(w.message).toMatch(/top|bottom/);
+  });
+  it('is quiet when the card clears the face, when the face is not there then, or when there are no faces', () => {
+    expect(codes(only(card({ position: 'bottom' })), ctx({ faces: face({ x: 0.4, y: 0.02, w: 0.2, h: 0.2 }) }))).toEqual([]);
+    expect(codes(only(card()), ctx({ faces: { fps: 4, samples: [{ t: 8, box: middle, conf: 0.99 }] } }))).toEqual([]);
+    expect(codes(only(card()), ctx())).toEqual([]);
+  });
+  it('a caption over the face warns caption-on-face; a caption below it does not', () => {
+    const cap = (position: string): Layer => ({ id: 'c9', track: 'caption', start: 1, end: 2, props: { position }, words: [{ t: 'xin', s: 1, e: 1.3, hl: false }] } as Layer);
+    const base = plan();
+    const withCap = (position: string): Plan => ({ ...base, layers: [...base.layers.filter(l => l.track !== 'caption'), cap(position)] });
+    expect(codes(withCap('center'), ctx({ faces: face(middle) })).map(i => i.code)).toEqual(['caption-on-face']);
+    expect(codes(withCap('bottom'), ctx({ faces: face({ x: 0.4, y: 0.05, w: 0.2, h: 0.3 }) }))).toEqual([]);
+  });
+});
