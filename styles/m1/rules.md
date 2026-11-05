@@ -43,6 +43,9 @@ Footage trong `window` hoặc `phone` làm tối và mờ người nói; vẫn g
 - Không để quá 3 s liên tục không có thay đổi thị giác (chữ mới, chip, footage hoặc chuyển cảnh).
 - Chuyển cảnh `blur`/`zoom` mỗi lần vào hoặc ra khỏi cảnh chèn; không dùng `slide` hai lần liên tiếp.
 
+## Cảnh tự do
+- Dùng `scene` khi cần bố cục riêng nhiều phần tử cùng lúc (lưới thẻ nổi theo lời, danh sách gạch chân, số lớn kèm vạch) mà thành phần dựng sẵn không ghép được; còn lại dùng thành phần dựng sẵn. Chữ trắng và vàng của phong cách (`white`, `accent`), nền thẻ `panel`, bo góc lớn; hoạt cảnh gọn (vào bằng lò xo, nổi viền vàng cho phần đang được nói tới), không rối mắt.
+
 ## Quy tắc chuyển động chung
 - Mọi thẻ vào bằng lò xo (vài thuộc tính cùng lúc: mờ, trượt, phóng), các phần tử cùng nhóm vào cách nhau 3 đến 6 khung, và **thoát nhanh hơn vào** (`exitFrames` dưới 60% thời gian lò xo ổn định, có test đo).
 - Thẻ đang đứng trên màn hình hơi phập phồng (±1,2% kích thước, chu kỳ 2 giây) để không chết cứng; nhịp theo `fps`.

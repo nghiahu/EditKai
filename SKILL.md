@@ -88,6 +88,7 @@ Layer có `"locked": true` là layer người dùng đã sửa tay. **Không bao
 | `graphic` | `callout` | `{ kind: "ring"\|"arrow" (bắt buộc), x, y (bắt buộc, 0–1: tâm điểm chỉ theo chiều rộng và chiều cao khung), size? (0.05–0.6, mặc định 0.18: đường kính vòng hoặc chiều dài mũi tên theo chiều rộng khung), angle? (độ, ngược chiều kim đồng hồ từ phía phải, mặc định 225: hướng mũi tên đi tới từ đó, 225 là từ góc dưới trái), label? (tối đa 24 ký tự, viên thuốc nhỏ cạnh điểm chỉ), color?: "accent"\|"white" }`. Nét vẽ tay vẽ dần một lần rồi đứng, thoát nhanh; không làm tối nền. Dùng để chỉ vào chỗ trong footage hoặc ảnh chụp màn hình (một nút, một con số): bạn đặt tay `x`, `y` sau khi xem khung hình. `analyze` không tự đề xuất. Cùng track `graphic` nên không chồng thời gian với thẻ khác; `validate` cảnh báo `callout-on-face` khi điểm chỉ rơi vào mặt người nói |
 | `graphic` | `step-number` | `{ number (bắt buộc, số nguyên 1–99), title? (tối đa 40 ký tự), sub? (tối đa 60), position? (mặc định top; cũng nhận bottom, center, left, right) }`. Số nghiêng khổng lồ lao vào từ lớn rồi dừng, tiêu đề và dòng phụ trượt vào cạnh nó. Dùng cho video dạng "N mẹo" hoặc các bước. `analyze` tự đề xuất khi lời nói có dấu mốc bước: "thứ nhất", "thứ hai" đến "thứ bảy", "bước 3", "mẹo số 3" (số lấy từ lời nói, tiêu đề là bốn từ liền sau, bỏ "là"); "đầu tiên" thì không, vì chưa chắc là danh sách |
 | `graphic` | `chart` | `{ kind: "bar"\|"line" (bắt buộc), points (bắt buộc, 2–6 điểm `{ label (tối đa 16 ký tự), value (số không âm) }`), unit? (tối đa 12), title? (tối đa 40), source? (tối đa 60, **nên có**), position? (mặc định center) }`. Thẻ nền đen, cột mọc lên lần lượt (cột lớn nhất màu nhấn) hoặc đường vẽ qua các chấm, nguồn in ở góc dưới. Chỉ dùng **số thật** do người nói nêu hoặc người dùng đưa; không bịa số để cho đẹp. `analyze` không tự đề xuất. Thiếu `source` thì `validate` cảnh báo `chart-no-source` |
+| `graphic` | `scene` | `{ anchor? (top, center, bottom, left, right), w, h (bắt buộc, tỉ lệ khung), root }`: cảnh tự do ghép từ khối cơ bản có hoạt cảnh riêng và mốc theo từ; xem mục "Cảnh tự do" bên dưới. `analyze` không tự đề xuất |
 | `graphic` | `transition` | `{ kind: "zoom"\|"blur"\|"slide"\|"push"\|"flash"\|"whip"\|"dip" }`, dài ≤ 0.6 s; hiệu ứng áp lên video nền (`flash` là nháy sáng, `whip` hất ngang và nhòe như lia máy nhanh, `dip` tối dần gần đen rồi sáng lại), đặt ngay trước cảnh hoặc cân tâm ở chỗ ghép, không chồng layer `graphic` khác |
 | `camera` | `zoom-punch` | `{ scale?: số trong (1, 1.5], focus?: { x, y } trong 0–1 }`, 0.8–1.5 s; đẩy camera vào ở từ nhấn mạnh rồi trả lại (mặc định theo phong cách: s1 1.06, m1 1.12) |
 | `camera` | `shake` | `{ intensity?: 1–3 }`, rung nhẹ cho khoảnh khắc mạnh |
@@ -150,6 +151,45 @@ Phần đề xuất chỉ là điểm xuất phát: xem từng nhịp, hợp lý
 **Cẩm nang `playbook.json`** (`styles/<style>/playbook.json`, đổi cách `analyze` đề xuất insert). Mỗi tình huống (`tool`, `number`, `section`, `cta`, `list`) có nhiều công thức (recipe: `id`, `type`, `duration`, `props` mẫu dùng `{text}`, `{TEXT}`, `{label}`, `{icon}`); công thức đầu tiên là cách mặc định. Phần `variety` giữ cho video không đơn điệu: `rotate` (cùng tình huống thì lần sau dùng công thức dùng lâu nhất chưa dùng lại), `maxShare` (tỉ lệ tối đa của một kiểu insert trong cả video, tính khi đã có ít nhất 4 insert) và `sameTypeGapSec` (hai insert cùng kiểu cách nhau tối thiểu bấy nhiêu giây). Danh sách `transitions` (mặc định `zoom`, `whip`, `blur`, `dip`, `push`, `slide`; không có `flash` vì khung trắng hoàn toàn quá gắt để lặp lại; đặt `[]` để tắt) quyết định kiểu chuyển cảnh ở các chỗ ghép. Kiểu insert phong cách không cho phép (`allowedInserts`) thì không bao giờ được chọn. Tình huống `number` có thêm công thức `counter` (số đếm lên) khi cue là một số rõ ràng như "30 phút" hoặc "50%"; `quote-card` chưa có tình huống tự gợi ý, bạn đặt tay ở bước đạo diễn khi người nói trích một câu. Muốn thêm một cách xử lý mới cho một tình huống chỉ cần thêm một công thức vào file; thiếu file thì dùng cẩm nang mặc định. Gợi ý vẫn chỉ là điểm xuất phát: bạn sửa `storyboard.json` như thường.
 
 Hai cảnh báo mới của `validate`: `insert-gap` (một khoảng dài hơn `director.insertGapMaxSec` không có insert nào; tối đa 5 dòng rồi một dòng tóm tắt) và `asset-unused` (file trong `assets.json` mà không layer `footage` hay `logo-badge` nào dùng làm `src`). Cả hai chỉ là cảnh báo: thêm insert phù hợp hoặc bỏ asset.
+
+## Cảnh tự do (`scene`)
+
+Các thành phần dựng sẵn ở bảng trên không ghép được với nhau (hai layer cùng track `graphic` không chồng thời gian). Khi lời nói cần một **bố cục riêng nhiều phần tử cùng lúc** (một lưới thẻ trong đó thẻ nào đang được nhắc thì nổi lên, một danh sách hiện từng dòng rồi gạch chân chữ khóa, một con số lớn kèm vạch), hãy dựng một layer `scene` bằng dữ liệu, không cần viết mã. Dùng thành phần dựng sẵn khi nó đủ (nhanh và ổn định hơn); dùng `scene` khi không thành phần nào diễn tả được ý.
+
+Layer (trong `plan.json`, hoặc làm insert `type: "scene"` trong `storyboard.json`):
+`{ "id": "s1", "track": "graphic", "type": "scene", "start": 12.3, "end": 17, "props": { "anchor": "top", "w": 0.9, "h": 0.34, "root": { ...phần tử } } }`
+- `anchor`: `top` (mặc định), `center`, `bottom`, `left`, `right`: nơi đặt hộp gốc trong vùng an toàn. `w`, `h` (0,05 đến 1, **bắt buộc**): kích thước hộp theo tỉ lệ khung; đặt sát nội dung, vì `validate` dùng hộp này để cảnh báo `scene-on-face` khi che mặt người nói (kèm gợi ý `anchor` khác). Nội dung nằm giữa hộp.
+
+**Phần tử** (`root` và các `children`; tối đa 6 cấp lồng nhau, 40 phần tử, `id` duy nhất, chữ tối đa 80 ký tự):
+
+| `kind` | Là gì | Thuộc tính riêng |
+|---|---|---|
+| `box` | Hộp (nền, viền, bo góc, bóng); có thể chứa con | |
+| `text` | Chữ | `text` (bắt buộc), `size` (mặc định 32), `weight` (100–900, mặc định 700), `color`, `italic`, `align` |
+| `icon` | Icon trong bộ icon của skill (tên lạ rơi về `check`) | `name` (bắt buộc), `size`, `color` |
+| `image` | Ảnh trong `assets/` | `src` (bắt buộc; thiếu file thì `validate` báo lỗi `missing-file`), `w`, `h` |
+| `line` | Đường thẳng hoặc gấp khúc | `points` (2 đến 8 điểm `[x, y]` trong hộp `w` × `h` của nó), `stroke`, `strokeWidth` |
+| `row`, `column` | Xếp các con theo hàng hoặc cột | `gap`, `align` (`start`, `center`, `end`) |
+| `grid` | Xếp con theo lưới | `cols` (1 đến 6), `gap` |
+| `stack` | Chồng các con lên nhau ở giữa | |
+
+Thuộc tính chung (đều tùy chọn): `w`, `h`, `padding`, `gap`, `radius`, `fill`, `stroke`, `strokeWidth`, `shadow`, `opacity`, `scale`, `x`, `y`, `rotate`. **Số là pixel của khung chuẩn 1080 rộng**, tự nhân theo khung nên cùng một cảnh đúng tỉ lệ ở 9:16, 16:9 và 1:1. **Màu**: token của phong cách (`accent` là vàng của `m1` hoặc xanh ngọc của `s1`, `white`, `ink`, `panel` là nền thẻ tối, `dim`) hoặc `#rrggbb`.
+
+**Hoạt cảnh.** Phần tử không khai báo gì thì đứng yên. Có hai cách:
+- Cú pháp tắt (`enter`, `exit`, `highlight`, `stagger`): `"enter": { "kind": "fade|rise|pop|slide-left|slide-right|draw", "at": giây, "duration": giây }` (`draw` cho `line`); `"exit": true` (hoặc `{ "at": giây }`) mờ dần đi; `"highlight": { "at", "until", "to": { "stroke": "accent", "strokeWidth": 6, "scale": 1.05 } }` (hoặc một mảng) đổi sang giá trị trong `to` từ `at` đến `until` rồi trở lại; trên một khối chứa, `"stagger": số khung` cùng với `enter` làm các con vào lần lượt (khối chứa không tự hiện).
+- Keyframe: `"keys": { "scale": [ { "at": 0.5, "v": 1 }, { "at": 0.7, "v": 1.2, "ease": "spring" } ] }`, thuộc tính được là `opacity`, `scale`, `x`, `y`, `rotate`, `strokeWidth`, `progress` (phần đường đã vẽ), `fill`, `stroke`, `color`; `ease` là `linear`, `out` (mặc định), `inOut`, `spring`. `keys` của một thuộc tính thay hẳn cú pháp tắt cho thuộc tính đó. Cả cảnh tự mờ đi ở cuối layer.
+
+**Mốc theo từ.** Mọi `at` và `until` là số giây tính từ đầu cảnh, **hoặc** `{ "word": chỉ số từ trong transcript.json, "offset": giây, "edge": "start" | "end" }` (mặc định đầu từ). `compose` đổi sang giây theo `transcript.json` hiện có, nên cắt lại video rồi `compose` lại thì hiệu ứng đi theo lời; `plan.json` không được còn mốc theo từ (`validate` báo lỗi `scene-unresolved-anchor`). Tìm chỉ số từ bằng cách đọc `transcript.json` (mảng `words`, chỉ số bắt đầu từ 0).
+
+Công thức mẫu (dữ liệu chạy được, có test) nằm ở `tests/fixtures/scenes/`: `grid-highlight.json` (lưới 2×2, mỗi thẻ có icon, tiêu đề, dòng phụ; thẻ nào được nhắc thì nổi viền và to lên 5%), `list-underline.json` (danh sách hiện từng dòng rồi gạch chân vẽ dần), `big-number.json` (số lớn nảy vào, vạch vẽ dần, chú thích mờ vào). Chép rồi đổi chữ, icon, thời điểm.
+
+**Vòng kiểm bắt buộc trước khi trình bày cho người dùng** (bạn không xem được chuyển động, chỉ xem được ảnh):
+1. `compose`, rồi `validate`; sửa lỗi và cảnh báo (`scene-on-face`, chữ tràn).
+2. Chụp **đúng các thời điểm quan trọng** của cảnh: `npx tsx src/cli.ts preview projects/<tên> --at 12.0,13.1,14.4,16.0` (trước, trong và sau từng mốc theo lời).
+3. Xem các ảnh trong `preview/` và `preview/sheet.png`: chữ có đọc được, có tràn khung hay che mặt không, phần tử nổi có đúng lúc người nói nhắc tới không.
+4. Sửa rồi chụp lại, tối đa 3 vòng; hết vòng còn lỗi thì nói rõ cho người dùng. Cảm giác chuyển động mượt hay không bạn không kiểm được: nhắc người dùng xem `preview --video`.
+
+Giới hạn: cảnh không có video lồng, 3D hay lottie; sửa phần tử trong editor chưa được (editor chỉ kéo đổi `start`, `end` của cả cảnh), sửa bằng JSON.
 
 ## Tiếng hiệu ứng
 

@@ -42,6 +42,9 @@ Chèn thưa: khoảng một cảnh chèn mỗi 20–30 s, ngoài các thẻ tiê
 - Hai thẻ tiêu đề không cách nhau dưới 0.3 s; không để quá 12 s liên tục chỉ có người nói trơn.
 - Mở đầu: thẻ tiêu đề đầu tiên xuất hiện trong 1 s đầu. Kết: một câu kêu gọi kèm `title-card` ở 5 s cuối.
 
+## Cảnh tự do
+- Dùng `scene` khi cần bố cục riêng nhiều phần tử cùng lúc (lưới thẻ nổi theo lời, danh sách gạch chân, số lớn kèm vạch) mà thành phần dựng sẵn không ghép được; còn lại dùng thành phần dựng sẵn. Chữ trắng và vàng của phong cách (`white`, `accent`), nền thẻ `panel`, bo góc lớn; hoạt cảnh gọn (vào bằng lò xo, nổi viền vàng cho phần đang được nói tới), không rối mắt.
+
 ## Quy tắc chuyển động chung
 - Mọi thẻ vào bằng lò xo (vài thuộc tính cùng lúc: mờ, trượt, phóng), các phần tử cùng nhóm vào cách nhau 3 đến 6 khung, và **thoát nhanh hơn vào** (`exitFrames` dưới 60% thời gian lò xo ổn định, có test đo).
 - Thẻ đang đứng trên màn hình hơi phập phồng (±1,2% kích thước, chu kỳ 2 giây) để không chết cứng; nhịp theo `fps`.

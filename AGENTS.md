@@ -16,3 +16,4 @@ Quy tắc ngắn:
 - Đồ họa không che mặt người nói: chạy `faces` sau `clean`/`condense` (ghi `faces.json`, đo cục bộ); `compose` đặt lại thẻ, `validate` cảnh báo `insert-on-face`/`caption-on-face`; `preview` ghi thêm `preview/report.md`; chi tiết ở `SKILL.md`.
 - Thêm layer `callout` (vòng khoanh, mũi tên chỉ chỗ, tự đặt `x`, `y`) và `step-number` (số bước nghiêng khổng lồ; `analyze` đề xuất khi lời nói có "thứ hai", "bước 3", "mẹo số 3"); chi tiết ở `SKILL.md`.
 - Thêm layer `chart` (cột hoặc đường vẽ dần cho 2–6 số thật, nên có `source`) và tiếng hiệu ứng bám theo giọng nói (`meta.sfx.density`); chi tiết ở `SKILL.md`.
+- Layer `scene` (cảnh tự do ghép từ khối cơ bản, hoạt cảnh theo keyframe, mốc gắn vào từ được nói) cho bố cục mà thành phần dựng sẵn không ghép được; công thức mẫu ở `tests/fixtures/scenes/`; vòng kiểm bắt buộc bằng `preview --at`; chi tiết ở `SKILL.md`.
