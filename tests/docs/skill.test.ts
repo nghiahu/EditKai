@@ -175,3 +175,9 @@ describe('SKILL.md describes the sound effects', () => {
     expect(missing(['meta.sfx', 'props.sound', 'whoosh', 'pop', 'tick', 'thud', 'swell', 'nghe thử', 'Chưa có nhạc nền'])).toEqual([]);
   });
 });
+
+describe('SKILL.md describes keeping graphics off the speaker\'s face', () => {
+  it('names the faces command, faces.json, the two warnings and report.md', () => {
+    expect(missing(['src/cli.ts faces', 'faces.json', 'insert-on-face', 'caption-on-face', 'preview/report.md', 'không che mặt'])).toEqual([]);
+  });
+});
