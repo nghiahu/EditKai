@@ -58,3 +58,14 @@ describe('plan schema accepts the framing fields', () => {
     expect(validatePlanSchema({ ...base, meta: { ...meta, focus: { x: 3, y: 0 } } }).ok).toBe(false);
   });
 });
+
+describe('plan schema accepts meta.sfx', () => {
+  const base = { version: 1, scenes: [], layers: [] };
+  const meta = { source: 'cleaned.mp4', fps: 30, width: 1080, height: 1920, style: 'm1' };
+  it('enabled and volume are optional; a volume outside 0-1 or a stray key is an error', () => {
+    expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { enabled: false, volume: 0.3 } } }).ok).toBe(true);
+    expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: {} } }).ok).toBe(true);
+    expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { volume: 2 } } }).ok).toBe(false);
+    expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { loud: true } } }).ok).toBe(false);
+  });
+});

@@ -145,6 +145,13 @@ Phần đề xuất chỉ là điểm xuất phát: xem từng nhịp, hợp lý
 
 Hai cảnh báo mới của `validate`: `insert-gap` (một khoảng dài hơn `director.insertGapMaxSec` không có insert nào; tối đa 5 dòng rồi một dòng tóm tắt) và `asset-unused` (file trong `assets.json` mà không layer `footage` hay `logo-badge` nào dùng làm `src`). Cả hai chỉ là cảnh báo: thêm insert phù hợp hoặc bỏ asset.
 
+## Tiếng hiệu ứng
+
+Mỗi lần dựng (`render`, `preview --video`) có sẵn tiếng hiệu ứng ngắn khớp với đồ họa, tổng hợp bằng mã (không file ngoài, không bản quyền), ghi vào `projects/<tên>/sfx/`: `whoosh` ở chuyển cảnh (`swell` trầm cho `dip`), `pop` khi một thẻ hiện ra (`logo-badge`, `stat-card`, `title-card`, `chip-stack`, `quote-card`, `explainer-scene`, `prompt-box`, `footage`), `tick` khi bộ đếm `counter` chạy (tối đa 8), `thud` ở `zoom-punch`. Hai tiếng cách nhau dưới 0,35 giây thì chỉ giữ tiếng quan trọng hơn. Bạn không phải làm gì thêm; chỉ chỉnh khi cần:
+- `meta.sfx`: `{ "enabled": false }` tắt hết; `{ "volume": 0.15 }` chỉnh âm lượng (0 đến 1, mặc định 0,25).
+- `props.sound: false` trên một layer tắt tiếng riêng của layer đó.
+Chưa có nhạc nền. AI không nghe được: sau khi dựng, nhắc người dùng **nghe thử**; nếu tiếng lấn lời thì hạ `volume` hoặc tắt.
+
 ## Khi nào dừng và hỏi người dùng
 
 Thiếu video/khung hình/phong cách; video không có lời nói; một lệnh lỗi mà thông báo không đủ để tự sửa; trước khi xóa project hay ghi đè `out.mp4` đã có.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, OffthreadVideo, Sequence, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Audio, OffthreadVideo, Sequence, useCurrentFrame } from 'remotion';
 import type { Plan } from '../src/plan/types';
 import type { Theme } from '../src/style/theme';
 import { registry } from './registry';
@@ -8,6 +8,11 @@ import { baseDim, mergeStyles } from './baseDim';
 import { cameraStyle } from './camera';
 import { transitionStyle } from './transition';
 import { framingStyle, resolveFraming } from '../src/plan/framing';
+import { sfxCues } from '../src/audio/cues';
+import { sfxFile } from '../src/audio/synth';
+import { assetUrl } from './assetUrl';
+
+export const SFX_VOLUME = 0.25;
 
 const FILL = { width: '100%', height: '100%' } as const;
 const BLUR_FILL_PX = 40;
@@ -41,6 +46,11 @@ export const PlanVideo: React.FC<PlanVideoProps> = ({ plan, theme, videoSrc, ass
           </Sequence>
         );
       })}
+      {assetBase ? sfxCues(plan).map((c, i) => (
+        <Sequence key={`sfx${i}`} from={Math.round(c.t * fps)} durationInFrames={Math.round(1 * fps)}>
+          <Audio src={assetUrl(assetBase, sfxFile(c.sound))} volume={(plan.meta.sfx?.volume ?? SFX_VOLUME) * c.gain} />
+        </Sequence>
+      )) : null}
     </AbsoluteFill>
   );
 };

@@ -3,6 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
+import { writeSfxFiles } from '../audio/files';
 import { probe } from '../media/probe';
 import { serveDir } from '../media/serve';
 import { validatePlan } from '../qa/validate';
@@ -38,6 +39,7 @@ export async function openRenderSession(projectDir: string): Promise<RenderSessi
   const errors = issues.filter(i => i.severity === 'error');
   if (errors.length) throw new Error(`Không thể render, plan có lỗi:\n${errors.map(e => `- [${e.code}] ${e.message}`).join('\n')}`);
 
+  writeSfxFiles(projectDir); // the sound effects the plan may ask for, served with the project
   const server = await serveDir(projectDir);
   let serveUrl: string | undefined;
   const close = async () => {

@@ -169,3 +169,9 @@ describe('SKILL.md documents the commands added after the clean-session test', (
     expect(missing(['src/cli.ts frames', 'frames/sheet.png', 'transcript.whisper.json', 'không khớp chỗ nào', 'ngay trước', 'ngay sau'])).toEqual([]);
   });
 });
+
+describe('SKILL.md describes the sound effects', () => {
+  it('names the sounds, the switches and says there is no background music yet', () => {
+    expect(missing(['meta.sfx', 'props.sound', 'whoosh', 'pop', 'tick', 'thud', 'swell', 'nghe thử', 'Chưa có nhạc nền'])).toEqual([]);
+  });
+});

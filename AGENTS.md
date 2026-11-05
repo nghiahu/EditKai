@@ -12,3 +12,4 @@ Quy tắc ngắn:
 - Layer có `"locked": true` là của người dùng: không ghi đè, không xóa. Dựng lại thì ghi `plan.next.json` rồi chạy `merge`.
 - Tối đa 3 vòng `validate`; hết vòng còn cảnh báo thì liệt kê cho người dùng.
 - Lệnh lỗi thì báo thông báo của nó bằng lời rõ ràng, không bỏ qua.
+- Tiếng hiệu ứng tự có khi dựng (`whoosh`, `pop`, `tick`, `thud`); chỉnh bằng `meta.sfx` (`enabled`, `volume`) hoặc `props.sound: false` trên layer; chi tiết ở `SKILL.md`.
