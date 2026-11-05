@@ -15,9 +15,6 @@ import { assetUrl } from './assetUrl';
 export const SFX_VOLUME = 0.25;
 
 const FILL = { width: '100%', height: '100%' } as const;
-const BLUR_FILL_PX = 40;
-const BLUR_FILL_LIGHT = 0.6;
-const BLUR_FILL_SCALE = 1.2;
 
 export type PlanVideoProps = { plan: Plan; theme: Theme; videoSrc: string; durationSec?: number; assetBase?: string };
 
@@ -31,11 +28,7 @@ export const PlanVideo: React.FC<PlanVideoProps> = ({ plan, theme, videoSrc, ass
   return (
     <AbsoluteFill style={{ background: theme.colors.navy ?? theme.colors.black ?? '#000' }}>
       <AbsoluteFill style={mergeStyles(transitionStyle(plan.layers, frame / fps), cameraStyle(plan.layers, frame / fps, theme.motion), baseDim(plan.layers, frame / fps, theme.motion))}>
-        {videoSrc ? (
-          <>
-            <OffthreadVideo src={videoSrc} style={{ ...FILL, ...framingStyle(framing) }} />
-          </>
-        ) : null}
+        {videoSrc ? <OffthreadVideo src={videoSrc} style={{ ...FILL, ...framingStyle(framing) }} /> : null}
       </AbsoluteFill>
       {plan.layers.map(l => {
         const Component = registry[l.type ?? l.track];
