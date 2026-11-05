@@ -21,10 +21,10 @@ describe('cueVolumes', () => {
     expect(v[0]).toBeLessThan(v[1]);
     expect(v[2]).toBe(SFX_VOLUME); // nothing but silence around 8 s
   });
-  it('meta.sfx.volume is the ceiling and meta.sfx.density sets how far above the voice', () => {
+  it('meta.sfx.volume is the ceiling and meta.sfx.density sets how far below the voice', () => {
     const loud = levels({ 20: -10, 21: -10, 22: -10 });
     const p = (sfx: Plan['meta']['sfx']) => plan([card('a', 2)], sfx);
-    expect(cueVolumes(p({ volume: 0.1 }), loud)[0]).toBe(0.1);
+    expect(cueVolumes(p({ volume: 0.05 }), loud)[0]).toBe(0.05);
     const [restrained] = cueVolumes(p({ density: 'restrained', volume: 1 }), levels({ 20: -30, 21: -30, 22: -30 }));
     const [rich] = cueVolumes(p({ density: 'rich', volume: 1 }), levels({ 20: -30, 21: -30, 22: -30 }));
     expect(restrained).toBeLessThan(rich);

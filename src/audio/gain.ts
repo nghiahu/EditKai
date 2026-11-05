@@ -1,16 +1,16 @@
 import { PEAK } from './synth';
 
 /** The ceiling of a sound effect's volume when meta.sfx.volume is not set. */
-export const SFX_VOLUME = 0.25;
+export const SFX_VOLUME = 0.12;
 
 export const DENSITIES = ['restrained', 'standard', 'rich'] as const;
 export type Density = (typeof DENSITIES)[number];
 
 /**
- * How far the peak of a sound effect sits above the voice's loudest 0.1 s around it (RMS dB): a quiet bed under the voice, the usual level, a
- * lively one. Worked out so that `standard` on an ordinary speaking voice (about -20 dB) lands near the fixed 0.25 used before; not tuned by ear.
+ * How far the peak of a sound effect sits BELOW the voice's loudest 0.1 s around it (RMS dB). An effect must stay well under the voice: a first
+ * version put it 3 dB above and it hurt a listener on headphones (voice and effect together reached full scale). Still not tuned by ear.
  */
-export const DENSITY_OFFSET_DB: Record<Density, number> = { restrained: -3, standard: 3, rich: 9 };
+export const DENSITY_OFFSET_DB: Record<Density, number> = { restrained: -18, standard: -12, rich: -6 };
 
 const SILENT_BELOW_DB = -60; // a voice quieter than this is silence: nothing to follow
 

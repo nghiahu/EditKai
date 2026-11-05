@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
 import { levelAround, parseLevels, voiceLevels } from '../../src/audio/voiceLevel';
-import { DENSITY_OFFSET_DB, sfxVolume } from '../../src/audio/gain';
+import { DENSITY_OFFSET_DB, SFX_VOLUME, sfxVolume } from '../../src/audio/gain';
+import { PEAK } from '../../src/audio/synth';
 
 describe('parseLevels', () => {
   it('reads one dB value per 0.1 s chunk from ffmpeg\'s metadata lines, and -inf as very quiet', () => {
@@ -44,10 +45,18 @@ describe('sfxVolume: the level of a sound effect from the level of the voice aro
     expect(sfxVolume(undefined, 'standard', 0.25)).toBe(0.25);
     expect(sfxVolume(-120, 'standard', 0.4)).toBe(0.4);
   });
-  it('a speaking voice (-20 dB) gives a volume close to the old fixed 0.25 on the standard density', () => {
-    const v = sfxVolume(-20, 'standard', 1);
-    expect(v).toBeGreaterThan(0.15);
-    expect(v).toBeLessThan(0.4);
+  it('an effect is always well under the voice: its peak at least 9 dB below the voice level on every density (a listener on headphones was hurt by effects above it)', () => {
+    for (const density of ['restrained', 'standard', 'rich'] as const) {
+      for (const voiceDb of [-30, -20, -12]) {
+        const peakDb = 20 * Math.log10(sfxVolume(voiceDb, density, 1) * PEAK);
+        expect(peakDb).toBeLessThanOrEqual(voiceDb - 5);
+      }
+    }
+    expect(DENSITY_OFFSET_DB.standard).toBeLessThanOrEqual(-9);
+  });
+  it('and never above a low ceiling by default', () => {
+    expect(sfxVolume(-5, 'rich', SFX_VOLUME)).toBeLessThanOrEqual(0.12);
+    expect(SFX_VOLUME).toBeLessThanOrEqual(0.12);
   });
 });
 
