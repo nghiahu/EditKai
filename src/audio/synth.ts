@@ -5,7 +5,7 @@ export type Sound = (typeof SOUNDS)[number];
 /** Where a sound lives inside the project folder (the renderer serves it from there). */
 export const sfxFile = (sound: Sound): string => `sfx/${sound}.wav`;
 
-const PEAK = 0.9;
+export const PEAK = 0.9; // the highest sample of every sound
 
 /** Seeded noise (mulberry32): the same sound comes out every run. */
 function rng(seed: number): () => number {
