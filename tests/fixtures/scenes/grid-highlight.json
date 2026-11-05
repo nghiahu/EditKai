@@ -1,0 +1,67 @@
+{
+  "anchor": "top",
+  "w": 0.92,
+  "h": 0.34,
+  "root": {
+    "id": "grid",
+    "kind": "grid",
+    "cols": 2,
+    "gap": 22,
+    "stagger": 5,
+    "enter": { "kind": "rise", "at": 0.2 },
+    "children": [
+      {
+        "id": "typography", "kind": "box", "w": 440, "h": 150, "fill": "panel", "radius": 30, "shadow": true,
+        "highlight": { "at": 1.0, "until": 1.8, "to": { "stroke": "accent", "strokeWidth": 6, "scale": 1.05 } },
+        "children": [
+          { "id": "typography-row", "kind": "row", "gap": 22, "children": [
+            { "id": "typography-icon", "kind": "box", "w": 76, "h": 76, "fill": "ink", "radius": 18, "children": [{ "id": "typography-i", "kind": "icon", "name": "typography", "size": 46, "color": "white" }] },
+            { "id": "typography-col", "kind": "column", "align": "start", "children": [
+              { "id": "typography-t", "kind": "text", "text": "Typography", "size": 40, "weight": 800, "align": "start" },
+              { "id": "typography-s", "kind": "text", "text": "đủ kiểu", "size": 28, "weight": 700, "color": "accent", "align": "start" }
+            ] }
+          ] }
+        ]
+      },
+      {
+        "id": "graphic", "kind": "box", "w": 440, "h": 150, "fill": "panel", "radius": 30, "shadow": true,
+        "highlight": { "at": 1.8, "until": 2.6, "to": { "stroke": "accent", "strokeWidth": 6, "scale": 1.05 } },
+        "children": [
+          { "id": "graphic-row", "kind": "row", "gap": 22, "children": [
+            { "id": "graphic-icon", "kind": "box", "w": 76, "h": 76, "fill": "ink", "radius": 18, "children": [{ "id": "graphic-i", "kind": "icon", "name": "graphic", "size": 46, "color": "white" }] },
+            { "id": "graphic-col", "kind": "column", "align": "start", "children": [
+              { "id": "graphic-t", "kind": "text", "text": "Graphic", "size": 40, "weight": 800, "align": "start" },
+              { "id": "graphic-s", "kind": "text", "text": "đa dạng", "size": 28, "weight": 700, "color": "accent", "align": "start" }
+            ] }
+          ] }
+        ]
+      },
+      {
+        "id": "motion", "kind": "box", "w": 440, "h": 150, "fill": "panel", "radius": 30, "shadow": true,
+        "highlight": { "at": 2.6, "until": 3.4, "to": { "stroke": "accent", "strokeWidth": 6, "scale": 1.05 } },
+        "children": [
+          { "id": "motion-row", "kind": "row", "gap": 22, "children": [
+            { "id": "motion-icon", "kind": "box", "w": 76, "h": 76, "fill": "ink", "radius": 18, "children": [{ "id": "motion-i", "kind": "icon", "name": "motion", "size": 46, "color": "white" }] },
+            { "id": "motion-col", "kind": "column", "align": "start", "children": [
+              { "id": "motion-t", "kind": "text", "text": "Motion", "size": 40, "weight": 800, "align": "start" },
+              { "id": "motion-s", "kind": "text", "text": "mượt mà", "size": 28, "weight": 700, "color": "accent", "align": "start" }
+            ] }
+          ] }
+        ]
+      },
+      {
+        "id": "sound", "kind": "box", "w": 440, "h": 150, "fill": "panel", "radius": 30, "shadow": true,
+        "highlight": { "at": 3.4, "until": 4.2, "to": { "stroke": "accent", "strokeWidth": 6, "scale": 1.05 } },
+        "children": [
+          { "id": "sound-row", "kind": "row", "gap": 22, "children": [
+            { "id": "sound-icon", "kind": "box", "w": 76, "h": 76, "fill": "ink", "radius": 18, "children": [{ "id": "sound-i", "kind": "icon", "name": "audio", "size": 46, "color": "white" }] },
+            { "id": "sound-col", "kind": "column", "align": "start", "children": [
+              { "id": "sound-t", "kind": "text", "text": "Âm thanh", "size": 40, "weight": 800, "align": "start" },
+              { "id": "sound-s", "kind": "text", "text": "khớp từng khung", "size": 28, "weight": 700, "color": "accent", "align": "start" }
+            ] }
+          ] }
+        ]
+      }
+    ]
+  }
+}

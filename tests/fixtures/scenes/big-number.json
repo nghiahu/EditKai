@@ -1,0 +1,15 @@
+{
+  "anchor": "bottom",
+  "w": 0.8,
+  "h": 0.3,
+  "root": {
+    "id": "number",
+    "kind": "column",
+    "gap": 8,
+    "children": [
+      { "id": "n", "kind": "text", "text": "85.000 view", "size": 130, "weight": 900, "color": "accent", "enter": { "kind": "pop", "at": 0.2 } },
+      { "id": "bar", "kind": "line", "points": [[0, 7], [520, 7]], "w": 520, "h": 14, "stroke": "white", "strokeWidth": 10, "enter": { "kind": "draw", "at": 0.7, "duration": 0.8 } },
+      { "id": "cap", "kind": "text", "text": "video đầu tiên của kênh", "size": 36, "weight": 700, "color": "white", "enter": { "kind": "fade", "at": 1.5 } }
+    ]
+  }
+}

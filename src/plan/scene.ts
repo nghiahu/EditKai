@@ -11,7 +11,7 @@ export const ENTER_KINDS = ['fade', 'rise', 'pop', 'slide-left', 'slide-right', 
 export const NUMBER_PROPS = ['opacity', 'scale', 'x', 'y', 'rotate', 'strokeWidth', 'progress'] as const;
 export const COLOR_PROPS = ['fill', 'stroke', 'color'] as const;
 export const MAX_NODES = 40;
-export const MAX_DEPTH = 4;
+export const MAX_DEPTH = 6;
 
 export type Ease = (typeof EASES)[number];
 /** Seconds from the start of the scene, or a spoken word: `compose` turns the second form into seconds from `transcript.json`. */

@@ -1,0 +1,19 @@
+{
+  "anchor": "left",
+  "w": 0.6,
+  "h": 0.4,
+  "root": {
+    "id": "list",
+    "kind": "column",
+    "gap": 18,
+    "align": "start",
+    "stagger": 6,
+    "enter": { "kind": "slide-left", "at": 0.2 },
+    "children": [
+      { "id": "l1", "kind": "text", "text": "1. Mở bài", "size": 50, "weight": 800, "align": "start" },
+      { "id": "l2", "kind": "text", "text": "2. Thân bài", "size": 50, "weight": 800, "align": "start" },
+      { "id": "l3", "kind": "text", "text": "3. Kết bài", "size": 50, "weight": 800, "align": "start" },
+      { "id": "under", "kind": "line", "points": [[0, 6], [320, 6]], "w": 320, "h": 12, "stroke": "accent", "strokeWidth": 8, "enter": { "kind": "draw", "at": 1.4, "duration": 0.6 } }
+    ]
+  }
+}

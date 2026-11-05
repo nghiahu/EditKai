@@ -57,10 +57,10 @@ describe('sceneProblem: it says where the mistake is', () => {
     expect(bad(scene(card('a', { radius: -1 })))).toMatch(/root\.radius/);
     expect(bad(scene(card('a', { w: Infinity })))).toMatch(/root\.w/);
   });
-  it('depth and size limits: 4 levels, at most 40 nodes', () => {
+  it('depth and size limits: 6 levels (a grid of cards that hold a row and a column of text needs 5), at most 40 nodes', () => {
     const deep = (n: number): SceneNode => (n === 0 ? card(`d${n}`) : { id: `d${n}`, kind: 'column', children: [deep(n - 1)] });
-    expect(sceneProblem(scene(deep(3)))).toBeUndefined(); // 4 levels
-    expect(bad(scene(deep(4)))).toMatch(/cấp|4/);
+    expect(sceneProblem(scene(deep(5)))).toBeUndefined(); // 6 levels
+    expect(bad(scene(deep(6)))).toMatch(/cấp|6/);
     const many = (n: number) => scene({ id: 'r', kind: 'column', children: Array.from({ length: n }, (_, i) => card(`n${i}`)) });
     expect(sceneProblem(many(MAX_NODES - 1))).toBeUndefined();
     expect(bad(many(MAX_NODES))).toMatch(/phần tử|40/);
