@@ -10,7 +10,7 @@ import { probe } from '../media/probe';
 import { readPlan } from '../plan/io';
 import type { Layer, Plan } from '../plan/types';
 import { framingProblem, resolveFraming } from '../plan/framing';
-import { placeAwayFromFaces } from '../director/faceAvoid';
+import { placeAwayFromFaces, placeCaptionsAwayFromFaces } from '../director/faceAvoid';
 import { mapFacesToFrame, readFaces } from '../media/faces';
 import { BRIGHT_SHARE, validatePlan } from '../qa/validate';
 import { measureCaptionBright } from './captionBright';
@@ -75,7 +75,8 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
   const found = readFaces(projectDir);
   const frameFaces = found && mapFacesToFrame(found, info, project, framed);
   const insertLayersAway = placeAwayFromFaces(ins.layers, frameFaces, theme, project.width, project.height);
-  let layers = [...caps.layers, ...insertLayersAway, ...cam.layers];
+  const captionLayersAway = placeCaptionsAwayFromFaces(caps.layers, frameFaces, theme);
+  let layers = [...captionLayersAway, ...insertLayersAway, ...cam.layers];
 
   // a regenerated plan is merged into plan.json later: its ids must not clash with the ones already there
   const existingFile = join(projectDir, 'plan.json');

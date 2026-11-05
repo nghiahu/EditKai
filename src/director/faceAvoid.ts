@@ -50,3 +50,20 @@ export function placeAwayFromFaces(layers: Layer[], faces: Faces | undefined, th
     return best === 'center' ? l : { ...l, props: { ...l.props, position: best } };
   });
 }
+
+/**
+ * Moves a `big` caption (centred by default, so right on the speaker) to the top or the bottom, whichever covers the face less, when the centre
+ * covers more than CAPTION_OVERLAP_LIMIT of it. Other captions (they sit low, at chin height) and captions with a `position` are left as they are.
+ */
+export function placeCaptionsAwayFromFaces(layers: Layer[], faces: Faces | undefined, theme: ThemeBits): Layer[] {
+  if (!faces) return layers;
+  return layers.map(l => {
+    if (l.track !== 'caption' || l.props?.variant !== 'big' || typeof l.props.position === 'string') return l;
+    const region = faceRegion(faces, l.start, l.end, 0);
+    if (!region) return l;
+    const covered = (p: 'top' | 'center' | 'bottom') => overlapShare(region, captionRegion(p, theme));
+    if (covered('center') <= CAPTION_OVERLAP_LIMIT) return l;
+    const best = covered('top') <= covered('bottom') ? 'top' : 'bottom';
+    return { ...l, props: { ...l.props, position: best } };
+  });
+}

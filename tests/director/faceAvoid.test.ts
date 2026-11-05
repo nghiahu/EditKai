@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OVERLAP_LIMIT, placeAwayFromFaces } from '../../src/director/faceAvoid';
+import { OVERLAP_LIMIT, placeAwayFromFaces, placeCaptionsAwayFromFaces } from '../../src/director/faceAvoid';
 import { insertFootprint } from '../../src/plan/insertFootprint';
 import { overlapShare, type Faces } from '../../src/media/faces';
 import { loadTheme } from '../../src/style/theme';
@@ -75,5 +75,22 @@ describe('placeAwayFromFaces', () => {
   });
   it('the limit is 15 percent of the face', () => {
     expect(OVERLAP_LIMIT).toBe(0.15);
+  });
+});
+
+describe('placeCaptionsAwayFromFaces', () => {
+  const cap = (id: string, props?: Record<string, unknown>): Layer => ({ id, track: 'caption', start: 2, end: 3, props, words: [{ t: 'xin', s: 2, e: 2.3, hl: false }] } as Layer);
+  const f = faces(face(0.15, 0.4)); // the face is in the middle of the frame
+  it('a big caption (centred by default) that would cover the face goes to the top or the bottom', () => {
+    const [out] = placeCaptionsAwayFromFaces([cap('c1', { variant: 'big' })], f, theme);
+    expect(['top', 'bottom']).toContain((out.props as { position?: string }).position);
+    expect((out.props as { variant?: string }).variant).toBe('big');
+  });
+  it('leaves other captions, a position that was set, a face that is not there then, and no faces alone', () => {
+    const phrase = cap('c2', { variant: 'phrase' });
+    const fixed = cap('c3', { variant: 'big', position: 'center' });
+    const elsewhere = { ...cap('c4', { variant: 'big' }), start: 30, end: 31 } as Layer;
+    expect(placeCaptionsAwayFromFaces([phrase, fixed, elsewhere], f, theme)).toEqual([phrase, fixed, elsewhere]);
+    expect(placeCaptionsAwayFromFaces([cap('c5', { variant: 'big' })], undefined, theme)).toEqual([cap('c5', { variant: 'big' })]);
   });
 });
