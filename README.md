@@ -40,3 +40,8 @@ npx tsx src/cli.ts render projects/demo
 - Chuyển động: các hàm nảy/hiện/thoát nằm trong `remotion/motion/`, thông số theo phong cách trong khối `motion` của `theme.json`. `tests/remotion/helper.ts` có `filmstrip(plan, frames, out)` để ghép dãy khung hình thành một ảnh và xem chuyển động bằng mắt.
 - Caption có bốn kiểu (`phrase` mặc định, `word`, `big`, `label`); `remotion/components/caption/` chứa từng renderer và `src/plan/captionProps.ts` đọc `props` với giá trị mặc định an toàn.
 - Chưa có: nhiều lớp video chồng nhau, chỉnh sóng âm/màu, sửa bằng ô chat, chỉnh vị trí chữ bằng kéo thả, âm thanh hiệu ứng, cảnh mở/kết, icon 3D.
+
+## Thành phần của bên thứ ba
+
+- Phông **Be Vietnam Pro** (SIL Open Font License 1.1) qua gói npm `@fontsource/be-vietnam-pro`, nạp trong `remotion/fonts.ts` để chữ tiếng Việt giống nhau trên mọi máy.
+- Mô hình phát hiện mặt **Ultra-Light-Fast-Generic-Face-Detector-1MB** (RFB-320, MIT), file và giấy phép nằm trong `models/`.

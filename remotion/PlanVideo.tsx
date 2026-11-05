@@ -2,6 +2,7 @@ import React from 'react';
 import { AbsoluteFill, Audio, OffthreadVideo, Sequence, useCurrentFrame } from 'remotion';
 import type { Plan } from '../src/plan/types';
 import type { Theme } from '../src/style/theme';
+import './fonts'; // loads Be Vietnam Pro before the first frame (the render and the editor both import this file)
 import { registry } from './registry';
 import { applyOverride } from './theme-utils';
 import { baseDim, mergeStyles } from './baseDim';
