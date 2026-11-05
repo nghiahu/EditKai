@@ -66,10 +66,12 @@ describe('placeAwayFromFaces', () => {
     const fp = insertFootprint('logo-badge', { label: 'YouTube' }, pos(out) as 'left', theme, W, H)!;
     expect(overlapShare(face(0.08, 0.62), fp)).toBeLessThan(OVERLAP_LIMIT);
   });
-  it('a card (not a badge or a counter) never goes to a side: it would be squeezed', () => {
-    const f = faces({ x: 0.2, y: 0.25, w: 0.6, h: 0.5 });
-    const [out] = placeAwayFromFaces([layer('a', 'stat-card', 2, 5, { rows: [{ value: 'x' }] })], f, theme, W, H);
-    expect(['left', 'right']).not.toContain(pos(out));
+  it('a stat card may go to a side in a wide frame, but never in a narrow one, and a quote card never does', () => {
+    const f = faces({ x: 0.33, y: 0.08, w: 0.32, h: 0.62 });
+    const stat = layer('a', 'stat-card', 2, 5, { rows: [{ value: '1/3' }] });
+    expect(['left', 'right']).toContain(pos(placeAwayFromFaces([stat], f, theme, 1920, 1080)[0]));
+    expect(['left', 'right']).not.toContain(pos(placeAwayFromFaces([stat], f, theme, 1080, 1920)[0]));
+    expect(['left', 'right']).not.toContain(pos(placeAwayFromFaces([layer('q', 'quote-card', 2, 5, { quote: 'x' })], f, theme, 1920, 1080)[0]));
   });
   it('the limit is 15 percent of the face', () => {
     expect(OVERLAP_LIMIT).toBe(0.15);

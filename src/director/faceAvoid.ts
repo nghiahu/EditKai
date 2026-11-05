@@ -13,12 +13,13 @@ type ThemeBits = { name: string; limits: { safeZone: { top: number; bottom: numb
 const CAPTION_WEIGHT = 0.5; // sitting on the captions costs half as much as sitting on the face
 const ORDER: InsertPosition[] = ['center', 'top', 'bottom']; // the default position comes first, so it wins a tie
 const SIDES: InsertPosition[] = ['left', 'right'];
-const COUNTER_SIDE_MIN_WIDTH = 1500; // a counter's digits are about 840 px wide: they fit a side column only in a wide frame
+const WIDE_FRAME_PX = 1500; // a counter's digits are about 840 px wide and a stat card needs about 700: they fit a side column only in a wide frame
+const SIDE_WHEN_WIDE = ['counter', 'stat-card'];
 const CAPTION_TEXT_SHARE = 0.6; // captions are centred and wrap early: their text takes the middle of the band, not all of it
 
-/** The positions a `type` insert may take: a badge may go to a side, a counter too in a wide frame; cards stay on the vertical axis (they would be squeezed). */
+/** The positions a `type` insert may take: a badge may go to a side; a counter or a stat card too in a wide frame; the other cards stay on the vertical axis (a long quote would wrap too much). */
 function positionsFor(type: string, width: number): InsertPosition[] {
-  if (type === 'logo-badge' || (type === 'counter' && width >= COUNTER_SIDE_MIN_WIDTH)) return [...ORDER, ...SIDES];
+  if (type === 'logo-badge' || (SIDE_WHEN_WIDE.includes(type) && width >= WIDE_FRAME_PX)) return [...ORDER, ...SIDES];
   return ORDER;
 }
 
