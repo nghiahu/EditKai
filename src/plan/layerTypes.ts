@@ -1,4 +1,5 @@
 import { footageProblem } from './insertProps';
+import { customProblem } from './custom';
 import { sceneProblem } from './scene';
 import { calloutProblem, chartProblem, counterProblem, logoBadgeProblem, promptBoxProblem, quoteCardProblem, statCardProblem, stepNumberProblem } from './insertTypes';
 import type { Track } from './types';
@@ -55,6 +56,7 @@ export const LAYER_TYPES: Record<string, LayerTypeSpec> = {
   'step-number': { track: 'graphic', check: p => stepNumberProblem(p) },
   chart: { track: 'graphic', check: p => chartProblem(p) },
   scene: { track: 'graphic', check: p => sceneProblem(p) },
+  custom: { track: 'graphic', check: p => customProblem(p) }, // a component the AI wrote for this project (projects/<tên>/components/<component>.tsx)
   freeze: { track: 'camera', check: () => undefined }, // holds the picture still (the sound goes on); no props
   footage: { track: 'footage', check: p => footageProblem(p) }, // props.src is reported by the missing-file rule
   transition: { track: 'graphic', check: p => (TRANSITION_KINDS.includes(p.kind as string) ? undefined : 'props.kind phải là zoom, blur, slide, push, flash, whip hoặc dip') },
