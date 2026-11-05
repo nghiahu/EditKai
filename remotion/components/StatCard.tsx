@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { resolveStatCard } from '../../src/plan/insertTypes';
 import { AnimatedIcon } from '../icons';
-import { clamp01, enterExit, pop, staggerDelay } from '../motion';
+import { breathe, clamp01, enterExit, pop, staggerDelay } from '../motion';
 import type { LayerComponent } from '../registry';
 import { insertBox } from './insertLayout';
 
@@ -26,7 +26,7 @@ export const StatCard: LayerComponent = ({ layer, theme }) => {
           style={{
             width: '100%', boxSizing: 'border-box', padding: 36, borderRadius: 36, display: 'flex', flexDirection: 'column', gap: 28,
             background: m1 ? 'rgba(10,10,10,0.92)' : 'rgba(11,21,48,0.92)', border: `2px solid ${accent}`, boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
-            transform: `translateY(${(1 - e) * 40}px) scale(${0.94 + 0.06 * e})`,
+            transform: `translateY(${(1 - e) * 40}px) scale(${(0.94 + 0.06 * e) * breathe(frame, fps)})`,
           }}
         >
           {r.title ? <div style={{ fontSize: 28, letterSpacing: 3, fontWeight: 700, color: accent, textTransform: 'uppercase', overflowWrap: 'anywhere' }}>{r.title}</div> : null}

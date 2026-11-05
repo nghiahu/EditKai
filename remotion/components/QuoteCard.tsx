@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { resolveQuoteCard } from '../../src/plan/insertTypes';
-import { clamp01, enterExit } from '../motion';
+import { breathe, clamp01, enterExit } from '../motion';
 import type { LayerComponent } from '../registry';
 import { insertBox } from './insertLayout';
 
@@ -33,7 +33,7 @@ export const QuoteCard: LayerComponent = ({ layer, theme }) => {
         <div
           style={{
             width: '100%', boxSizing: 'border-box', padding: '28px 44px 40px', borderRadius: 36, background: m1 ? 'rgba(10,10,10,0.92)' : 'rgba(11,21,48,0.92)',
-            border: `2px solid ${accent}`, boxShadow: '0 30px 80px rgba(0,0,0,0.55)', transform: `translateY(${(1 - e) * 40}px) scale(${0.94 + 0.06 * e})`,
+            border: `2px solid ${accent}`, boxShadow: '0 30px 80px rgba(0,0,0,0.55)', transform: `translateY(${(1 - e) * 40}px) scale(${(0.94 + 0.06 * e) * breathe(frame, fps)})`,
           }}
         >
           <div style={{ fontSize: BIG_MARK, lineHeight: 0.8, height: BIG_MARK * 0.55, color: accent, fontWeight: 900, opacity: e }}>{'“'}</div>

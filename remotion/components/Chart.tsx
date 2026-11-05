@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { formatCount } from '../../src/plan/counter';
 import { resolveChart } from '../../src/plan/insertTypes';
-import { clamp01, drawProgress, easeOut, enterExit, staggerDelay } from '../motion';
+import { breathe, clamp01, drawProgress, easeOut, enterExit, staggerDelay } from '../motion';
 import type { LayerComponent } from '../registry';
 import { insertBox } from './insertLayout';
 
@@ -40,7 +40,7 @@ export const Chart: LayerComponent = ({ layer, theme }) => {
       <div style={{ ...insertBox(r.position, theme, width, height), fontFamily: theme.fonts.heading, color: theme.colors.white }}>
         <div style={{
           width: '100%', boxSizing: 'border-box', padding: PADDING, borderRadius: 36, background: m1 ? 'rgba(10,10,10,0.92)' : 'rgba(11,21,48,0.92)',
-          border: `2px solid ${accent}`, boxShadow: '0 30px 80px rgba(0,0,0,0.55)', transform: `translateY(${(1 - e) * 40}px) scale(${0.94 + 0.06 * e})`,
+          border: `2px solid ${accent}`, boxShadow: '0 30px 80px rgba(0,0,0,0.55)', transform: `translateY(${(1 - e) * 40}px) scale(${(0.94 + 0.06 * e) * breathe(frame, fps)})`,
         }}>
           {r.title ? <div style={{ fontSize: 28, letterSpacing: 3, fontWeight: 700, color: accent, textTransform: 'uppercase', overflowWrap: 'anywhere', marginBottom: 18 }}>{r.title}</div> : null}
           {r.kind === 'bar' ? (

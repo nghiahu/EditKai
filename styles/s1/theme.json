@@ -30,7 +30,7 @@
       "mass": 1
     },
     "staggerFrames": 5,
-    "exitFrames": 10,
+    "exitFrames": 8,
     "wordLeadSec": 0.08,
     "punchScale": 1.06
   },

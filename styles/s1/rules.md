@@ -42,6 +42,10 @@ Chèn thưa: khoảng một cảnh chèn mỗi 20–30 s, ngoài các thẻ tiê
 - Hai thẻ tiêu đề không cách nhau dưới 0.3 s; không để quá 12 s liên tục chỉ có người nói trơn.
 - Mở đầu: thẻ tiêu đề đầu tiên xuất hiện trong 1 s đầu. Kết: một câu kêu gọi kèm `title-card` ở 5 s cuối.
 
+## Quy tắc chuyển động chung
+- Mọi thẻ vào bằng lò xo (vài thuộc tính cùng lúc: mờ, trượt, phóng), các phần tử cùng nhóm vào cách nhau 3 đến 6 khung, và **thoát nhanh hơn vào** (`exitFrames` dưới 60% thời gian lò xo ổn định, có test đo).
+- Thẻ đang đứng trên màn hình hơi phập phồng (±1,2% kích thước, chu kỳ 2 giây) để không chết cứng; nhịp theo `fps`.
+
 ## Chỉ chỗ và đánh số
 - `callout` (vòng khoanh hoặc mũi tên vẽ tay) chỉ để trỏ vào một chi tiết trong footage hoặc ảnh chụp màn hình khi lời nói nhắc tới nó; đặt `x`, `y` sau khi xem khung hình, nhãn ngắn (vài từ), không đặt lên mặt người nói. Muốn chỉ vào một chi tiết trên hình người nói thì thêm `freeze` cùng khoảng thời gian để hình đứng yên (tiếng vẫn chạy).
 - `step-number` (số nghiêng khổng lồ) chỉ dùng khi video là danh sách bước hoặc mẹo; số tăng dần, tiêu đề là vài từ của chính bước đó; không dùng cho dấu mốc phần như "mở bài" (dùng thẻ tiêu đề).

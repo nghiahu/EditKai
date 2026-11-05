@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { resolveStepNumber } from '../../src/plan/insertTypes';
-import { clamp01, easeOut, enterExit, pop } from '../motion';
+import { breathe, clamp01, easeOut, enterExit, pop } from '../motion';
 import type { LayerComponent } from '../registry';
 import { insertBox } from './insertLayout';
 
@@ -27,7 +27,7 @@ export const StepNumber: LayerComponent = ({ layer, theme }) => {
         <div style={{ display: 'flex', flexDirection: side ? 'column' : 'row', alignItems: 'center', gap: side ? 4 : 32, maxWidth: '100%', textAlign: side ? 'center' : 'left' }}>
           <div style={{
             flex: 'none', fontSize: NUMERAL, lineHeight: 1, fontWeight: 900, fontStyle: 'italic', color: accent,
-            transform: `scale(${1 + (1 - clamp01(land)) * 0.9}) rotate(${-4 - (1 - clamp01(land)) * 6}deg)`, opacity: clamp01(land * 2),
+            transform: `scale(${(1 + (1 - clamp01(land)) * 0.9) * breathe(frame, fps)}) rotate(${-4 - (1 - clamp01(land)) * 6}deg)`, opacity: clamp01(land * 2),
             WebkitTextStroke: '5px rgba(0,0,0,0.55)', paintOrder: 'stroke fill', textShadow: '0 10px 40px rgba(0,0,0,0.6)',
           }}>
             {r.number}

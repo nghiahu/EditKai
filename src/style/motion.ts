@@ -10,7 +10,7 @@ export interface Motion {
 export const DEFAULT_MOTION: Motion = {
   spring: { damping: 22, stiffness: 120, mass: 1 },
   staggerFrames: 5,
-  exitFrames: 10,
+  exitFrames: 8,
   wordLeadSec: 0.08,
   punchScale: 1.06,
 };

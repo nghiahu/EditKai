@@ -27,7 +27,7 @@ describe('loadTheme', () => {
     expect(() => loadTheme('styles/nope')).toThrow(/styles\/nope/);
   });
   it('exposes the motion values of each style', () => {
-    expect(loadTheme('styles/s1').motion).toEqual({ spring: { damping: 22, stiffness: 120, mass: 1 }, staggerFrames: 5, exitFrames: 10, wordLeadSec: 0.08, punchScale: 1.06 });
+    expect(loadTheme('styles/s1').motion).toEqual({ spring: { damping: 22, stiffness: 120, mass: 1 }, staggerFrames: 5, exitFrames: 8, wordLeadSec: 0.08, punchScale: 1.06 });
     expect(loadTheme('styles/m1').motion).toEqual({ spring: { damping: 12, stiffness: 220, mass: 1 }, staggerFrames: 3, exitFrames: 6, wordLeadSec: 0.08, punchScale: 1.12 });
   });
   it('fills a theme.json without motion from DEFAULT_MOTION', () => {

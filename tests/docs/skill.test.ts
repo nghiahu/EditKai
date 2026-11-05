@@ -215,3 +215,13 @@ describe('SKILL.md and the rules describe the chart', () => {
     it(`${style} rules say when to use a chart`, () => expect(readFileSync(`styles/${style}/rules.md`, 'utf8')).toContain('chart'));
   }
 });
+
+describe('style rules state the motion rules', () => {
+  for (const style of ['s1', 'm1']) {
+    it(`${style}: exits faster than entrances, and held cards breathe`, () => {
+      const r = readFileSync(`styles/${style}/rules.md`, 'utf8');
+      expect(r).toContain('thoát nhanh hơn vào');
+      expect(r).toContain('phập phồng');
+    });
+  }
+});
