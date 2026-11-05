@@ -6,7 +6,7 @@ export const CONTAINER_KINDS = ['row', 'column', 'grid', 'stack'] as const;
 export const NODE_KINDS = [...LEAF_KINDS, ...CONTAINER_KINDS] as const;
 export const COLOR_TOKENS = ['accent', 'white', 'ink', 'panel', 'dim'] as const;
 export const EASES = ['linear', 'out', 'inOut', 'spring'] as const;
-export const ENTER_KINDS = ['fade', 'rise', 'pop', 'slide-left', 'slide-right', 'draw', 'wipe'] as const;
+export const ENTER_KINDS = ['fade', 'rise', 'pop', 'slide-left', 'slide-right', 'draw'] as const;
 /** Numbers that can be animated, and colours that can be animated. `progress` is how much of a line is drawn (0-1). */
 export const NUMBER_PROPS = ['opacity', 'scale', 'x', 'y', 'rotate', 'strokeWidth', 'progress'] as const;
 export const COLOR_PROPS = ['fill', 'stroke', 'color'] as const;
