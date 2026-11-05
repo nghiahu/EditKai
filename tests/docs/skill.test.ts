@@ -187,3 +187,16 @@ describe('SKILL.md documents the side positions', () => {
     expect(missing(['"left"', '"right"', 'cột bên'])).toEqual([]);
   });
 });
+
+describe('SKILL.md and the rules describe callout and step-number', () => {
+  it('SKILL.md names both layers, their main props and what triggers a step card', () => {
+    expect(missing(['callout', 'step-number', '"ring"', '"arrow"', 'angle', 'thứ hai', 'mẹo số', 'bước 3'])).toEqual([]);
+  });
+  for (const style of ['s1', 'm1']) {
+    it(`${style} rules say when to use a callout and a step-number`, () => {
+      const r = readFileSync(`styles/${style}/rules.md`, 'utf8');
+      expect(r).toContain('callout');
+      expect(r).toContain('step-number');
+    });
+  }
+});

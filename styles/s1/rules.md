@@ -42,6 +42,10 @@ Chèn thưa: khoảng một cảnh chèn mỗi 20–30 s, ngoài các thẻ tiê
 - Hai thẻ tiêu đề không cách nhau dưới 0.3 s; không để quá 12 s liên tục chỉ có người nói trơn.
 - Mở đầu: thẻ tiêu đề đầu tiên xuất hiện trong 1 s đầu. Kết: một câu kêu gọi kèm `title-card` ở 5 s cuối.
 
+## Chỉ chỗ và đánh số
+- `callout` (vòng khoanh hoặc mũi tên vẽ tay) chỉ để trỏ vào một chi tiết trong footage hoặc ảnh chụp màn hình khi lời nói nhắc tới nó; đặt `x`, `y` sau khi xem khung hình, nhãn ngắn (vài từ), không đặt lên mặt người nói.
+- `step-number` (số nghiêng khổng lồ) chỉ dùng khi video là danh sách bước hoặc mẹo; số tăng dần, tiêu đề là vài từ của chính bước đó; không dùng cho dấu mốc phần như "mở bài" (dùng thẻ tiêu đề).
+
 ## Chưa đo được
 Easing chính xác của icon/chữ, âm thanh và hiệu ứng tiếng — cần mắt người xem lại bản dựng.
 

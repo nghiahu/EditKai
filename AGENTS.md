@@ -14,3 +14,4 @@ Quy tắc ngắn:
 - Lệnh lỗi thì báo thông báo của nó bằng lời rõ ràng, không bỏ qua.
 - Tiếng hiệu ứng tự có khi dựng (`whoosh`, `pop`, `tick`, `thud`); chỉnh bằng `meta.sfx` (`enabled`, `volume`) hoặc `props.sound: false` trên layer; chi tiết ở `SKILL.md`.
 - Đồ họa không che mặt người nói: chạy `faces` sau `clean`/`condense` (ghi `faces.json`, đo cục bộ); `compose` đặt lại thẻ, `validate` cảnh báo `insert-on-face`/`caption-on-face`; `preview` ghi thêm `preview/report.md`; chi tiết ở `SKILL.md`.
+- Thêm layer `callout` (vòng khoanh, mũi tên chỉ chỗ, tự đặt `x`, `y`) và `step-number` (số bước nghiêng khổng lồ; `analyze` đề xuất khi lời nói có "thứ hai", "bước 3", "mẹo số 3"); chi tiết ở `SKILL.md`.

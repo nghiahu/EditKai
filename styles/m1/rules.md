@@ -43,6 +43,10 @@ Footage trong `window` hoặc `phone` làm tối và mờ người nói; vẫn g
 - Không để quá 3 s liên tục không có thay đổi thị giác (chữ mới, chip, footage hoặc chuyển cảnh).
 - Chuyển cảnh `blur`/`zoom` mỗi lần vào hoặc ra khỏi cảnh chèn; không dùng `slide` hai lần liên tiếp.
 
+## Chỉ chỗ và đánh số
+- `callout` (vòng khoanh hoặc mũi tên vẽ tay) chỉ để trỏ vào một chi tiết trong footage hoặc ảnh chụp màn hình khi lời nói nhắc tới nó; đặt `x`, `y` sau khi xem khung hình, nhãn ngắn (vài từ), không đặt lên mặt người nói.
+- `step-number` (số nghiêng khổng lồ) chỉ dùng khi video là danh sách bước hoặc mẹo; số tăng dần, tiêu đề là vài từ của chính bước đó; không dùng cho dấu mốc phần như "mở bài" (dùng thẻ tiêu đề).
+
 ## Chưa đo được
 Kiểu easing chính xác của chip và hộp vàng, âm thanh/hiệu ứng tiếng.
 

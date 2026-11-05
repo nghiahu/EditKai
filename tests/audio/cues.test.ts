@@ -19,7 +19,7 @@ describe('sfxCues', () => {
     expect(b.sound).toBe('swell');
   });
   it('a card gets a pop at its start', () => {
-    for (const [type, track] of [['logo-badge', 'graphic'], ['stat-card', 'graphic'], ['title-card', 'title'], ['chip-stack', 'graphic'], ['quote-card', 'graphic'], ['explainer-scene', 'graphic'], ['prompt-box', 'graphic']] as const) {
+    for (const [type, track] of [['logo-badge', 'graphic'], ['stat-card', 'graphic'], ['title-card', 'title'], ['chip-stack', 'graphic'], ['quote-card', 'graphic'], ['explainer-scene', 'graphic'], ['prompt-box', 'graphic'], ['step-number', 'graphic'], ['callout', 'graphic']] as const) {
       expect(sfxCues(plan([L('a', track, type, 5, 7)]))).toEqual([{ t: 5, sound: 'pop', gain: 0.8, layerId: 'a' }]);
     }
   });

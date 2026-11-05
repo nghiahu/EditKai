@@ -7,7 +7,7 @@ const MIN_GAP_SEC = 0.35;
 const TRANSITION_LEAD_SEC = 0.15;
 const TICK_STEP_SEC = 0.15;
 const TICK_MAX = 8;
-const CARDS = new Set(['logo-badge', 'stat-card', 'title-card', 'chip-stack', 'quote-card', 'explainer-scene', 'prompt-box', 'footage']);
+const CARDS = new Set(['logo-badge', 'stat-card', 'title-card', 'chip-stack', 'quote-card', 'explainer-scene', 'prompt-box', 'footage', 'step-number', 'callout']);
 const GAIN: Record<Sound, number> = { whoosh: 1, swell: 1, pop: 0.8, tick: 0.5, thud: 0.9 };
 const PRIORITY: Record<Sound, number> = { whoosh: 0, swell: 0, pop: 1, thud: 2, tick: 3 };
 
