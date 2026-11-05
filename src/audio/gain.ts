@@ -1,5 +1,8 @@
 import { PEAK } from './synth';
 
+/** The ceiling of a sound effect's volume when meta.sfx.volume is not set. */
+export const SFX_VOLUME = 0.25;
+
 export const DENSITIES = ['restrained', 'standard', 'rich'] as const;
 export type Density = (typeof DENSITIES)[number];
 

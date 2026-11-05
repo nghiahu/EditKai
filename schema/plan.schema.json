@@ -78,6 +78,13 @@
               "type": "number",
               "minimum": 0,
               "maximum": 1
+            },
+            "density": {
+              "enum": [
+                "restrained",
+                "standard",
+                "rich"
+              ]
             }
           }
         }

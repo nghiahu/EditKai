@@ -3,7 +3,10 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
+import { sfxCues } from '../audio/cues';
 import { writeSfxFiles } from '../audio/files';
+import { cueVolumes } from '../audio/volumes';
+import { voiceLevels } from '../audio/voiceLevel';
 import { probe } from '../media/probe';
 import { serveDir } from '../media/serve';
 import { validatePlan } from '../qa/validate';
@@ -48,7 +51,9 @@ export async function openRenderSession(projectDir: string): Promise<RenderSessi
   };
   try {
     serveUrl = await bundle({ entryPoint: resolve(root, 'remotion', 'index.ts') });
-    const inputProps = { plan, theme, videoSrc: `${server.url}/${plan.meta.source}`, assetBase: server.url, durationSec };
+    // each sound effect follows the loudness of the voice around it (one pass over the sound)
+    const sfxVolumes = sfxCues(plan).length ? cueVolumes(plan, await voiceLevels(video)) : [];
+    const inputProps = { plan, theme, videoSrc: `${server.url}/${plan.meta.source}`, assetBase: server.url, durationSec, sfxVolumes };
     const composition = await selectComposition({ serveUrl, id: 'PlanVideo', inputProps });
     return { plan, theme, durationSec, serveUrl, inputProps, composition, close };
   } catch (e) {

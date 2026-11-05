@@ -200,3 +200,9 @@ describe('SKILL.md and the rules describe callout and step-number', () => {
     });
   }
 });
+
+describe('SKILL.md describes the sound effects following the voice', () => {
+  it('names density, its three values and that the volume is a ceiling', () => {
+    expect(missing(['density', 'restrained', 'standard', 'rich', 'trần', 'bám theo giọng'])).toEqual([]);
+  });
+});

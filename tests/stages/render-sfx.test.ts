@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run, runFfmpeg } from '../../src/media/ffmpeg';
-import { renderStage } from '../../src/stages/render';
+import { openRenderSession, renderStage } from '../../src/stages/render';
 import type { Plan } from '../../src/plan/types';
 
 let base: string;
@@ -42,4 +42,31 @@ describe('render with sound effects', () => {
     const out = await render('off', { enabled: false });
     expect(await level(out, 1.0, 0.15)).toBeLessThan(-70);
   }, 300000);
+});
+
+describe('the volume of an effect follows the voice', () => {
+  // the same card over a loud voice and over a quiet one (the same tone, 20 dB apart)
+  async function volumeOver(name: string, toneVolume: number, sfx?: Plan['meta']['sfx']): Promise<number[]> {
+    const dir = join(base, name);
+    mkdirSync(dir);
+    await runFfmpeg(['-y', '-f', 'lavfi', '-i', 'color=c=gray:s=360x640:r=30:d=3', '-f', 'lavfi', '-i', `sine=frequency=300:sample_rate=44100:duration=3,volume=${toneVolume}`,
+      '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', join(dir, 'cleaned.mp4')]);
+    const plan: Plan = {
+      version: 1, meta: { source: 'cleaned.mp4', fps: 30, width: 360, height: 640, style: 'm1', ...(sfx ? { sfx } : {}) },
+      scenes: [{ id: 'sc1', start: 0, end: 3, role: 'talking-head' }],
+      layers: [{ id: 'i1', track: 'graphic', type: 'logo-badge', start: 1, end: 2.5, props: { label: 'Claude' } }],
+    };
+    writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan));
+    const session = await openRenderSession(dir);
+    try { return (session.inputProps as { sfxVolumes: number[] }).sfxVolumes; } finally { await session.close(); }
+  }
+  it('is about ten times higher over a voice 20 dB louder, and lower for restrained than for rich', async () => {
+    const [loud] = await volumeOver('loud', 0.5);
+    const [quiet] = await volumeOver('quiet', 0.05);
+    expect(loud / quiet).toBeGreaterThan(5);
+    expect(loud / quiet).toBeLessThan(15);
+    const [r] = await volumeOver('restrained', 0.05, { density: 'restrained' });
+    const [c] = await volumeOver('rich', 0.05, { density: 'rich' });
+    expect(r).toBeLessThan(c);
+  }, 400000);
 });

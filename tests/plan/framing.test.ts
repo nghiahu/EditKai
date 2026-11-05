@@ -66,6 +66,8 @@ describe('plan schema accepts meta.sfx', () => {
     expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { enabled: false, volume: 0.3 } } }).ok).toBe(true);
     expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: {} } }).ok).toBe(true);
     expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { volume: 2 } } }).ok).toBe(false);
+    expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { density: 'rich' } } }).ok).toBe(true);
+    expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { density: 'loud' } } }).ok).toBe(false);
     expect(validatePlanSchema({ ...base, meta: { ...meta, sfx: { loud: true } } }).ok).toBe(false);
   });
 });

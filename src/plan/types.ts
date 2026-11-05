@@ -7,7 +7,7 @@ export interface Layer {
 }
 export interface Plan {
   version: 1;
-  meta: { source: string; fps: number; width: number; height: number; style: string; fit?: 'cover' | 'contain'; focus?: { x: number; y: number }; sfx?: { enabled?: boolean; volume?: number } };
+  meta: { source: string; fps: number; width: number; height: number; style: string; fit?: 'cover' | 'contain'; focus?: { x: number; y: number }; sfx?: { enabled?: boolean; volume?: number; density?: 'restrained' | 'standard' | 'rich' } };
   scenes: Scene[];
   layers: Layer[];
 }
