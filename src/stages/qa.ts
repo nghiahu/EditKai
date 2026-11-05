@@ -11,6 +11,7 @@ import { readPlan } from '../plan/io';
 import { resolveFraming } from '../plan/framing';
 import { mapFacesToFrame, readFaces } from '../media/faces';
 import { measureCaptionBright } from './captionBright';
+import { customSourceReader } from './customBundle';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const MAX_ROUNDS = 3;
@@ -52,6 +53,7 @@ export async function checkProject(projectDir: string): Promise<Issue[]> {
     durationSec: info.durationSec,
     faces: faces && mapFacesToFrame(faces, info, plan.meta, resolveFraming(plan.meta)),
     fileExists: p => existsSync(join(projectDir, p)),
+    customSource: customSourceReader(projectDir),
     transcript,
     assets,
     captionBright: await measureCaptionBright(video, plan.layers.filter(l => l.track === 'caption'), theme, plan.meta.width, { width: plan.meta.width, height: plan.meta.height, ...resolveFraming(plan.meta) }),

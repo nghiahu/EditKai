@@ -15,6 +15,7 @@ import { resolveAnchors } from '../plan/sceneAnchors';
 import { mapFacesToFrame, readFaces } from '../media/faces';
 import { BRIGHT_SHARE, validatePlan } from '../qa/validate';
 import { measureCaptionBright } from './captionBright';
+import { customSourceReader } from './customBundle';
 import { loadTheme } from '../style/theme';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -108,7 +109,7 @@ export async function composeStage(projectDir: string): Promise<{ planFile: stri
     scenes: buildScenes(sb, ls, theme.limits, durationSec),
     layers: ls,
   });
-  const check = (p: Plan) => validatePlan(p, theme, { durationSec, fileExists, transcript: { words }, assets }).filter(i => i.severity === 'error');
+  const check = (p: Plan) => validatePlan(p, theme, { durationSec, fileExists, transcript: { words }, assets, customSource: customSourceReader(projectDir) }).filter(i => i.severity === 'error');
   // safety net: whatever the pieces above let through, plan.json must validate; layers with errors are left out and reported
   let plan = build(layers);
   const bad = new Set(check(plan).map(e => e.layerId).filter((id): id is string => !!id));

@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,4 +60,12 @@ export async function bundleProject(projectDir: string, opts: { outDir?: string 
     throw e;
   }
   return { serveUrl, close: async () => { rmSync(serveUrl, { recursive: true, force: true }); if (entryDir) rmSync(entryDir, { recursive: true, force: true }); } };
+}
+
+/** Reads `components/<name>.tsx` of a project for the validator; undefined when the name is not valid or the file is missing. */
+export function customSourceReader(projectDir: string): (name: string) => string | undefined {
+  return name => {
+    const file = join(projectDir, 'components', `${name}.tsx`);
+    return NAME_RE.test(name) && existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+  };
 }

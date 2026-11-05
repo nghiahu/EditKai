@@ -10,7 +10,7 @@ import { probe } from '../media/probe';
 import { serveDir } from '../media/serve';
 import { validatePlan } from '../qa/validate';
 import { loadTheme } from '../style/theme';
-import { bundleProject, type ProjectBundle } from './customBundle';
+import { bundleProject, customSourceReader, type ProjectBundle } from './customBundle';
 import { readPlan } from '../plan/io';
 import type { Plan } from '../plan/types';
 import type { Theme } from '../style/theme';
@@ -37,7 +37,7 @@ export async function openRenderSession(projectDir: string): Promise<RenderSessi
   if (!existsSync(video)) throw new Error(`Không tìm thấy video nguồn ${plan.meta.source}`);
   const { durationSec } = await probe(video);
 
-  const issues = validatePlan(plan, theme, { durationSec, fileExists: p => existsSync(join(projectDir, p)) });
+  const issues = validatePlan(plan, theme, { durationSec, fileExists: p => existsSync(join(projectDir, p)), customSource: customSourceReader(projectDir) });
   for (const w of issues.filter(i => i.severity === 'warning')) console.warn(`[cảnh báo] ${w.code}: ${w.message}`);
   const errors = issues.filter(i => i.severity === 'error');
   if (errors.length) throw new Error(`Không thể render, plan có lỗi:\n${errors.map(e => `- [${e.code}] ${e.message}`).join('\n')}`);

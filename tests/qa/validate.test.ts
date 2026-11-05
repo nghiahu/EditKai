@@ -499,3 +499,49 @@ describe('scene against the captions', () => {
     expect(warns(sceneAt('center', { y: -0.3 }))).toEqual([]);
   });
 });
+
+describe('custom layers (project components)', () => {
+  const m1 = loadTheme('styles/m1');
+  const custom = (props: Record<string, unknown>, extra: Partial<Layer> = {}): Layer => ({ id: 'k1', track: 'graphic', type: 'custom', start: 1, end: 4, props: { component: 'hat', ...props }, ...extra } as Layer);
+  const only = (...ls: Layer[]): Plan => { const p = plan(); p.layers = [p.layers[0], ...ls]; return p; };
+  const okSource = "import React from 'react';\nexport default function A() { return <div />; }\n";
+  const sources = (m: Record<string, string>) => (name: string) => m[name];
+  it('a component the project does not have is an error custom-missing naming the file', () => {
+    const e = validatePlan(only(custom({})), m1, ctx({ customSource: sources({}) })).filter(i => i.code === 'custom-missing');
+    expect(e).toHaveLength(1);
+    expect(e[0].severity).toBe('error');
+    expect(e[0].message).toContain('components/hat.tsx');
+    expect(validatePlan(only(custom({})), m1, ctx({ customSource: sources({ hat: okSource }) })).filter(i => i.severity === 'error')).toEqual([]);
+  });
+  it('bad code is an error with the scan code; it is reported once per component even when two layers use it', () => {
+    const bad = okSource + "export const x = () => fetch('http://a');\n";
+    const e = validatePlan(only(custom({}), custom({}, { id: 'k2', start: 5, end: 8 })), m1, ctx({ customSource: sources({ hat: bad }) })).filter(i => i.code === 'custom-forbidden-api');
+    expect(e).toHaveLength(1);
+    expect(e[0].severity).toBe('error');
+    expect(e[0].message).toContain('hat.tsx');
+  });
+  it('components are not read when the caller gives no customSource', () => {
+    expect(validatePlan(only(custom({})), m1, ctx()).filter(i => i.code.startsWith('custom-'))).toEqual([]);
+  });
+  it('props the layer type rejects stop the plan before any file is read', () => {
+    expect(validatePlan(only(custom({ component: 'Hat' })), m1, ctx({ customSource: sources({}) })).some(i => i.severity === 'error')).toBe(true);
+  });
+  describe('with a declared box (w and h)', () => {
+    const face = { x: 0.4, y: 0.25, w: 0.2, h: 0.3 };
+    const faces = { fps: 4, samples: Array.from({ length: 41 }, (_, i) => ({ t: i / 4, box: face, conf: 0.99 })) };
+    const src = { customSource: sources({ hat: okSource }) };
+    it('over the face: custom-on-face naming an anchor to try; clear of it or without w and h: nothing', () => {
+      const [w] = validatePlan(only(custom({ anchor: 'center', w: 0.6, h: 0.3 })), m1, ctx({ faces, ...src })).filter(i => i.code === 'custom-on-face');
+      expect(w.severity).toBe('warning');
+      expect(w.message).toMatch(/top|bottom|left|right/);
+      expect(validatePlan(only(custom({ anchor: 'bottom', w: 0.6, h: 0.3 })), m1, ctx({ faces, ...src })).filter(i => i.code === 'custom-on-face')).toEqual([]);
+      expect(validatePlan(only(custom({ anchor: 'center' })), m1, ctx({ faces, ...src })).filter(i => i.code === 'custom-on-face')).toEqual([]);
+    });
+    it('over the captions at the same time: custom-overlaps-caption', () => {
+      const caption = { id: 'c1', track: 'caption', start: 1, end: 4, words: [{ t: 'xin', s: 1, e: 1.5, hl: false }, { t: 'chào', s: 1.5, e: 2, hl: false }] } as Layer;
+      const w = validatePlan(only(custom({ anchor: 'bottom', w: 0.4, h: 0.3 }), caption), m1, ctx(src)).filter(i => i.code === 'custom-overlaps-caption');
+      expect(w).toHaveLength(1);
+      expect(validatePlan(only(custom({ anchor: 'top', w: 0.4, h: 0.3 }), caption), m1, ctx(src)).filter(i => i.code === 'custom-overlaps-caption')).toEqual([]);
+    });
+  });
+});

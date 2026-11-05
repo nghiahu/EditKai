@@ -10,6 +10,8 @@ import { bestPosition, CAPTION_OVERLAP_LIMIT, OVERLAP_LIMIT } from '../director/
 import { faceRegion, overlapShare, type Faces } from '../media/faces';
 import { unresolvedAnchors } from '../plan/sceneAnchors';
 import { SCENE_ANCHORS, sceneBox, sceneImages, type SceneProps } from '../plan/scene';
+import { customBox, type CustomProps } from '../plan/custom';
+import { scanCustomSource } from './customScan';
 import { resolveCallout, resolveLogoBadge, resolvePromptBox, resolveStatCard } from '../plan/insertTypes';
 import { LAYER_TYPES } from '../plan/layerTypes';
 import { normalizeWord } from './text';
@@ -23,6 +25,8 @@ export interface Ctx {
   captionBright?: Map<string, number>;
   /** The speaker's face over time, already in frame coordinates (`mapFacesToFrame`); absent when it was not measured. */
   faces?: Faces;
+  /** The source text of a project component (`components/<name>.tsx`), undefined when the file is missing; absent when components are not checked. */
+  customSource?: (name: string) => string | undefined;
 }
 
 const DRIFT_SEC = 0.3;
@@ -37,6 +41,14 @@ function insertPosition(l: Layer): string | undefined {
   if (l.type === 'prompt-box') return resolvePromptBox(l.props).position;
   if (l.type === 'stat-card') return resolveStatCard(l.props).position;
   if (l.type === 'logo-badge') return resolveLogoBadge(l.props).position;
+  return undefined;
+}
+
+/** The box a scene or custom layer declares (shares of the frame), with what to call it in messages; undefined for other layers or a custom layer without w and h. */
+function declaredBox(l: Layer, theme: Theme): { box: { x: number; y: number; w: number; h: number }; kind: 'scene' | 'custom'; label: string } | undefined {
+  const sz = theme.limits.safeZone;
+  if (l.type === 'scene' && l.props && typeof l.props.w === 'number' && typeof l.props.h === 'number') return { box: sceneBox(l.props as unknown as SceneProps, sz), kind: 'scene', label: 'hộp cảnh' };
+  if (l.type === 'custom' && l.props) { const box = customBox(l.props as unknown as CustomProps, sz); if (box) return { box, kind: 'custom', label: 'hộp thành phần' }; }
   return undefined;
 }
 
@@ -127,17 +139,18 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     }
   }
 
-  // a scene over the captions that are up at the same time (the caption text is centred and takes the middle of its band)
+  // a scene or custom box over the captions that are up at the same time (the caption text is centred and takes the middle of its band)
   for (const l of plan.layers) {
-    if (l.type !== 'scene' || !l.props || typeof l.props.w !== 'number' || typeof l.props.h !== 'number') continue;
-    const box = sceneBox(l.props as unknown as SceneProps, theme.limits.safeZone);
+    const declared = declaredBox(l, theme);
+    if (!declared) continue;
+    const box = declared.box;
     const hit = plan.layers.find(c => {
       if (c.track !== 'caption' || !(c.start < l.end && l.start < c.end)) return false;
       const band = captionRegion(resolveCaptionProps(c.props, theme).position, theme);
       const text = { ...band, x: band.x + band.w * 0.2, w: band.w * 0.6 };
       return overlapShare(text, box) > 0.1;
     });
-    if (hit) warn('scene-overlaps-caption', `${l.id}: hộp cảnh nằm đè lên phụ đề ${hit.id} cùng lúc; đổi props.offset (ví dụ y âm để nhấc lên) hoặc thu nhỏ props.h`, l.id);
+    if (hit) warn(`${declared.kind}-overlaps-caption`, `${l.id}: ${declared.label} nằm đè lên phụ đề ${hit.id} cùng lúc; đổi props.offset (ví dụ y âm để nhấc lên) hoặc thu nhỏ props.h`, l.id);
   }
 
   // a scene's times must be seconds by now (compose turns spoken words into seconds)
@@ -145,6 +158,19 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
     const open = unresolvedAnchors(l.props);
     for (const src of sceneImages(l.props)) if (!ctx.fileExists(src)) err('missing-file', `${l.id}: không tìm thấy ảnh ${src} của cảnh`, l.id);
     if (open.length) err('scene-unresolved-anchor', `${l.id}: mốc theo từ chưa đổi thành giây (${open.join(', ')}); chạy lại compose, hoặc sửa chỉ số từ`, l.id);
+  }
+
+  // a project component must exist and pass the static scan (once per component)
+  if (ctx.customSource) {
+    const checked = new Set<string>();
+    for (const l of plan.layers) {
+      const name = l.type === 'custom' ? l.props?.component : undefined;
+      if (typeof name !== 'string' || checked.has(name)) continue;
+      checked.add(name);
+      const source = ctx.customSource(name);
+      if (source === undefined) { err('custom-missing', `${l.id}: không có file components/${name}.tsx trong dự án`, l.id); continue; }
+      for (const p of scanCustomSource(source)) err(p.code, `${l.id}: components/${name}.tsx: ${p.message}`, l.id);
+    }
   }
 
   // a chart shows numbers: say where they come from
@@ -158,12 +184,12 @@ export function validatePlan(plan: Plan, theme: Theme, ctx: Ctx): Issue[] {
       if (l.track === 'caption') {
         const share = overlapShare(face, captionRegion(resolveCaptionProps(l.props, theme).position, theme));
         if (share > CAPTION_OVERLAP_LIMIT) warn('caption-on-face', `${l.id}: phụ đề che ${Math.round(share * 100)}% mặt người nói; đổi props.position`, l.id);
-      } else if (l.type === 'scene' && l.props && typeof l.props.w === 'number' && typeof l.props.h === 'number') {
-        const box = sceneBox(l.props as unknown as SceneProps, theme.limits.safeZone);
-        const share = overlapShare(face, box);
+      } else if (declaredBox(l, theme)) {
+        const declared = declaredBox(l, theme)!;
+        const share = overlapShare(face, declared.box);
         if (share > OVERLAP_LIMIT) {
-          const clear = SCENE_ANCHORS.filter(a => overlapShare(face, sceneBox({ ...(l.props as unknown as SceneProps), anchor: a }, theme.limits.safeZone)) <= OVERLAP_LIMIT);
-          warn('scene-on-face', `${l.id}: hộp cảnh che ${Math.round(share * 100)}% mặt người nói; ${clear.length ? `thử props.anchor "${clear[0]}"` : 'thu nhỏ props.w, props.h hoặc đổi anchor'}`, l.id);
+          const clear = SCENE_ANCHORS.filter(a => overlapShare(face, declaredBox({ ...l, props: { ...l.props, anchor: a } } as Layer, theme)!.box) <= OVERLAP_LIMIT);
+          warn(`${declared.kind}-on-face`, `${l.id}: ${declared.label} che ${Math.round(share * 100)}% mặt người nói; ${clear.length ? `thử props.anchor "${clear[0]}"` : 'thu nhỏ props.w, props.h hoặc đổi anchor'}`, l.id);
         }
       } else if (l.type === 'callout') {
         const c = resolveCallout(l.props);
