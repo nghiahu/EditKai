@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runFfmpeg } from '../../src/media/ffmpeg';
@@ -47,6 +47,9 @@ describe('previewStage', () => {
     expect(r.frames.map(f => f.t)).toEqual([...r.frames.map(f => f.t)].sort((a, b) => a - b));
     expect(r.frames.some(f => f.label.includes('dip'))).toBe(true);
     expect(existsSync(r.sheet)).toBe(true);
+    const report = readFileSync(join(dir, 'preview', 'report.md'), 'utf8');
+    expect(report.split('\n').filter(l => /^\| \d+ \|/.test(l))).toHaveLength(r.frames.length);
+    expect(report).toContain('f01.png');
     const sheet = await probe(r.sheet);
     expect(sheet.width).toBeGreaterThan(360);
     expect(sheet.width).toBeLessThanOrEqual(1920);

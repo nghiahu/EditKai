@@ -1,9 +1,11 @@
-import { mkdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { openBrowser, renderStill } from '@remotion/renderer';
 import { runFfmpeg } from '../media/ffmpeg';
 import { openRenderSession, renderStage } from './render';
 import { previewFrames, type PreviewFrame } from './previewFrames';
+import { previewReport } from './previewReport';
+import { checkProject } from './qa';
 
 const PARALLEL = 4; // pictures rendered at once
 const SHEET_COLS = 4;
@@ -57,6 +59,10 @@ export async function previewStage(projectDir: string, opts: { max?: number } = 
     const layout = frames.map((_, i) => `${(i % cols) * tileW}_${Math.floor(i / cols) * tileH}`).join('|');
     const stack = frames.length > 1 ? `${frames.map((_, i) => `[s${i}]`).join('')}xstack=inputs=${frames.length}:layout=${layout}[out]` : '[s0]null[out]';
     await runFfmpeg(['-y', ...frames.flatMap(f => ['-i', f.file]), '-filter_complex', `${scale};${stack}`, '-map', '[out]', '-frames:v', '1', sheet]);
+    // report.md: what each picture is, what is said there and which warnings touch it
+    const transcriptFile = join(projectDir, 'transcript.json');
+    const words = existsSync(transcriptFile) ? (JSON.parse(readFileSync(transcriptFile, 'utf8')).words ?? []) : [];
+    writeFileSync(join(dir, 'report.md'), previewReport({ frames, layers: session.plan.layers, words, issues: await checkProject(projectDir) }));
     return { dir, sheet, frames };
   } finally {
     await session.close();
