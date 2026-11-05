@@ -44,6 +44,21 @@ describe('placeAwayFromFaces', () => {
     expect(JSON.stringify(l)).toBe(before);
     expect(placeAwayFromFaces([l], undefined, theme, W, H)).toEqual([l]);
   });
+  it('between two positions that clear the face, takes the one that does not sit on the captions', () => {
+    // s1 keeps its captions at the bottom: a card at the bottom would cover them
+    const s1 = loadTheme('styles/s1');
+    const props = { rows: [{ value: '30 phút' }] };
+    const fp = (p: 'top' | 'center' | 'bottom') => insertFootprint('stat-card', props, p, s1, W, H)!;
+    const bottom = fp('bottom');
+    const centre = fp('center');
+    const top = fp('top');
+    // a face that fills the centre and just reaches into the top position (a little less than the limit), never the bottom
+    const y = top.y + top.h * 0.95;
+    const f = faces({ x: 0.3, y, w: 0.4, h: centre.y + centre.h - y });
+    const [out] = placeAwayFromFaces([layer('a', 'stat-card', 2, 5, props)], f, s1, W, H);
+    expect(bottom.y + bottom.h).toBeGreaterThan(centre.y + centre.h); // the face does not reach the bottom
+    expect(pos(out)).toBe('top');
+  });
   it('the limit is 15 percent of the face', () => {
     expect(OVERLAP_LIMIT).toBe(0.15);
   });

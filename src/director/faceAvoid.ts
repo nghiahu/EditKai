@@ -1,4 +1,5 @@
 import { faceRegion, overlapShare, type Faces } from '../media/faces';
+import { captionRegion } from '../plan/captionRegion';
 import { FOOTPRINT_TYPES, insertFootprint } from '../plan/insertFootprint';
 import { INSERT_POSITIONS, type InsertPosition } from '../plan/insertProps';
 import type { Layer } from '../plan/types';
@@ -8,12 +9,13 @@ export const OVERLAP_LIMIT = 0.15;
 /** A caption may cover more: it sits at chin height, so the lower part of the face box is its normal place; above this it covers the mouth. */
 export const CAPTION_OVERLAP_LIMIT = 0.35;
 
-type ThemeBits = { limits: { safeZone: { top: number; bottom: number; left: number; right: number } } };
+type ThemeBits = { name: string; limits: { safeZone: { top: number; bottom: number; left: number; right: number } } };
+const CAPTION_WEIGHT = 0.5; // sitting on the captions costs half as much as sitting on the face
 const ORDER: InsertPosition[] = ['center', ...INSERT_POSITIONS.filter(p => p !== 'center')]; // the default position comes first, so it wins a tie
 
 /**
  * Gives each insert that has no `position` of its own (a card, a counter, a badge, a prompt box) the position that covers the speaker's face least
- * while it is up: the default (centre) when that clears the face, else the best of top and bottom. `faces` must already be in frame coordinates
+ * while it is up: the default (centre) when that clears the face, else the best of top and bottom, where covering the bottom captions also counts. `faces` must already be in frame coordinates
  * (`mapFacesToFrame`). Layers with a position, other types, and spans with no face are returned as they were.
  */
 export function placeAwayFromFaces(layers: Layer[], faces: Faces | undefined, theme: ThemeBits, width: number, height: number): Layer[] {
@@ -23,9 +25,12 @@ export function placeAwayFromFaces(layers: Layer[], faces: Faces | undefined, th
     if (typeof l.props?.position === 'string') return l;
     const region = faceRegion(faces, l.start, l.end, 0);
     if (!region) return l;
-    const covered = (p: InsertPosition) => overlapShare(region, insertFootprint(l.type!, l.props, p, theme, width, height)!);
+    const footprint = (p: InsertPosition) => insertFootprint(l.type!, l.props, p, theme, width, height)!;
+    const covered = (p: InsertPosition) => overlapShare(region, footprint(p));
     if (covered('center') <= OVERLAP_LIMIT) return l;
-    const best = ORDER.reduce((a, p) => (covered(p) < covered(a) ? p : a));
+    const captions = captionRegion('bottom', theme);
+    const cost = (p: InsertPosition) => covered(p) + CAPTION_WEIGHT * overlapShare(footprint(p), captions);
+    const best = ORDER.reduce((a, p) => (cost(p) < cost(a) ? p : a));
     return best === 'center' ? l : { ...l, props: { ...l.props, position: best } };
   });
 }
