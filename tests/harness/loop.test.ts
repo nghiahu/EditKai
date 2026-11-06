@@ -41,9 +41,11 @@ describe('harness agent loop', () => {
     expect(result.turnCount).toBe(1);
     expect(result.totalUsage.inputTokens).toBe(120);
     expect(result.totalUsage.outputTokens).toBe(25);
+    expect(result.costUsd).toBeGreaterThan(0);
+    expect(result.turnLogs).toHaveLength(1);
   });
 
-  it('executes tool calls in loop and computes diff', async () => {
+  it('executes tool calls in loop and records observability log', async () => {
     const plan = loadValidPlan();
     const targetLayerId = plan.layers[0].id;
 
@@ -88,13 +90,21 @@ describe('harness agent loop', () => {
     expect(result.diff.updated[0].id).toBe(targetLayerId);
     expect(result.diffDescription.some(d => d.includes(targetLayerId))).toBe(true);
     expect(result.totalUsage.inputTokens).toBe(450);
+
+    // Observability checks: each turn records tool, input, output, cost
+    expect(result.turnLogs).toHaveLength(2);
+    expect(result.turnLogs[0].toolExecutions).toHaveLength(1);
+    expect(result.turnLogs[0].toolExecutions[0].name).toBe('patch_layer');
+    expect(result.turnLogs[0].toolExecutions[0].isError).toBe(false);
+    expect(result.turnLogs[0].costUsd).toBeGreaterThan(0);
+    expect(result.costUsd).toBeGreaterThan(0);
   });
 
-  it('stops at maxTurns and logs token usage', async () => {
+  it('at final turn: stops tools and forces model to answer with existing information', async () => {
     const plan = loadValidPlan();
 
-    // Infinite tool calling loop
     const provider = new MockLlmProvider([
+      // Turn 1: tool call
       {
         message: {
           role: 'assistant',
@@ -102,24 +112,18 @@ describe('harness agent loop', () => {
         },
         usage: { inputTokens: 100, outputTokens: 20 },
       },
+      // Turn 2 (final turn): model is forced to answer with text using information already gathered
       {
         message: {
           role: 'assistant',
-          toolCalls: [{ id: '2', name: 'get_plan_summary', args: {} }],
+          content: 'Dựa trên thông tin đã thu thập từ plan, video có 5 layer và thời lượng 30s.',
         },
-        usage: { inputTokens: 100, outputTokens: 20 },
-      },
-      {
-        message: {
-          role: 'assistant',
-          toolCalls: [{ id: '3', name: 'get_plan_summary', args: {} }],
-        },
-        usage: { inputTokens: 100, outputTokens: 20 },
+        usage: { inputTokens: 150, outputTokens: 35 },
       },
     ]);
 
     const result = await runAgentLoop({
-      userPrompt: 'Lặp lại',
+      userPrompt: 'Tóm tắt video',
       projectDir: tmpDir,
       plan,
       provider,
@@ -127,6 +131,46 @@ describe('harness agent loop', () => {
     });
 
     expect(result.turnCount).toBe(2);
-    expect(result.reply).toMatch(/giới hạn lượt/i);
+    // Verified: The model provided answer based on gathered info
+    expect(result.reply).toBe('Dựa trên thông tin đã thu thập từ plan, video có 5 layer và thời lượng 30s.');
+
+    // Verify tools were omitted on the final turn (provider.callHistory[1].tools was empty)
+    expect(provider.callHistory[1].tools).toHaveLength(0);
+  });
+
+  it('detects cache hit from the second question onwards', async () => {
+    const plan = loadValidPlan();
+    const provider = new MockLlmProvider([
+      {
+        message: { role: 'assistant', content: 'Video dài 10 giây.' },
+        usage: { inputTokens: 100, outputTokens: 15 },
+      },
+      {
+        message: { role: 'assistant', content: 'Lớp đó có màu xanh lam.' },
+        usage: { inputTokens: 180, outputTokens: 20 },
+      },
+    ]);
+
+    // Question 1
+    const res1 = await runAgentLoop({
+      userPrompt: 'Video dài bao nhiêu?',
+      projectDir: tmpDir,
+      plan,
+      provider,
+    });
+    expect(res1.totalUsage.cacheHit).toBeFalsy();
+
+    // Question 2 (builds on Question 1 history)
+    const res2 = await runAgentLoop({
+      userPrompt: 'Lớp đầu tiên màu gì?',
+      projectDir: tmpDir,
+      plan,
+      provider,
+      conversationHistory: res1.history,
+    });
+
+    // Cache hit detected from question 2 onwards!
+    expect(res2.totalUsage.cacheHit).toBe(true);
+    expect(res2.totalUsage.cachedTokens).toBeGreaterThan(0);
   });
 });

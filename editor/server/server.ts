@@ -178,6 +178,8 @@ export function createEditorHandler(
             pendingId,
             turnCount: result.turnCount,
             totalUsage: result.totalUsage,
+            costUsd: result.costUsd,
+            turnLogs: result.turnLogs,
           });
         } catch (e) {
           return json(res, 500, { error: (e as Error).message });

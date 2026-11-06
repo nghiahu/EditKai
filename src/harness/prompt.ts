@@ -38,3 +38,4 @@ Phong cách dựng hiện tại: "${style}".
 ${styleRules ? `Quy tắc phong cách cụ thể:\n${styleRules}` : ''}
 `;
 }
+

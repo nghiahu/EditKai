@@ -46,6 +46,10 @@ button:disabled { opacity:.45; cursor:default; }
 .chat-bubble { padding:8px 12px; border-radius:10px; font-size:13px; line-height:1.45; }
 .chat-message.user .chat-bubble { background:#e5b800; color:#1a1917; font-weight:500; border-bottom-right-radius:2px; }
 .chat-message.assistant .chat-bubble { background:#fff; border:1px solid var(--line); color:var(--ink); border-bottom-left-radius:2px; }
+.chat-metrics { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; font-size:10px; }
+.metric-pill { background:#f0ede4; border:1px solid #dcd5c5; border-radius:10px; padding:2px 6px; color:#555; }
+.metric-pill.cache-hit { background:#e8f5e9; border-color:#a5d6a7; color:#2e7d32; font-weight:600; }
+.metric-pill.cost { background:#fff8e1; border-color:#ffe082; color:#f57f17; font-weight:500; }
 .diff-card { margin-top:8px; padding:8px 10px; background:#faf7f0; border:1px solid #e0d7c3; border-radius:6px; font-size:12px; }
 .diff-header { font-weight:600; margin-bottom:4px; color:#4a4539; }
 .diff-list { margin:0; padding-left:16px; list-style-type:none; }

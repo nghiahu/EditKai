@@ -43,6 +43,13 @@ export interface AgentChatResponse {
   draftPlan: Plan;
   pendingId: string;
   turnCount: number;
+  totalUsage?: {
+    inputTokens: number;
+    outputTokens: number;
+    cachedTokens?: number;
+    cacheHit?: boolean;
+  };
+  costUsd?: number;
 }
 
 export async function sendAgentChat(message: string, history: unknown[] = []): Promise<AgentChatResponse> {

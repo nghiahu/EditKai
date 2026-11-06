@@ -21,7 +21,7 @@ import { sampleFrames } from './stages/sampleFrames';
 import { facesStage } from './stages/faces';
 import { renderStage } from './stages/render';
 import { customCheck } from './stages/customCheck';
-import { agentChatStage } from './stages/agentChat';
+import { agentChatStage, agentChatInteractive } from './stages/agentChat';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
@@ -213,14 +213,18 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       return r.issues.some(i => i.severity === 'error') ? 1 : 0;
     }
     if (cmd === 'chat') {
-      const prompt = flags.prompt ?? positional.join(' ');
+      const prompt = flags.prompt ?? (positional.length > 0 ? positional.join(' ') : undefined);
       if (!prompt) {
-        err('Thiếu --prompt "<yêu cầu>". Ví dụ: chat <project> --prompt "Đổi màu card đầu"');
-        return 2;
+        if (!process.stdin.isTTY) {
+          err('Thiếu --prompt "<yêu cầu>". Ví dụ: chat <project> --prompt "Đổi màu card đầu"');
+          return 2;
+        }
+        await agentChatInteractive(projectDir);
+        return 0;
       }
       const apply = 'apply' in flags;
-      const r = await agentChatStage(projectDir, { prompt, apply });
-      out(`[AI]: ${r.reply}`);
+      const r = await agentChatStage(projectDir, { prompt, apply, verbose: true });
+      out(`\n[AI]: ${r.reply}`);
       if (r.hasChanges) {
         out('\nThay đổi đề xuất:');
         r.diffDescription.forEach(d => out(`  ${d}`));

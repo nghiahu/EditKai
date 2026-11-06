@@ -108,3 +108,4 @@ describe('agentChatStage', () => {
     expect(err[0]).toMatch(/--prompt/);
   });
 });
+

@@ -42,7 +42,24 @@ export interface LlmUsage {
   inputTokens: number;
   outputTokens: number;
   cachedTokens?: number;
+  cacheHit?: boolean;
 }
+
+export interface TurnToolExecution {
+  name: string;
+  args: Record<string, unknown>;
+  result: unknown;
+  isError?: boolean;
+}
+
+export interface TurnLog {
+  turn: number;
+  toolExecutions: TurnToolExecution[];
+  responseText?: string;
+  usage: LlmUsage;
+  costUsd: number;
+}
+
 
 export interface LlmResponse {
   message: ChatMessage;
@@ -70,3 +87,4 @@ export interface HarnessContext {
   projectDir: string;
   transcript?: TranscriptData;
 }
+

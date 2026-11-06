@@ -9,6 +9,12 @@ export interface ChatMessageItem {
   diffDescription?: string[];
   applied?: boolean;
   discarded?: boolean;
+  metrics?: {
+    turnCount: number;
+    costUsd?: number;
+    cacheHit?: boolean;
+    cachedTokens?: number;
+  };
 }
 
 export function ChatPanel({
@@ -71,6 +77,12 @@ export function ChatPanel({
         text: res.reply,
         pendingId: res.hasChanges ? res.pendingId : undefined,
         diffDescription: res.hasChanges ? res.diffDescription : undefined,
+        metrics: {
+          turnCount: res.turnCount,
+          costUsd: res.costUsd,
+          cacheHit: res.totalUsage?.cacheHit,
+          cachedTokens: res.totalUsage?.cachedTokens,
+        },
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -123,6 +135,18 @@ export function ChatPanel({
           <div key={m.id} className={`chat-message ${m.role}`}>
             <div className="chat-bubble">
               <div className="chat-text">{m.text}</div>
+
+              {m.metrics && (
+                <div className="chat-metrics">
+                  <span className="metric-pill">🔄 {m.metrics.turnCount} lượt</span>
+                  {m.metrics.cacheHit && (
+                    <span className="metric-pill cache-hit">⚡ Cache Hit ({m.metrics.cachedTokens ?? 0} tokens)</span>
+                  )}
+                  {typeof m.metrics.costUsd === 'number' && (
+                    <span className="metric-pill cost">💵 ${m.metrics.costUsd.toFixed(6)}</span>
+                  )}
+                </div>
+              )}
 
               {m.diffDescription && m.diffDescription.length > 0 && (
                 <div className="diff-card">
@@ -208,3 +232,4 @@ export function ChatPanel({
     </div>
   );
 }
+
