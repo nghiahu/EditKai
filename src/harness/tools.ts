@@ -126,6 +126,78 @@ export function removeLayer(plan: Plan, layerId: string): { ok: boolean; error?:
   return { ok: true };
 }
 
+export function addCallout(
+  plan: Plan,
+  options: {
+    start: number;
+    end?: number;
+    label?: string;
+    kind?: 'ring' | 'arrow';
+    x?: number;
+    y?: number;
+    color?: 'accent' | 'white';
+  },
+): { ok: boolean; layerId?: string; error?: string } {
+  const start = options.start;
+  const end = options.end !== undefined ? options.end : start + 2.5;
+  if (start < 0) return { ok: false, error: 'Thời gian start không thể âm' };
+  if (end <= start) return { ok: false, error: 'Thời gian end phải lớn hơn start' };
+
+  const id = `callout-${Date.now().toString(36)}`;
+  const layer: Layer = {
+    id,
+    track: 'graphic',
+    type: 'callout',
+    start,
+    end,
+    props: {
+      kind: options.kind ?? 'arrow',
+      x: options.x !== undefined ? options.x : 0.75,
+      y: options.y !== undefined ? options.y : 0.3,
+      size: 0.18,
+      color: options.color ?? 'accent',
+      ...(options.label ? { label: options.label.slice(0, 24) } : {}),
+    },
+  };
+
+  plan.layers.push(layer);
+  plan.layers.sort((a, b) => a.start - b.start);
+  return { ok: true, layerId: id };
+}
+
+export function addTitleCard(
+  plan: Plan,
+  options: {
+    start: number;
+    end?: number;
+    title: string;
+    icon?: string;
+  },
+): { ok: boolean; layerId?: string; error?: string } {
+  const start = options.start;
+  const end = options.end !== undefined ? options.end : start + 2.5;
+  if (start < 0) return { ok: false, error: 'Thời gian start không thể âm' };
+  if (end <= start) return { ok: false, error: 'Thời gian end phải lớn hơn start' };
+
+  const id = `title-${Date.now().toString(36)}`;
+  const layer: Layer = {
+    id,
+    track: 'title',
+    type: 'title-card',
+    start,
+    end,
+    props: {
+      title: options.title,
+      icon: options.icon ?? 'check',
+    },
+  };
+
+  plan.layers.push(layer);
+  plan.layers.sort((a, b) => a.start - b.start);
+  return { ok: true, layerId: id };
+}
+
+
 export async function validateDraftPlan(plan: Plan, projectDir: string): Promise<Issue[]> {
   const schemaRes = validatePlanSchema(plan);
   if (!schemaRes.ok) return schemaRes.issues;
@@ -168,6 +240,23 @@ export async function executeHarnessTool(
       return addLayer(ctx.draftPlan, (args.layer ?? {}) as Layer);
     case 'remove_layer':
       return removeLayer(ctx.draftPlan, String(args.id ?? ''));
+    case 'add_callout':
+      return addCallout(ctx.draftPlan, {
+        start: Number(args.start ?? 1.5),
+        end: args.end !== undefined ? Number(args.end) : undefined,
+        label: args.label ? String(args.label) : undefined,
+        kind: args.kind === 'ring' ? 'ring' : 'arrow',
+        x: args.x !== undefined ? Number(args.x) : 0.75,
+        y: args.y !== undefined ? Number(args.y) : 0.3,
+        color: args.color === 'white' ? 'white' : 'accent',
+      });
+    case 'add_title_card':
+      return addTitleCard(ctx.draftPlan, {
+        start: Number(args.start ?? 0),
+        end: args.end !== undefined ? Number(args.end) : undefined,
+        title: String(args.title ?? 'Tiêu đề'),
+        icon: args.icon ? String(args.icon) : undefined,
+      });
     case 'validate_plan':
       return await validateDraftPlan(ctx.draftPlan, ctx.projectDir);
     default:
@@ -245,6 +334,37 @@ export const HARNESS_TOOLS: ToolDefinition[] = [
         id: { type: 'string', description: 'ID của layer cần xóa' },
       },
       required: ['id'],
+    },
+  },
+  {
+    name: 'add_callout',
+    description: 'Thêm khối callout (mũi tên hoặc vòng tròn chỉ điểm nhấn kèm nhãn chú thích) vào video tại mốc thời gian cụ thể.',
+    parameters: {
+      type: 'object',
+      properties: {
+        start: { type: 'number', description: 'Mốc giây bắt đầu xuất hiện' },
+        end: { type: 'number', description: 'Mốc giây kết thúc' },
+        label: { type: 'string', description: 'Nhãn chữ hiển thị cạnh mũi tên/vòng tròn' },
+        kind: { type: 'string', enum: ['arrow', 'ring'], description: 'Loại callout: arrow (mũi tên) hoặc ring (vòng tròn)' },
+        x: { type: 'number', description: 'Tọa độ ngang tỉ lệ khung hình (0 đến 1)' },
+        y: { type: 'number', description: 'Tọa độ dọc tỉ lệ khung hình (0 đến 1)' },
+        color: { type: 'string', enum: ['accent', 'white'], description: 'Màu sắc callout' },
+      },
+      required: ['start'],
+    },
+  },
+  {
+    name: 'add_title_card',
+    description: 'Thêm thẻ tiêu đề (intro card / title card) vào video để giới thiệu chủ đề hoặc phân đoạn.',
+    parameters: {
+      type: 'object',
+      properties: {
+        start: { type: 'number', description: 'Mốc giây bắt đầu' },
+        end: { type: 'number', description: 'Mốc giây kết thúc' },
+        title: { type: 'string', description: 'Nội dung tiêu đề chính' },
+        icon: { type: 'string', description: 'Tên icon (ví dụ: check, star, alert)' },
+      },
+      required: ['start', 'title'],
     },
   },
   {

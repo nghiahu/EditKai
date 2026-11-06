@@ -96,13 +96,25 @@ export class MockLlmProvider implements LlmProvider {
 
       if (
         lastMessage.toolCallId?.includes('add_layer') ||
-        lastMessage.toolCallId?.includes('remove_layer')
+        lastMessage.toolCallId?.includes('add_callout') ||
+        lastMessage.toolCallId?.includes('add_title_card')
       ) {
+        // Multi-turn: sau khi thêm layer/callout, mô hình tự động gọi validate_plan để kiểm tra an toàn
+        return {
+          message: {
+            role: 'assistant',
+            toolCalls: [{ id: 'call_validate_plan', name: 'validate_plan', args: {} }],
+          },
+          usage: { inputTokens: 230, outputTokens: 25 },
+        };
+      }
+
+      if (lastMessage.toolCallId?.includes('remove_layer')) {
         return {
           message: {
             role: 'assistant',
             content:
-              'Đã cập nhật layer thành công vào bản nháp. Vui lòng kiểm tra diff bên dưới trước khi áp dụng vào timeline.',
+              'Đã xóa layer thành công khỏi bản nháp. Vui lòng kiểm tra diff bên dưới trước khi áp dụng vào timeline.',
           },
           usage: { inputTokens: 220, outputTokens: 45 },
         };
@@ -147,6 +159,61 @@ export class MockLlmProvider implements LlmProvider {
           ],
         },
         usage: { inputTokens: 170, outputTokens: 40 },
+      };
+    }
+
+    if (
+      lastUser.includes('callout') ||
+      lastUser.includes('chú thích') ||
+      lastUser.includes('mũi tên') ||
+      lastUser.includes('vòng tròn')
+    ) {
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call_add_callout',
+              name: 'add_callout',
+              args: {
+                start: 1.5,
+                end: 4.0,
+                label: 'Điểm nhấn',
+                kind: 'arrow',
+                x: 0.75,
+                y: 0.3,
+                color: 'accent',
+              },
+            },
+          ],
+        },
+        usage: { inputTokens: 180, outputTokens: 45 },
+      };
+    }
+
+    if (
+      lastUser.includes('tiêu đề') ||
+      lastUser.includes('title') ||
+      lastUser.includes('intro') ||
+      lastUser.includes('mở đầu')
+    ) {
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call_add_title_card',
+              name: 'add_title_card',
+              args: {
+                start: 0.5,
+                end: 3.0,
+                title: 'Giới thiệu nội dung',
+                icon: 'star',
+              },
+            },
+          ],
+        },
+        usage: { inputTokens: 175, outputTokens: 40 },
       };
     }
 

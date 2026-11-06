@@ -7,6 +7,8 @@ import {
   getTranscript,
   patchLayer,
   addLayer,
+  addCallout,
+  addTitleCard,
   removeLayer,
   executeHarnessTool,
   HARNESS_TOOLS,
@@ -119,6 +121,51 @@ describe('harness tools', () => {
     // removing again fails
     const res2 = removeLayer(plan, idToRemove);
     expect(res2.ok).toBe(false);
+  });
+
+  it('add_callout creates a valid callout graphic layer with arrow and label', () => {
+    const plan = loadValidPlan();
+    const beforeCount = plan.layers.length;
+    const res = addCallout(plan, {
+      start: 2.0,
+      end: 4.5,
+      label: 'Mẹo số 1',
+      kind: 'arrow',
+      x: 0.8,
+      y: 0.25,
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.layerId).toBeDefined();
+    expect(plan.layers.length).toBe(beforeCount + 1);
+
+    const callout = plan.layers.find(l => l.id === res.layerId);
+    expect(callout?.track).toBe('graphic');
+    expect(callout?.type).toBe('callout');
+    expect(callout?.start).toBe(2.0);
+    expect(callout?.end).toBe(4.5);
+    expect(callout?.props?.label).toBe('Mẹo số 1');
+    expect(callout?.props?.kind).toBe('arrow');
+  });
+
+  it('add_title_card creates a valid title-card layer', () => {
+    const plan = loadValidPlan();
+    const beforeCount = plan.layers.length;
+    const res = addTitleCard(plan, {
+      start: 0.5,
+      end: 3.0,
+      title: 'Giới thiệu',
+      icon: 'star',
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.layerId).toBeDefined();
+    expect(plan.layers.length).toBe(beforeCount + 1);
+
+    const titleLayer = plan.layers.find(l => l.id === res.layerId);
+    expect(titleLayer?.track).toBe('title');
+    expect(titleLayer?.type).toBe('title-card');
+    expect(titleLayer?.props?.title).toBe('Giới thiệu');
   });
 
   it('executeHarnessTool runs tool by name in context', async () => {
