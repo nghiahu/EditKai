@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "editor": "tsx scripts/editor.ts",
-    "cli": "tsx src/cli.ts"
+    "cli": "tsx src/cli.ts",
+    "demo:todo": "tsx src/cli.ts demo-todo"
   },
   "keywords": [],
   "author": "",

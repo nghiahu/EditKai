@@ -22,10 +22,11 @@ import { facesStage } from './stages/faces';
 import { renderStage } from './stages/render';
 import { customCheck } from './stages/customCheck';
 import { agentChatStage, agentChatInteractive } from './stages/agentChat';
+import { demoTodoStage, demoTodoInteractive } from './stages/demoTodo';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | frames | faces | analyze | compose | validate | merge | assets | editor | preview | custom-check | chat | render';
+const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | frames | faces | analyze | compose | validate | merge | assets | editor | preview | custom-check | chat | demo-todo | render';
 
 type Out = (s: string) => void;
 
@@ -91,6 +92,42 @@ function parse(argv: string[]) {
 export async function runCli(argv: string[], out: Out = console.log, err: Out = console.error): Promise<number> {
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   if (argv[0] === 'doctor') return runDoctorCommand(out);
+  if (argv[0] === 'demo-todo') {
+    const rest = argv.slice(1);
+    const flags: Record<string, string> = {};
+    const pos: string[] = [];
+    for (let i = 0; i < rest.length; i++) {
+      if (rest[i]?.startsWith('--')) {
+        flags[rest[i].slice(2)] = rest[i + 1];
+        i++;
+      } else {
+        pos.push(rest[i]);
+      }
+    }
+    const dataDir = resolve(pos[0] ?? join(root, 'demo', 'personal-tasks'));
+    const prompt = flags.prompt ?? (pos.length > 1 ? pos.slice(1).join(' ') : undefined);
+    if (!prompt) {
+      if (!process.stdin.isTTY) {
+        err('Thiếu --prompt "<yêu cầu>". Ví dụ: demo-todo --prompt "Thêm việc chuẩn bị tài liệu họp"');
+        return 2;
+      }
+      await demoTodoInteractive(dataDir);
+      return 0;
+    }
+    const apply = 'apply' in flags;
+    const r = await demoTodoStage(dataDir, { prompt, apply, verbose: true });
+    out(`\n[Trợ lý AI]: ${r.reply}`);
+    if (r.hasChanges) {
+      out('\nThay đổi đề xuất:');
+      r.diffDescription.forEach(d => out(`  ${d}`));
+      if (r.applied) {
+        out('\n✓ Đã ghi thay đổi vào tasks.json');
+      } else {
+        out('\n(Chưa áp dụng vào tasks.json. Dùng thêm cờ --apply để lưu)');
+      }
+    }
+    return 0;
+  }
   const { cmd, dir, flags, positional } = parse(argv);
   if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'frames', 'faces', 'analyze', 'compose', 'validate', 'merge', 'editor', 'preview', 'custom-check', 'chat', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }

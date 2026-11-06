@@ -1,0 +1,48 @@
+{
+  "owner": "Bạn",
+  "updatedAt": "2026-11-06T08:04:33.079Z",
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Hoàn thiện báo cáo tuần gửi quản lý",
+      "status": "done",
+      "priority": "high",
+      "dueDate": "Hôm nay 17:00",
+      "tags": [
+        "công việc",
+        "báo cáo"
+      ],
+      "createdAt": "2026-11-06T08:04:15.014Z",
+      "updatedAt": "2026-11-06T08:04:33.079Z"
+    },
+    {
+      "id": "task-2",
+      "title": "Mua bánh sinh nhật cho mẹ",
+      "status": "todo",
+      "priority": "medium",
+      "dueDate": "Thứ 7 tuần này",
+      "tags": [
+        "gia đình"
+      ],
+      "createdAt": "2026-11-06T08:04:15.014Z"
+    },
+    {
+      "id": "task-3",
+      "title": "Đọc 20 trang sách Clean Code",
+      "status": "done",
+      "priority": "low",
+      "tags": [
+        "học tập"
+      ],
+      "createdAt": "2026-11-06T08:04:15.014Z"
+    },
+    {
+      "id": "task-4",
+      "title": "chuẩn bị tài liệu họp sáng mai độ ưu tiên cao",
+      "status": "todo",
+      "priority": "high",
+      "dueDate": "Sáng mai 9h",
+      "createdAt": "2026-11-06T08:04:25.234Z"
+    }
+  ]
+}

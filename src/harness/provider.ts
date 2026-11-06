@@ -31,10 +31,13 @@ export class MockLlmProvider implements LlmProvider {
   private simulateDynamicTurn(messages: ChatMessage[], tools: ToolDefinition[]): LlmResponse {
     // Nếu ở lượt cuối hoặc công cụ bị tắt, ép trả lời bằng text
     if (!tools || tools.length === 0) {
+      const isTodo = messages.some(m => m.role === 'system' && m.content?.includes('Công việc Cá nhân'));
       return {
         message: {
           role: 'assistant',
-          content: 'Dựa trên các thông tin đã thu thập từ các lượt trước, kế hoạch dựng hiện tại đã được đồng bộ và sẵn sàng để áp dụng hoặc xuất video.',
+          content: isTodo
+            ? 'Dựa trên các thông tin đã thu thập từ các lượt trước, danh sách công việc cá nhân của bạn đã được cập nhật hoàn tất.'
+            : 'Dựa trên các thông tin đã thu thập từ các lượt trước, kế hoạch dựng hiện tại đã được đồng bộ và sẵn sàng để áp dụng hoặc xuất video.',
         },
         usage: { inputTokens: 250, outputTokens: 45 },
       };
@@ -46,6 +49,177 @@ export class MockLlmProvider implements LlmProvider {
         .reverse()
         .find(m => m.role === 'user' && !m.content?.startsWith('[HỆ THỐNG]'))
         ?.content?.toLowerCase() ?? '';
+
+    // Xử lý riêng cho Domain: Trợ lý Quản lý Công việc Cá nhân (Todo)
+    const isTodoDomain = tools.some(t => t.name === 'add_task');
+    if (isTodoDomain) {
+      if (lastMessage.role === 'tool') {
+        if (lastMessage.toolCallId?.includes('add_task')) {
+          let taskName = 'công việc';
+          try {
+            const res = JSON.parse(lastMessage.content ?? '{}');
+            if (res.task?.title) taskName = `"${res.task.title}"`;
+          } catch {
+            // ignore
+          }
+          return {
+            message: {
+              role: 'assistant',
+              content: `Tôi đã thêm ${taskName} vào danh sách công việc của bạn. Bạn hãy xem bảng thay đổi (diff) bên dưới và duyệt để lưu vào hệ thống nhé.`,
+            },
+            usage: { inputTokens: 180, outputTokens: 45 },
+          };
+        }
+        if (lastMessage.toolCallId?.includes('update_task')) {
+          return {
+            message: {
+              role: 'assistant',
+              content: 'Đã cập nhật trạng thái/thông tin công việc thành công. Bạn vui lòng xác nhận thay đổi bên dưới.',
+            },
+            usage: { inputTokens: 190, outputTokens: 40 },
+          };
+        }
+        if (lastMessage.toolCallId?.includes('delete_task')) {
+          return {
+            message: {
+              role: 'assistant',
+              content: 'Đã xóa công việc khỏi danh sách theo yêu cầu.',
+            },
+            usage: { inputTokens: 180, outputTokens: 35 },
+          };
+        }
+        if (lastMessage.toolCallId?.includes('list_tasks')) {
+          let count = 0;
+          try {
+            const list = JSON.parse(lastMessage.content ?? '[]');
+            if (Array.isArray(list)) count = list.length;
+          } catch {
+            // ignore
+          }
+          return {
+            message: {
+              role: 'assistant',
+              content: `Hiện tại bạn có ${count} công việc phù hợp với yêu cầu tìm kiếm.`,
+            },
+            usage: { inputTokens: 200, outputTokens: 45 },
+          };
+        }
+      }
+
+      // Xử lý câu hỏi người dùng
+      if (
+        lastUser.includes('thêm') ||
+        lastUser.includes('tạo') ||
+        lastUser.includes('add') ||
+        lastUser.includes('nhắc')
+      ) {
+        let title = 'Công việc mới';
+        const match = lastUser.match(/(?:thêm việc|thêm task|thêm|tạo task|tạo việc)\s+([^,.]+)/i);
+        if (match && match[1]) {
+          title = match[1].trim();
+        } else if (lastMessage.content) {
+          title = lastMessage.content.slice(0, 50);
+        }
+        const priority =
+          lastUser.includes('gấp') || lastUser.includes('quan trọng') || lastUser.includes('cao')
+            ? 'high'
+            : 'medium';
+        const dueDate = lastUser.includes('hôm nay')
+          ? 'Hôm nay'
+          : lastUser.includes('mai')
+            ? 'Sáng mai 9h'
+            : undefined;
+
+        return {
+          message: {
+            role: 'assistant',
+            toolCalls: [
+              {
+                id: 'call_add_task',
+                name: 'add_task',
+                args: { title, priority, ...(dueDate ? { dueDate } : {}) },
+              },
+            ],
+          },
+          usage: { inputTokens: 160, outputTokens: 35 },
+        };
+      }
+
+      if (
+        lastUser.includes('xong') ||
+        lastUser.includes('hoàn thành') ||
+        lastUser.includes('sửa') ||
+        lastUser.includes('đổi')
+      ) {
+        const idMatch =
+          lastUser.match(/task-(\d+)/i) ||
+          lastUser.match(/số\s*(\d+)/i) ||
+          lastUser.match(/việc\s*(\d+)/i);
+        const targetId = idMatch
+          ? idMatch[0].startsWith('task-')
+            ? idMatch[0]
+            : `task-${idMatch[1]}`
+          : 'task-1';
+        return {
+          message: {
+            role: 'assistant',
+            toolCalls: [
+              {
+                id: 'call_update_task',
+                name: 'update_task',
+                args: { id: targetId, status: 'done' },
+              },
+            ],
+          },
+          usage: { inputTokens: 170, outputTokens: 35 },
+        };
+      }
+
+      if (
+        lastUser.includes('xóa') ||
+        lastUser.includes('bỏ') ||
+        lastUser.includes('delete') ||
+        lastUser.includes('remove')
+      ) {
+        const idMatch =
+          lastUser.match(/task-(\d+)/i) ||
+          lastUser.match(/số\s*(\d+)/i) ||
+          lastUser.match(/việc\s*(\d+)/i);
+        const targetId = idMatch
+          ? idMatch[0].startsWith('task-')
+            ? idMatch[0]
+            : `task-${idMatch[1]}`
+          : 'task-1';
+        return {
+          message: {
+            role: 'assistant',
+            toolCalls: [
+              {
+                id: 'call_delete_task',
+                name: 'delete_task',
+                args: { id: targetId },
+              },
+            ],
+          },
+          usage: { inputTokens: 160, outputTokens: 30 },
+        };
+      }
+
+      // Mặc định: gọi list_tasks
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call_list_tasks',
+              name: 'list_tasks',
+              args: {},
+            },
+          ],
+        },
+        usage: { inputTokens: 150, outputTokens: 25 },
+      };
+    }
 
     // Nếu vừa nhận kết quả từ tool call ở lượt trước
     if (lastMessage.role === 'tool') {
