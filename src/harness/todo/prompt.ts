@@ -19,3 +19,4 @@ QUY TẮC BẮT BUỘC KHI XỬ LÝ:
 5. Sau khi thực thi các công cụ, hãy trả lời người dùng bằng tiếng Việt một cách lịch sự, thân thiện, tóm tắt rõ hành động đã thực hiện và danh sách việc liên quan.
 6. Luôn giữ câu trả lời súc tích, rõ ràng, không lặp lại mã code hoặc JSON thô trừ khi được yêu cầu.`;
 }
+

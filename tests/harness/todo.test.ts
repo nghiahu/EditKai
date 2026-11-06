@@ -20,6 +20,11 @@ describe('Todo Harness Tools', () => {
 
   beforeEach(() => {
     store = initDefaultTaskStore();
+    addTask(store, { title: 'Báo cáo tuần', priority: 'high' });
+    updateTask(store, 'task-1', { status: 'in_progress' });
+    addTask(store, { title: 'Mua bánh sinh nhật', priority: 'medium' });
+    addTask(store, { title: 'Đọc sách Clean Code', priority: 'low' });
+    updateTask(store, 'task-3', { status: 'done' });
   });
 
   it('listTasks lọc chính xác theo status và priority', () => {
@@ -32,7 +37,7 @@ describe('Todo Harness Tools', () => {
 
     const highPrio = listTasks(store, { priority: 'high' });
     expect(highPrio).toHaveLength(1);
-    expect(highPrio[0].title).toContain('báo cáo');
+    expect(highPrio[0].title.toLowerCase()).toContain('báo cáo');
 
     const byKeyword = listTasks(store, { keyword: 'Clean Code' });
     expect(byKeyword).toHaveLength(1);
@@ -182,3 +187,4 @@ describe('Todo Agent Loop & Observability', () => {
     expect(onDisk2.tasks.some((t: any) => t.title.includes('tập gym'))).toBe(true);
   });
 });
+

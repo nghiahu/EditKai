@@ -3,3 +3,4 @@ projects/
 dist
 .superpowers
 .venv
+.env

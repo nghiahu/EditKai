@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type {
   ChatMessage,
   LlmProvider,
@@ -5,13 +8,40 @@ import type {
   ToolDefinition,
 } from './types';
 
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
 function tryLoadEnv(): void {
-  try {
-    if (typeof (process as unknown as { loadEnvFile?: () => void }).loadEnvFile === 'function') {
-      (process as unknown as { loadEnvFile: () => void }).loadEnvFile();
+  const envPaths = [
+    join(process.cwd(), '.env'),
+    join(root, '.env'),
+    join(root, '..', '.env'),
+  ];
+
+  for (const p of envPaths) {
+    if (existsSync(p)) {
+      try {
+        if (typeof (process as unknown as { loadEnvFile?: (path?: string) => void }).loadEnvFile === 'function') {
+          (process as unknown as { loadEnvFile: (path?: string) => void }).loadEnvFile(p);
+        }
+      } catch {
+        // Fallback manual parser
+      }
+      try {
+        const content = readFileSync(p, 'utf8');
+        for (const line of content.split(/\r?\n/)) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          const eqIdx = trimmed.indexOf('=');
+          if (eqIdx > 0) {
+            const k = trimmed.slice(0, eqIdx).trim();
+            const v = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+            if (!process.env[k]) process.env[k] = v;
+          }
+        }
+      } catch {
+        // non-fatal
+      }
     }
-  } catch {
-    // Non-fatal if .env doesn't exist
   }
 }
 
@@ -505,9 +535,9 @@ export class GeminiLlmProvider implements LlmProvider {
   private apiKey: string;
   private model: string;
 
-  constructor(apiKey: string, model = 'gemini-2.5-flash') {
+  constructor(apiKey: string, model?: string) {
     this.apiKey = apiKey;
-    this.model = model;
+    this.model = model || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
   }
 
   async chat(messages: ChatMessage[], tools: ToolDefinition[]): Promise<LlmResponse> {
@@ -515,13 +545,25 @@ export class GeminiLlmProvider implements LlmProvider {
       .filter(m => m.role !== 'system')
       .map(m => {
         if (m.role === 'tool') {
+          const toolName =
+            tools.find(t => m.toolCallId?.includes(t.name))?.name ||
+            (m.toolCallId ? m.toolCallId.replace(/^call_/, '').replace(/_\d+$/, '') : 'tool');
+          let responsePayload: Record<string, unknown> = {};
+          try {
+            responsePayload = typeof m.content === 'string' ? JSON.parse(m.content) : (m.content || {});
+            if (typeof responsePayload !== 'object' || responsePayload === null || Array.isArray(responsePayload)) {
+              responsePayload = { result: responsePayload };
+            }
+          } catch {
+            responsePayload = { output: m.content };
+          }
           return {
             role: 'user',
             parts: [
               {
                 functionResponse: {
-                  name: m.toolCallId ?? 'unknown',
-                  response: { content: m.content },
+                  name: toolName,
+                  response: responsePayload,
                 },
               },
             ],

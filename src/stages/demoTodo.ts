@@ -34,34 +34,7 @@ export function initDefaultTaskStore(): TaskStore {
   return {
     owner: 'Bạn',
     updatedAt: now,
-    tasks: [
-      {
-        id: 'task-1',
-        title: 'Hoàn thiện báo cáo tuần gửi quản lý',
-        status: 'in_progress',
-        priority: 'high',
-        dueDate: 'Hôm nay 17:00',
-        tags: ['công việc', 'báo cáo'],
-        createdAt: now,
-      },
-      {
-        id: 'task-2',
-        title: 'Mua bánh sinh nhật cho mẹ',
-        status: 'todo',
-        priority: 'medium',
-        dueDate: 'Thứ 7 tuần này',
-        tags: ['gia đình'],
-        createdAt: now,
-      },
-      {
-        id: 'task-3',
-        title: 'Đọc 20 trang sách Clean Code',
-        status: 'done',
-        priority: 'low',
-        tags: ['học tập'],
-        createdAt: now,
-      },
-    ],
+    tasks: [],
   };
 }
 
@@ -211,3 +184,4 @@ export async function demoTodoInteractive(
     rl.close();
   }
 }
+
