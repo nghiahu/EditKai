@@ -5,6 +5,16 @@ import type {
   ToolDefinition,
 } from './types';
 
+function tryLoadEnv(): void {
+  try {
+    if (typeof (process as unknown as { loadEnvFile?: () => void }).loadEnvFile === 'function') {
+      (process as unknown as { loadEnvFile: () => void }).loadEnvFile();
+    }
+  } catch {
+    // Non-fatal if .env doesn't exist
+  }
+}
+
 export class MockLlmProvider implements LlmProvider {
   private responses: LlmResponse[];
   private index = 0;
@@ -18,6 +28,189 @@ export class MockLlmProvider implements LlmProvider {
     this.responses.push(res);
   }
 
+  private simulateDynamicTurn(messages: ChatMessage[], tools: ToolDefinition[]): LlmResponse {
+    // Nếu ở lượt cuối hoặc công cụ bị tắt, ép trả lời bằng text
+    if (!tools || tools.length === 0) {
+      return {
+        message: {
+          role: 'assistant',
+          content: 'Dựa trên các thông tin đã thu thập từ các lượt trước, kế hoạch dựng hiện tại đã được đồng bộ và sẵn sàng để áp dụng hoặc xuất video.',
+        },
+        usage: { inputTokens: 250, outputTokens: 45 },
+      };
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    const lastUser =
+      [...messages]
+        .reverse()
+        .find(m => m.role === 'user' && !m.content?.startsWith('[HỆ THỐNG]'))
+        ?.content?.toLowerCase() ?? '';
+
+    // Nếu vừa nhận kết quả từ tool call ở lượt trước
+    if (lastMessage.role === 'tool') {
+      if (
+        lastMessage.toolCallId?.includes('get_plan_summary') ||
+        lastUser.includes('tóm tắt') ||
+        lastUser.includes('xem')
+      ) {
+        let count = 5;
+        let style = 's1';
+        try {
+          const d = JSON.parse(lastMessage.content ?? '{}');
+          if (Array.isArray(d.layers)) count = d.layers.length;
+          if (d.meta?.style) style = d.meta.style;
+        } catch {
+          // ignore
+        }
+        return {
+          message: {
+            role: 'assistant',
+            content: `Kế hoạch dựng (phong cách "${style}") hiện có tổng cộng ${count} layer trên timeline (bao gồm các thẻ tiêu đề, phụ đề và đồ họa). Mọi mốc thời gian đều liên tục và hợp lệ.`,
+          },
+          usage: { inputTokens: 210, outputTokens: 55 },
+        };
+      }
+
+      if (lastMessage.toolCallId?.includes('patch_layer')) {
+        // Multi-turn: sau khi patch layer, mô hình tự gọi validate_plan để kiểm tra an toàn
+        return {
+          message: {
+            role: 'assistant',
+            toolCalls: [{ id: 'call_validate_plan', name: 'validate_plan', args: {} }],
+          },
+          usage: { inputTokens: 240, outputTokens: 25 },
+        };
+      }
+
+      if (lastMessage.toolCallId?.includes('validate_plan')) {
+        return {
+          message: {
+            role: 'assistant',
+            content:
+              'Tôi đã cập nhật thuộc tính của layer theo yêu cầu và đã kiểm tra an toàn qua validate_plan (không có lỗi vi phạm vùng mặt hay che phụ đề). Bạn có thể xem thay đổi đề xuất bên dưới.',
+          },
+          usage: { inputTokens: 290, outputTokens: 60 },
+        };
+      }
+
+      if (
+        lastMessage.toolCallId?.includes('add_layer') ||
+        lastMessage.toolCallId?.includes('remove_layer')
+      ) {
+        return {
+          message: {
+            role: 'assistant',
+            content:
+              'Đã cập nhật layer thành công vào bản nháp. Vui lòng kiểm tra diff bên dưới trước khi áp dụng vào timeline.',
+          },
+          usage: { inputTokens: 220, outputTokens: 45 },
+        };
+      }
+    }
+
+    // Tìm ID layer thực tế từ kết quả tool get_plan_summary trước đó nếu có trong lịch sử
+    let targetLayerId = 'l1';
+    for (const m of messages) {
+      if (m.role === 'tool' && m.content) {
+        try {
+          const d = JSON.parse(m.content);
+          if (Array.isArray(d.layers) && d.layers.length > 0 && d.layers[0].id) {
+            targetLayerId = d.layers[0].id;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    // Ưu tiên kiểm tra các hành động chỉnh sửa (sửa, đổi, màu, thêm, xóa) trước
+    if (
+      lastUser.includes('sửa') ||
+      lastUser.includes('đổi') ||
+      lastUser.includes('màu') ||
+      lastUser.includes('chỉnh') ||
+      lastUser.includes('thời gian') ||
+      lastUser.includes('vàng') ||
+      lastUser.includes('cam')
+    ) {
+      const color = lastUser.includes('cam') ? '#ff8800' : '#ffd700';
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call_patch_layer',
+              name: 'patch_layer',
+              args: { id: targetLayerId, patch: { props: { fill: color } } },
+            },
+          ],
+        },
+        usage: { inputTokens: 170, outputTokens: 40 },
+      };
+    }
+
+    if (lastUser.includes('thêm')) {
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call_add_layer',
+              name: 'add_layer',
+              args: {
+                layer: {
+                  id: 'callout-highlight',
+                  track: 'graphic',
+                  type: 'callout',
+                  start: 1.5,
+                  end: 4.0,
+                  props: { label: 'Điểm nhấn', fill: '#ffd700' },
+                },
+              },
+            },
+          ],
+        },
+        usage: { inputTokens: 185, outputTokens: 45 },
+      };
+    }
+
+    if (lastUser.includes('xóa')) {
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [{ id: 'call_remove_layer', name: 'remove_layer', args: { id: targetLayerId } }],
+        },
+        usage: { inputTokens: 150, outputTokens: 30 },
+      };
+    }
+
+    // Nếu người dùng hỏi tóm tắt hoặc xem
+    if (
+      lastUser.includes('tóm tắt') ||
+      lastUser.includes('xem') ||
+      lastUser.includes('kế hoạch') ||
+      lastUser.includes('layer')
+    ) {
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [{ id: 'call_get_plan_summary', name: 'get_plan_summary', args: {} }],
+        },
+        usage: { inputTokens: 140, outputTokens: 30 },
+      };
+    }
+
+    // Mặc định: gọi get_plan_summary để xem cấu trúc
+    return {
+      message: {
+        role: 'assistant',
+        toolCalls: [{ id: 'call_get_plan_summary', name: 'get_plan_summary', args: {} }],
+      },
+      usage: { inputTokens: 130, outputTokens: 25 },
+    };
+  }
+
   async chat(messages: ChatMessage[], tools: ToolDefinition[]): Promise<LlmResponse> {
     this.callHistory.push({ messages, tools });
     if (this.index < this.responses.length) {
@@ -25,13 +218,7 @@ export class MockLlmProvider implements LlmProvider {
       this.index++;
       return res;
     }
-    return {
-      message: {
-        role: 'assistant',
-        content: 'Mô hình giả lập không còn phản hồi nào trong hàng đợi.',
-      },
-      usage: { inputTokens: 0, outputTokens: 0 },
-    };
+    return this.simulateDynamicTurn(messages, tools);
   }
 }
 
@@ -271,6 +458,8 @@ export function createLlmProvider(options?: {
   model?: string;
   mockResponses?: LlmResponse[];
 }): LlmProvider {
+  tryLoadEnv();
+
   const chosen = options?.provider ?? (
     process.env.GEMINI_API_KEY
       ? 'gemini'
@@ -296,4 +485,3 @@ export function createLlmProvider(options?: {
   // fallback to Mock
   return new MockLlmProvider(options?.mockResponses);
 }
-

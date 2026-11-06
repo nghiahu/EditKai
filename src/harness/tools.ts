@@ -66,7 +66,10 @@ export function patchLayer(
   layerId: string,
   patch: Partial<Layer>,
 ): { ok: boolean; error?: string } {
-  const target = plan.layers.find(l => l.id === layerId);
+  let target = plan.layers.find(l => l.id === layerId);
+  if (!target && (layerId === 'l1' || layerId === 'first') && plan.layers.length > 0) {
+    target = plan.layers[0];
+  }
   if (!target) return { ok: false, error: `Không tìm thấy layer id: "${layerId}"` };
 
   const newStart = patch.start !== undefined ? patch.start : target.start;
