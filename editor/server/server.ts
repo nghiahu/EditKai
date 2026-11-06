@@ -36,14 +36,20 @@ export function createEditorHandler(
 
   return (req, res) => {
     const origin = req.headers.origin;
-    if (origin === allowedOrigin) {
-      res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    const isAllowed =
+      !origin ||
+      origin === allowedOrigin ||
+      origin === 'http://localhost:5187' ||
+      /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin);
+
+    if (origin && isAllowed) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'content-type');
     }
     const url = req.url ?? '/';
-    if (origin && origin !== allowedOrigin && (req.method === 'PUT' || req.method === 'POST')) {
+    if (origin && !isAllowed && (req.method === 'PUT' || req.method === 'POST')) {
       json(res, 403, { error: 'Origin không được phép' });
       return;
     }
