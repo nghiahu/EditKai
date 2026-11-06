@@ -50,6 +50,23 @@ export class MockLlmProvider implements LlmProvider {
     // Nếu vừa nhận kết quả từ tool call ở lượt trước
     if (lastMessage.role === 'tool') {
       if (
+        lastMessage.content?.includes('"ok":false') ||
+        lastMessage.content?.includes('Không tìm thấy') ||
+        lastMessage.content?.includes('lớn hơn') ||
+        lastMessage.content?.includes('không thể') ||
+        (lastMessage.content?.includes('"error"') && !lastMessage.content?.includes('validate_plan'))
+      ) {
+        return {
+          message: {
+            role: 'assistant',
+            content:
+              'Harness đã phát hiện lỗi từ công cụ: Tham số chỉnh sửa không hợp lệ hoặc không tìm thấy layer. Hệ thống không bị dừng giữa chừng, lỗi đã được bắt và xử lý an toàn, kế hoạch dựng được bảo toàn.',
+          },
+          usage: { inputTokens: 250, outputTokens: 55 },
+        };
+      }
+
+      if (
         lastMessage.toolCallId?.includes('get_plan_summary') ||
         lastUser.includes('tóm tắt') ||
         lastUser.includes('xem')
@@ -97,7 +114,7 @@ export class MockLlmProvider implements LlmProvider {
       if (
         lastMessage.toolCallId?.includes('add_layer') ||
         lastMessage.toolCallId?.includes('add_callout') ||
-        lastMessage.toolCallId?.includes('add_title_card')
+          lastMessage.toolCallId?.includes('add_title_card')
       ) {
         // Multi-turn: sau khi thêm layer/callout, mô hình tự động gọi validate_plan để kiểm tra an toàn
         return {
@@ -114,7 +131,7 @@ export class MockLlmProvider implements LlmProvider {
           message: {
             role: 'assistant',
             content:
-              'Đã xóa layer thành công khỏi bản nháp. Vui lòng kiểm tra diff bên dưới trước khi áp dụng vào timeline.',
+            'Đã xóa layer thành công khỏi bản nháp. Vui lòng kiểm tra diff bên dưới trước khi áp dụng vào timeline.',
           },
           usage: { inputTokens: 220, outputTokens: 45 },
         };
@@ -134,6 +151,27 @@ export class MockLlmProvider implements LlmProvider {
           // ignore
         }
       }
+    }
+
+    if (
+      lastUser.includes('lỗi') ||
+      lastUser.includes('sai') ||
+      lastUser.includes('không tồn tại') ||
+      lastUser.includes('cố ý')
+    ) {
+      return {
+        message: {
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call_patch_layer',
+              name: 'patch_layer',
+              args: { id: 'layer_khong_ton_tai', patch: { start: 10, end: 2 } },
+            },
+          ],
+        },
+        usage: { inputTokens: 160, outputTokens: 35 },
+      };
     }
 
     // Ưu tiên kiểm tra các hành động chỉnh sửa (sửa, đổi, màu, thêm, xóa) trước
@@ -434,15 +472,15 @@ export class OpenAiLlmProvider implements LlmProvider {
         content: m.content ?? null,
         ...(m.toolCalls
           ? {
-              tool_calls: m.toolCalls.map(tc => ({
-                id: tc.id,
-                type: 'function',
-                function: {
-                  name: tc.name,
-                  arguments: JSON.stringify(tc.args),
-                },
-              })),
-            }
+            tool_calls: m.toolCalls.map(tc => ({
+              id: tc.id,
+              type: 'function',
+              function: {
+                name: tc.name,
+                arguments: JSON.stringify(tc.args),
+              },
+            })),
+          }
           : {}),
       };
     });
