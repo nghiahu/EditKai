@@ -8,6 +8,7 @@ import { LayerList } from './LayerList';
 import { Preview } from './Preview';
 import { PropertiesPanel } from './PropertiesPanel';
 import { Timeline } from './Timeline';
+import { ChatPanel } from './ChatPanel';
 import { initState, reduce } from './state/editorState';
 
 export function App() {
@@ -32,6 +33,7 @@ function Editor({ initial, initialTheme }: { initial: Plan; initialTheme: Theme 
   const [disk, setDisk] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [busy, setBusy] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const playerRef = useRef<PlayerRef | null>(null);
   const { plan } = state;
   const fps = plan.meta.fps;
@@ -112,6 +114,7 @@ function Editor({ initial, initialTheme }: { initial: Plan; initialTheme: Theme 
         <label>Zoom <input type="range" min={30} max={240} value={pps} onChange={e => setPps(Number(e.target.value))} /></label>
         <span style={{ flex: 1 }} />
         <small>{plan.meta.style} · {plan.meta.width}×{plan.meta.height}{state.dirty ? ' · chưa lưu' : ''}</small>
+        <button className={showChat ? 'primary' : ''} onClick={() => setShowChat(s => !s)}>💬 AI Sửa video</button>
         <button className="primary" onClick={() => void save()} disabled={!state.dirty}>Lưu</button>
         <button onClick={() => void render()} disabled={busy}>Render</button>
       </div>
@@ -139,6 +142,7 @@ function Editor({ initial, initialTheme }: { initial: Plan; initialTheme: Theme 
         onSelect={id => dispatch({ type: 'select', id })} onSeek={seek}
         onMove={(id, start) => dispatch({ type: 'move', id, start })}
         onResize={(id, edge, t) => dispatch({ type: 'resize', id, edge, time: t })} />
+      <ChatPanel isOpen={showChat} onClose={() => setShowChat(false)} onPlanUpdated={() => void reload()} />
     </div>
   );
 }

@@ -28,10 +28,19 @@ npx tsx src/cli.ts analyze projects/demo   # ghi storyboard.json (đề xuất t
 # AI sửa projects/demo/storyboard.json rồi đặt reviewed: true
 npx tsx src/cli.ts compose projects/demo   # dựng plan.json + compose-report.json
 npx tsx src/cli.ts validate projects/demo
+npx tsx src/cli.ts chat projects/demo --prompt "Đổi màu khối callout sang vàng" --apply # sửa timeline bằng AI
 npx tsx src/cli.ts merge projects/demo      # sau khi dựng lại: gộp plan.next.json, giữ layer đã khóa
-npx tsx src/cli.ts editor projects/demo     # http://127.0.0.1:5187
+npx tsx src/cli.ts editor projects/demo     # http://127.0.0.1:5187 (có ô chat AI tích hợp)
 npx tsx src/cli.ts render projects/demo
 ```
+
+### Agent Harness & Ô chat AI
+
+EditKai tích hợp sẵn **Agent Harness** để điều khiển và chỉnh sửa kế hoạch dựng bằng ngôn ngữ tự nhiên:
+- **Trong Editor (`http://127.0.0.1:5187`):** Bấm nút **💬 AI Sửa video** trên thanh công cụ để mở panel chat. Bạn có thể yêu cầu sửa màu, thêm bớt layer, đổi toạ độ. AI sẽ sinh bản xem trước thay đổi (Diff Card) để bạn duyệt và bấm **[✓ Áp dụng]** hoặc **[✕ Bỏ qua]**.
+- **Qua dòng lệnh (CLI):** Chạy `npx tsx src/cli.ts chat <project> --prompt "<yêu cầu>" [--apply]`.
+- **Cấu hình LLM:** Đặt biến môi trường `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` hoặc `OPENAI_API_KEY` trong file `.env` hoặc hệ thống. Nếu không có key, hệ thống sẽ sử dụng mock provider cho kiểm thử an toàn.
+
 
 ## Phát triển
 
@@ -39,7 +48,7 @@ npx tsx src/cli.ts render projects/demo
 - Thêm phong cách: tạo `styles/<tên>/theme.json` và `styles/<tên>/rules.md`; thêm component vào `remotion/components/` và đăng ký trong `remotion/registry.ts` nếu cần.
 - Chuyển động: các hàm nảy/hiện/thoát nằm trong `remotion/motion/`, thông số theo phong cách trong khối `motion` của `theme.json`. `tests/remotion/helper.ts` có `filmstrip(plan, frames, out)` để ghép dãy khung hình thành một ảnh và xem chuyển động bằng mắt.
 - Caption có bốn kiểu (`phrase` mặc định, `word`, `big`, `label`); `remotion/components/caption/` chứa từng renderer và `src/plan/captionProps.ts` đọc `props` với giá trị mặc định an toàn.
-- Chưa có: nhiều lớp video chồng nhau, chỉnh sóng âm/màu, sửa bằng ô chat, chỉnh vị trí chữ bằng kéo thả, âm thanh hiệu ứng, cảnh mở/kết, icon 3D.
+- Chưa có: nhiều lớp video chồng nhau, chỉnh sóng âm/màu, chỉnh vị trí chữ bằng kéo thả, âm thanh hiệu ứng phức tạp, cảnh mở/kết tự động, icon 3D.
 
 ## Thành phần của bên thứ ba
 

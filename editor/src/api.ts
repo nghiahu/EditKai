@@ -34,3 +34,39 @@ export function onPlanChanged(cb: () => void): () => void {
   es.addEventListener('plan-changed', cb);
   return () => es.close();
 }
+
+export interface AgentChatResponse {
+  reply: string;
+  hasChanges: boolean;
+  diff: unknown;
+  diffDescription: string[];
+  draftPlan: Plan;
+  pendingId: string;
+  turnCount: number;
+}
+
+export async function sendAgentChat(message: string, history: unknown[] = []): Promise<AgentChatResponse> {
+  const r = await fetch(`${API}/api/agent/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history }),
+  });
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    throw new Error(body.error ?? `Lỗi ${r.status}`);
+  }
+  return r.json();
+}
+
+export async function applyAgentChanges(pendingId: string): Promise<void> {
+  const r = await fetch(`${API}/api/agent/apply`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pendingId }),
+  });
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    throw new Error(body.error ?? `Lỗi ${r.status}`);
+  }
+}
+

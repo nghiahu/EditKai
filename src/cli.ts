@@ -21,10 +21,11 @@ import { sampleFrames } from './stages/sampleFrames';
 import { facesStage } from './stages/faces';
 import { renderStage } from './stages/render';
 import { customCheck } from './stages/customCheck';
+import { agentChatStage } from './stages/agentChat';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASPECTS: Record<string, [number, number]> = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] };
-const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | frames | faces | analyze | compose | validate | merge | assets | editor | preview | custom-check | render';
+const COMMANDS = 'doctor | init | clean | fix-transcript | pauses | condense | frames | faces | analyze | compose | validate | merge | assets | editor | preview | custom-check | chat | render';
 
 type Out = (s: string) => void;
 
@@ -90,8 +91,8 @@ function parse(argv: string[]) {
 export async function runCli(argv: string[], out: Out = console.log, err: Out = console.error): Promise<number> {
   if (argv[0] === 'assets') return runAssets(argv.slice(1), out, err);
   if (argv[0] === 'doctor') return runDoctorCommand(out);
-  const { cmd, dir, flags } = parse(argv);
-  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'frames', 'faces', 'analyze', 'compose', 'validate', 'merge', 'editor', 'preview', 'custom-check', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
+  const { cmd, dir, flags, positional } = parse(argv);
+  if (!['init', 'clean', 'fix-transcript', 'pauses', 'condense', 'frames', 'faces', 'analyze', 'compose', 'validate', 'merge', 'editor', 'preview', 'custom-check', 'chat', 'render'].includes(cmd ?? '')) { err(`Lệnh không hợp lệ: ${cmd ?? '(trống)'}. Dùng: ${COMMANDS}`); return 2; }
   if (!dir) { err(`Thiếu thư mục project. Dùng: ${cmd} <thư-mục-project>`); return 2; }
   const projectDir = resolve(dir);
 
@@ -210,6 +211,26 @@ export async function runCli(argv: string[], out: Out = console.log, err: Out = 
       r.frames.forEach(f => out(`  ${f.layerId}  ${f.t.toFixed(1)} s  ${f.ms} ms  ${f.file}`));
       r.issues.forEach(i => out(`${i.severity === 'error' ? 'LỖI' : 'cảnh báo'} [${i.code}] ${i.message}`));
       return r.issues.some(i => i.severity === 'error') ? 1 : 0;
+    }
+    if (cmd === 'chat') {
+      const prompt = flags.prompt ?? positional.join(' ');
+      if (!prompt) {
+        err('Thiếu --prompt "<yêu cầu>". Ví dụ: chat <project> --prompt "Đổi màu card đầu"');
+        return 2;
+      }
+      const apply = 'apply' in flags;
+      const r = await agentChatStage(projectDir, { prompt, apply });
+      out(`[AI]: ${r.reply}`);
+      if (r.hasChanges) {
+        out('\nThay đổi đề xuất:');
+        r.diffDescription.forEach(d => out(`  ${d}`));
+        if (r.applied) {
+          out('\n✓ Đã ghi thay đổi vào plan.json');
+        } else {
+          out('\n(Chưa áp dụng vào plan.json. Dùng thêm cờ --apply để lưu)');
+        }
+      }
+      return 0;
     }
     if (cmd === 'render') {
       out(`Đã render: ${await renderStage(projectDir)}`);
